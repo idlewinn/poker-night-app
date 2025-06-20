@@ -6,7 +6,7 @@ import PlayerList from './components/PlayerList';
 import AddPlayerForm from './components/AddPlayerForm';
 import Sessions from './components/Sessions';
 import { playersApi, sessionsApi } from './services/api';
-import { Player, Session, TabValue, CreateSessionRequest, UpdateSessionRequest } from './types/index';
+import { Player, Session, TabValue, CreateSessionRequest, UpdateSessionRequest, CreatePlayerRequest, UpdatePlayerRequest } from './types/index';
 import './App.css';
 
 // Create a custom theme for the poker app
@@ -154,9 +154,17 @@ function App(): React.JSX.Element {
     }
   };
 
-  const addPlayer = async (name: string): Promise<void> => {
+  const addPlayer = async (name: string, email?: string): Promise<void> => {
     try {
-      const newPlayer = await playersApi.create({ name: name.trim() });
+      const requestData: CreatePlayerRequest = {
+        name: name.trim()
+      };
+
+      if (email?.trim()) {
+        requestData.email = email.trim();
+      }
+
+      const newPlayer = await playersApi.create(requestData);
       setPlayers([...players, newPlayer]);
     } catch (err) {
       console.error('Failed to add player:', err);
@@ -174,9 +182,17 @@ function App(): React.JSX.Element {
     }
   };
 
-  const renamePlayer = async (id: number, newName: string): Promise<void> => {
+  const renamePlayer = async (id: number, newName: string, newEmail?: string): Promise<void> => {
     try {
-      const updatedPlayer = await playersApi.update(id, { name: newName.trim() });
+      const requestData: UpdatePlayerRequest = {
+        name: newName.trim()
+      };
+
+      if (newEmail?.trim()) {
+        requestData.email = newEmail.trim();
+      }
+
+      const updatedPlayer = await playersApi.update(id, requestData);
       setPlayers(players.map(player =>
         player.id === id ? updatedPlayer : player
       ));

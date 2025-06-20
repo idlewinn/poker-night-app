@@ -21,6 +21,7 @@ function initializeDatabase(): void {
     CREATE TABLE IF NOT EXISTS players (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
+      email TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `, (err: Error | null) => {
@@ -28,6 +29,14 @@ function initializeDatabase(): void {
       console.error('Error creating players table:', err.message);
     } else {
       console.log('Players table ready');
+      // Add email column if it doesn't exist (for existing databases)
+      db.run(`ALTER TABLE players ADD COLUMN email TEXT`, (alterErr: Error | null) => {
+        if (alterErr && !alterErr.message.includes('duplicate column name')) {
+          console.error('Error adding email column:', alterErr.message);
+        } else if (!alterErr) {
+          console.log('Email column added to players table');
+        }
+      });
     }
   });
 

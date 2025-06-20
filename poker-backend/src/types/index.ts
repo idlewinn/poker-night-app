@@ -2,6 +2,7 @@
 export interface Player {
   id: number;
   name: string;
+  email?: string;
   created_at: string;
 }
 
@@ -22,10 +23,12 @@ export interface SessionPlayer {
 // API Request/Response Types
 export interface CreatePlayerRequest {
   name: string;
+  email?: string;
 }
 
 export interface UpdatePlayerRequest {
   name: string;
+  email?: string;
 }
 
 export interface CreateSessionRequest {

@@ -5,12 +5,14 @@ import { AddPlayerFormProps } from '../types/index';
 
 function AddPlayerForm({ onAddPlayer }: AddPlayerFormProps): React.JSX.Element {
   const [playerName, setPlayerName] = useState<string>('');
+  const [playerEmail, setPlayerEmail] = useState<string>('');
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     if (playerName.trim()) {
-      onAddPlayer(playerName);
+      onAddPlayer(playerName, playerEmail.trim() || undefined);
       setPlayerName('');
+      setPlayerEmail('');
     }
   };
 
@@ -41,23 +43,34 @@ function AddPlayerForm({ onAddPlayer }: AddPlayerFormProps): React.JSX.Element {
         <Box
           sx={{
             display: 'flex',
+            flexDirection: 'column',
             gap: 2,
-            alignItems: 'flex-start',
-            flexDirection: { xs: 'column', sm: 'row' },
           }}
         >
           <TextField
             fullWidth
+            label="Player Name"
             variant="outlined"
             value={playerName}
             onChange={(e) => setPlayerName(e.target.value)}
             placeholder="Enter player name..."
-            inputProps={{ maxLength: 50 }}
+            required
+            slotProps={{ htmlInput: { maxLength: 50 } }}
             size="large"
-            sx={{
-              flex: 1,
-            }}
           />
+
+          <TextField
+            fullWidth
+            label="Email Address"
+            type="email"
+            variant="outlined"
+            value={playerEmail}
+            onChange={(e) => setPlayerEmail(e.target.value)}
+            placeholder="Enter email address (optional)..."
+            slotProps={{ htmlInput: { maxLength: 100 } }}
+            size="large"
+          />
+
           <Button
             type="submit"
             variant="contained"
@@ -65,7 +78,6 @@ function AddPlayerForm({ onAddPlayer }: AddPlayerFormProps): React.JSX.Element {
             startIcon={<PersonAdd />}
             disabled={!playerName.trim()}
             sx={{
-              minWidth: { xs: '100%', sm: 160 },
               height: 56,
               fontSize: '1rem',
             }}

@@ -2,6 +2,7 @@
 export interface Player {
   id: number;
   name: string;
+  email?: string;
   created_at: string;
 }
 
@@ -18,17 +19,17 @@ export interface Session {
 export interface PlayerItemProps {
   player: Player;
   onRemove: () => void;
-  onRename: (newName: string) => void;
+  onRename: (newName: string, newEmail?: string) => void;
 }
 
 export interface PlayerListProps {
   players: Player[];
   onRemovePlayer: (id: number) => void;
-  onRenamePlayer: (id: number, newName: string) => void;
+  onRenamePlayer: (id: number, newName: string, newEmail?: string) => void;
 }
 
 export interface AddPlayerFormProps {
-  onAddPlayer: (name: string) => void;
+  onAddPlayer: (name: string, email?: string) => void;
 }
 
 export interface SessionItemProps {
@@ -77,10 +78,12 @@ export interface ApiResponse<T> {
 
 export interface CreatePlayerRequest {
   name: string;
+  email?: string;
 }
 
 export interface UpdatePlayerRequest {
   name: string;
+  email?: string;
 }
 
 export interface CreateSessionRequest {

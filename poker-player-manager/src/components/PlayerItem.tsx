@@ -21,18 +21,21 @@ import { PlayerItemProps } from '../types/index';
 function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.Element {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editName, setEditName] = useState<string>(player.name);
+  const [editEmail, setEditEmail] = useState<string>(player.email || '');
 
   const handleSave = (): void => {
-    if (editName.trim() && editName !== player.name) {
-      onRename(editName);
+    if (editName.trim() && (editName !== player.name || editEmail !== (player.email || ''))) {
+      onRename(editName, editEmail.trim() || undefined);
     }
     setIsEditing(false);
     setEditName(player.name);
+    setEditEmail(player.email || '');
   };
 
   const handleCancel = (): void => {
     setIsEditing(false);
     setEditName(player.name);
+    setEditEmail(player.email || '');
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -73,14 +76,26 @@ function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
+              label="Player Name"
               variant="outlined"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               onKeyDown={handleKeyPress}
-              onBlur={handleSave}
               autoFocus
               size="medium"
               placeholder="Enter player name..."
+              required
+            />
+            <TextField
+              fullWidth
+              label="Email Address"
+              type="email"
+              variant="outlined"
+              value={editEmail}
+              onChange={(e) => setEditEmail(e.target.value)}
+              onKeyDown={handleKeyPress}
+              size="medium"
+              placeholder="Enter email address (optional)..."
             />
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
               <Tooltip title="Save changes" arrow>
@@ -119,7 +134,7 @@ function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.
           </Box>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, flex: 1, minHeight: '60px' }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2, flex: 1, minHeight: '80px' }}>
               <Avatar
                 sx={{
                   bgcolor: 'primary.main',
@@ -127,27 +142,45 @@ function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.
                   width: 48,
                   height: 48,
                   boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                  mt: 0.5,
                 }}
               >
                 <Person sx={{ fontSize: 24 }} />
               </Avatar>
-              <Typography
-                variant="h6"
-                component="div"
-                sx={{
-                  fontWeight: 600,
-                  color: 'text.primary',
-                  lineHeight: 1.3,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  width: { xs: '120px', sm: '140px', md: '160px' }, // Responsive fixed width
-                  fontSize: { xs: '1rem', sm: '1.25rem' }, // Responsive font size
-                }}
-                title={player.name} // Show full name on hover
-              >
-                {player.name}
-              </Typography>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  variant="h6"
+                  component="div"
+                  sx={{
+                    fontWeight: 600,
+                    color: 'text.primary',
+                    lineHeight: 1.3,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    fontSize: { xs: '1rem', sm: '1.25rem' },
+                    mb: 0.5,
+                  }}
+                  title={player.name}
+                >
+                  {player.name}
+                </Typography>
+                {player.email && (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'text.secondary',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontSize: '0.875rem',
+                    }}
+                    title={player.email}
+                  >
+                    {player.email}
+                  </Typography>
+                )}
+              </Box>
             </Box>
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
               <Tooltip title="Rename player" arrow>

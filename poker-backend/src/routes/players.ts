@@ -42,16 +42,16 @@ router.get('/:id', (req: Request, res: Response) => {
 
 // POST create new player
 router.post('/', (req: TypedRequest<CreatePlayerRequest>, res: Response): void => {
-  const { name } = req.body;
+  const { name, email } = req.body;
 
   if (!name || !name.trim()) {
     res.status(400).json({ error: 'Player name is required' });
     return;
   }
-  
-  const sql = 'INSERT INTO players (name) VALUES (?)';
-  
-  db.run(sql, [name.trim()], function(this: any, err: Error | null) {
+
+  const sql = 'INSERT INTO players (name, email) VALUES (?, ?)';
+
+  db.run(sql, [name.trim(), email?.trim() || null], function(this: any, err: Error | null) {
     if (err) {
       if (err.message.includes('UNIQUE constraint failed')) {
         res.status(409).json({ error: 'Player name already exists' });
@@ -76,16 +76,16 @@ router.post('/', (req: TypedRequest<CreatePlayerRequest>, res: Response): void =
 // PUT update player
 router.put('/:id', (req: TypedRequest<UpdatePlayerRequest>, res: Response): void => {
   const { id } = req.params;
-  const { name } = req.body;
+  const { name, email } = req.body;
 
   if (!name || !name.trim()) {
     res.status(400).json({ error: 'Player name is required' });
     return;
   }
-  
-  const sql = 'UPDATE players SET name = ? WHERE id = ?';
-  
-  db.run(sql, [name.trim(), id], function(this: any, err: Error | null) {
+
+  const sql = 'UPDATE players SET name = ?, email = ? WHERE id = ?';
+
+  db.run(sql, [name.trim(), email?.trim() || null, id], function(this: any, err: Error | null) {
     if (err) {
       if (err.message.includes('UNIQUE constraint failed')) {
         res.status(409).json({ error: 'Player name already exists' });
