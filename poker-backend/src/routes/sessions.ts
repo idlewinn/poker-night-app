@@ -28,10 +28,11 @@ function generateSessionNameFromDateTime(dateTimeString: string): string {
 // GET all sessions with their players
 router.get('/', (req: Request, res: Response) => {
   const sql = `
-    SELECT 
+    SELECT
       s.*,
       GROUP_CONCAT(p.id) as player_ids,
-      GROUP_CONCAT(p.name) as player_names
+      GROUP_CONCAT(p.name) as player_names,
+      GROUP_CONCAT(sp.status) as player_statuses
     FROM sessions s
     LEFT JOIN session_players sp ON s.id = sp.session_id
     LEFT JOIN players p ON sp.player_id = p.id
@@ -39,7 +40,7 @@ router.get('/', (req: Request, res: Response) => {
     ORDER BY s.created_at DESC
   `;
   
-  db.all(sql, [], (err: Error | null, rows: SessionQueryResult[]) => {
+  db.all(sql, [], (err: Error | null, rows: any[]) => {
     if (err) {
       console.error('Error fetching sessions:', err.message);
       res.status(500).json({ error: 'Failed to fetch sessions' });
@@ -50,7 +51,19 @@ router.get('/', (req: Request, res: Response) => {
         name: row.name,
         scheduledDateTime: row.scheduled_datetime,
         createdAt: row.created_at,
-        playerIds: row.player_ids ? row.player_ids.split(',').map(id => parseInt(id)) : []
+        playerIds: row.player_ids ? row.player_ids.split(',').map((id: string) => parseInt(id)) : [],
+        players: row.player_ids ? row.player_ids.split(',').map((id: string, index: number) => ({
+          id: index + 1, // session_player id (not critical for frontend)
+          session_id: row.id,
+          player_id: parseInt(id),
+          status: row.player_statuses ? row.player_statuses.split(',')[index] as PlayerStatus : 'Invited' as PlayerStatus,
+          created_at: row.created_at,
+          player: {
+            id: parseInt(id),
+            name: row.player_names.split(',')[index],
+            created_at: row.created_at
+          }
+        })) : []
       }));
       res.json(sessions);
     }

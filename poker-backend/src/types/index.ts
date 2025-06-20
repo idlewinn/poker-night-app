@@ -58,6 +58,7 @@ export interface SessionWithPlayers {
   scheduledDateTime: string | null;
   createdAt: string;
   playerIds: number[];
+  players?: SessionPlayer[]; // Optional populated player data with status
 }
 
 // API Response Types
