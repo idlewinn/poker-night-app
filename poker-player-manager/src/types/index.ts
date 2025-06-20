@@ -49,6 +49,7 @@ export interface SessionItemProps {
   players: Player[];
   onRemove: () => void;
   onEdit: () => void;
+  onViewDetails: () => void;
 }
 
 export interface SessionListProps {
@@ -56,6 +57,7 @@ export interface SessionListProps {
   players: Player[];
   onRemoveSession: (id: number) => void;
   onEditSession: (session: Session) => void;
+  onViewSessionDetails: (session: Session) => void;
 }
 
 export interface CreateSessionModalProps {

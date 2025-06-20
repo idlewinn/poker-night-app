@@ -4,12 +4,15 @@ import { Add } from '@mui/icons-material';
 import SessionList from './SessionList';
 import CreateSessionModal from './CreateSessionModal';
 import EditSessionModal from './EditSessionModal';
+import SessionDetailModal from './SessionDetailModal';
 import { SessionsProps, Session } from '../types/index';
 
 function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemoveSession }: SessionsProps): React.JSX.Element {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
   const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null);
+  const [sessionToView, setSessionToView] = useState<Session | null>(null);
 
   const handleOpenCreateModal = (): void => {
     setIsCreateModalOpen(true);
@@ -27,6 +30,16 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
   const handleCloseEditModal = (): void => {
     setIsEditModalOpen(false);
     setSessionToEdit(null);
+  };
+
+  const handleOpenDetailModal = (session: Session): void => {
+    setSessionToView(session);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleCloseDetailModal = (): void => {
+    setIsDetailModalOpen(false);
+    setSessionToView(null);
   };
 
   const handleCreateSession = (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): void => {
@@ -99,6 +112,7 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
         players={players}
         onRemoveSession={onRemoveSession}
         onEditSession={handleOpenEditModal}
+        onViewSessionDetails={handleOpenDetailModal}
       />
 
       {/* Create Session Modal */}
@@ -116,6 +130,13 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
         onUpdateSession={handleUpdateSession}
         players={players}
         session={sessionToEdit}
+      />
+
+      <SessionDetailModal
+        open={isDetailModalOpen}
+        onClose={handleCloseDetailModal}
+        session={sessionToView}
+        players={players}
       />
     </Box>
   )

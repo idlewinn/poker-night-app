@@ -4,7 +4,7 @@ import { EventNote } from '@mui/icons-material';
 import SessionItem from './SessionItem';
 import { SessionListProps } from '../types/index';
 
-function SessionList({ sessions, players, onRemoveSession, onEditSession }: SessionListProps): React.JSX.Element {
+function SessionList({ sessions, players, onRemoveSession, onEditSession, onViewSessionDetails }: SessionListProps): React.JSX.Element {
   if (sessions.length === 0) {
     return (
       <Paper
@@ -65,6 +65,7 @@ function SessionList({ sessions, players, onRemoveSession, onEditSession }: Sess
               players={players}
               onRemove={() => onRemoveSession(session.id)}
               onEdit={() => onEditSession(session)}
+              onViewDetails={() => onViewSessionDetails(session)}
             />
           </Grid>
         ))}

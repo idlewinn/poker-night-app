@@ -15,15 +15,33 @@ import {
   EventNote,
   Groups,
   CalendarToday,
-  Schedule
+  Schedule,
+  Visibility
 } from '@mui/icons-material';
 import { SessionItemProps } from '../types/index';
+import PlayerStatusBadge from './PlayerStatusBadge';
 
-function SessionItem({ session, players, onRemove, onEdit }: SessionItemProps): React.JSX.Element {
-  // Get player names for this session
-  const sessionPlayers = players.filter(player => 
+function SessionItem({ session, players, onRemove, onEdit, onViewDetails }: SessionItemProps): React.JSX.Element {
+  // Get players that are in this session
+  const sessionPlayers = players.filter(player =>
     session.playerIds.includes(player.id)
-  )
+  );
+
+  // For now, we'll show all players as "Invited" since we haven't implemented
+  // the backend integration yet. This will be updated when we connect to the API.
+  const getStatusCounts = () => {
+    const counts = {
+      'Invited': sessionPlayers.length,
+      'In': 0,
+      'Out': 0,
+      'Maybe': 0,
+      'Attending but not playing': 0
+    };
+    // TODO: Calculate actual status counts from session.players when backend is connected
+    return counts;
+  };
+
+  const statusCounts = getStatusCounts();
 
   // Format the creation date
   const formatDate = (dateString: string): string => {
@@ -138,7 +156,7 @@ function SessionItem({ session, players, onRemove, onEdit }: SessionItemProps): 
 
             {/* Player chips */}
             {sessionPlayers.length > 0 && (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
                 {sessionPlayers.slice(0, 3).map(player => (
                   <Chip
                     key={player.id}
@@ -158,10 +176,43 @@ function SessionItem({ session, players, onRemove, onEdit }: SessionItemProps): 
                 )}
               </Box>
             )}
+
+            {/* Status summary */}
+            {sessionPlayers.length > 0 && (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {Object.entries(statusCounts).map(([status, count]) => {
+                  if (count === 0) return null;
+                  return (
+                    <PlayerStatusBadge
+                      key={status}
+                      status={status as any}
+                      size="small"
+                      variant="outlined"
+                    />
+                  );
+                })}
+              </Box>
+            )}
           </Box>
 
           {/* Actions */}
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+            <Tooltip title="View details" arrow>
+              <IconButton
+                onClick={onViewDetails}
+                color="info"
+                size="medium"
+                sx={{
+                  bgcolor: 'info.light',
+                  color: 'info.contrastText',
+                  '&:hover': {
+                    bgcolor: 'info.main',
+                  },
+                }}
+              >
+                <Visibility />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Edit session" arrow>
               <IconButton
                 onClick={onEdit}
