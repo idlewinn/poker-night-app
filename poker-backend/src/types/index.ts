@@ -30,13 +30,13 @@ export interface UpdatePlayerRequest {
 
 export interface CreateSessionRequest {
   name: string;
-  scheduledDateTime?: string | null;
+  scheduledDateTime: string;
   playerIds?: number[];
 }
 
 export interface UpdateSessionRequest {
   name: string;
-  scheduledDateTime?: string | null;
+  scheduledDateTime: string;
   playerIds?: number[];
 }
 

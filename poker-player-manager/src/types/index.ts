@@ -48,14 +48,14 @@ export interface SessionListProps {
 export interface CreateSessionModalProps {
   open: boolean;
   onClose: () => void;
-  onCreateSession: (sessionName: string, selectedPlayerIds: number[], scheduledDateTime?: string) => void;
+  onCreateSession: (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string) => void;
   players: Player[];
 }
 
 export interface EditSessionModalProps {
   open: boolean;
   onClose: () => void;
-  onUpdateSession: (sessionId: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime?: string) => void;
+  onUpdateSession: (sessionId: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string) => void;
   players: Player[];
   session: Session | null;
 }
@@ -63,8 +63,8 @@ export interface EditSessionModalProps {
 export interface SessionsProps {
   sessions: Session[];
   players: Player[];
-  onCreateSession: (sessionName: string, selectedPlayerIds: number[], scheduledDateTime?: string) => void;
-  onUpdateSession: (sessionId: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime?: string) => void;
+  onCreateSession: (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string) => void;
+  onUpdateSession: (sessionId: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string) => void;
   onRemoveSession: (id: number) => void;
 }
 
@@ -85,13 +85,13 @@ export interface UpdatePlayerRequest {
 
 export interface CreateSessionRequest {
   name: string;
-  scheduledDateTime?: string | null;
+  scheduledDateTime: string;
   playerIds?: number[];
 }
 
 export interface UpdateSessionRequest {
   name: string;
-  scheduledDateTime?: string | null;
+  scheduledDateTime: string;
   playerIds?: number[];
 }
 
@@ -117,16 +117,16 @@ export type PlayerUpdateHandler = (id: number, newName: string) => Promise<void>
 export type PlayerRemoveHandler = (id: number) => Promise<void>;
 
 export type SessionCreateHandler = (
-  sessionName: string, 
-  selectedPlayerIds: number[], 
-  scheduledDateTime?: string
+  sessionName: string,
+  selectedPlayerIds: number[],
+  scheduledDateTime: string
 ) => Promise<void>;
 
 export type SessionUpdateHandler = (
   sessionId: number,
-  sessionName: string, 
-  selectedPlayerIds: number[], 
-  scheduledDateTime?: string
+  sessionName: string,
+  selectedPlayerIds: number[],
+  scheduledDateTime: string
 ) => Promise<void>;
 
 export type SessionRemoveHandler = (id: number) => Promise<void>;

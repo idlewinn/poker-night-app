@@ -84,10 +84,15 @@ router.post('/', (req: TypedRequest<CreateSessionRequest>, res: Response): void 
     res.status(400).json({ error: 'Session name is required' });
     return;
   }
+
+  if (!scheduledDateTime) {
+    res.status(400).json({ error: 'Scheduled date and time is required' });
+    return;
+  }
   
   const sql = 'INSERT INTO sessions (name, scheduled_datetime) VALUES (?, ?)';
-  
-  db.run(sql, [name.trim(), scheduledDateTime || null], function(this: any, err: Error | null) {
+
+  db.run(sql, [name.trim(), scheduledDateTime], function(this: any, err: Error | null) {
     if (err) {
       console.error('Error creating session:', err.message);
       res.status(500).json({ error: 'Failed to create session' });
@@ -120,10 +125,15 @@ router.put('/:id', (req: TypedRequest<UpdateSessionRequest>, res: Response): voi
     res.status(400).json({ error: 'Session name is required' });
     return;
   }
+
+  if (!scheduledDateTime) {
+    res.status(400).json({ error: 'Scheduled date and time is required' });
+    return;
+  }
   
   const sql = 'UPDATE sessions SET name = ?, scheduled_datetime = ? WHERE id = ?';
-  
-  db.run(sql, [name.trim(), scheduledDateTime || null, id], function(this: any, err: Error | null) {
+
+  db.run(sql, [name.trim(), scheduledDateTime, id], function(this: any, err: Error | null) {
     if (err) {
       console.error('Error updating session:', err.message);
       res.status(500).json({ error: 'Failed to update session' });

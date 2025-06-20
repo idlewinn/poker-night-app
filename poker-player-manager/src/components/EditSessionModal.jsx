@@ -31,6 +31,30 @@ import {
   Edit
 } from '@mui/icons-material'
 
+// Helper function to get the nearest Saturday 3 weeks from today at 7pm
+const getDefaultSessionDate = () => {
+  const today = dayjs();
+  const threeWeeksFromToday = today.add(3, 'week');
+
+  // Find the nearest Saturday (6 = Saturday in dayjs)
+  let nearestSaturday = threeWeeksFromToday;
+  const dayOfWeek = threeWeeksFromToday.day();
+
+  if (dayOfWeek === 6) {
+    // Already Saturday
+    nearestSaturday = threeWeeksFromToday;
+  } else if (dayOfWeek < 6) {
+    // Before Saturday this week
+    nearestSaturday = threeWeeksFromToday.day(6);
+  } else {
+    // After Saturday, go to next Saturday
+    nearestSaturday = threeWeeksFromToday.add(1, 'week').day(6);
+  }
+
+  // Set time to 7:00 PM
+  return nearestSaturday.hour(19).minute(0).second(0);
+};
+
 function EditSessionModal({ open, onClose, onUpdateSession, players, session }) {
   const [sessionName, setSessionName] = useState('')
   const [selectedPlayerIds, setSelectedPlayerIds] = useState([])
@@ -41,21 +65,21 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }) 
     if (session && open) {
       setSessionName(session.name)
       setSelectedPlayerIds(session.playerIds || [])
-      setScheduledDateTime(session.scheduledDateTime ? dayjs(session.scheduledDateTime) : null)
+      setScheduledDateTime(session.scheduledDateTime ? dayjs(session.scheduledDateTime) : getDefaultSessionDate())
     }
   }, [session, open])
 
   const handleClose = () => {
     setSessionName('')
     setSelectedPlayerIds([])
-    setScheduledDateTime(null)
+    setScheduledDateTime(getDefaultSessionDate())
     onClose()
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (sessionName.trim() && session) {
-      onUpdateSession(session.id, sessionName, selectedPlayerIds, scheduledDateTime?.toISOString())
+    if (sessionName.trim() && session && scheduledDateTime) {
+      onUpdateSession(session.id, sessionName, selectedPlayerIds, scheduledDateTime.toISOString())
       handleClose()
     }
   }
@@ -124,7 +148,7 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }) 
             
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DateTimePicker
-                label="Scheduled Date & Time"
+                label="Scheduled Date & Time *"
                 value={scheduledDateTime}
                 onChange={setScheduledDateTime}
                 views={['year', 'month', 'day', 'hours']}
@@ -134,7 +158,8 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }) 
                   textField: {
                     fullWidth: true,
                     variant: 'outlined',
-                    helperText: 'Optional - when will this session occur?',
+                    required: true,
+                    helperText: 'When will this session occur?',
                     InputProps: {
                       startAdornment: <Schedule sx={{ mr: 1, color: 'text.secondary' }} />
                     }
@@ -256,7 +281,7 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }) 
           <Button
             type="submit"
             variant="contained"
-            disabled={!sessionName.trim()}
+            disabled={!sessionName.trim() || !scheduledDateTime}
             startIcon={<Edit />}
           >
             Update Session

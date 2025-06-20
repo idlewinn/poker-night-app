@@ -217,11 +217,11 @@ function App(): JSX.Element {
     )
   }
 
-  const addSession = async (sessionName: string, selectedPlayerIds: number[], scheduledDateTime?: string): Promise<void> => {
+  const addSession = async (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): Promise<void> => {
     try {
       const newSession = await sessionsApi.create({
         name: sessionName.trim(),
-        scheduledDateTime: scheduledDateTime || null,
+        scheduledDateTime: scheduledDateTime,
         playerIds: selectedPlayerIds || []
       });
       setSessions([...sessions, newSession]);
@@ -241,11 +241,11 @@ function App(): JSX.Element {
     }
   };
 
-  const updateSession = async (id: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime?: string): Promise<void> => {
+  const updateSession = async (id: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): Promise<void> => {
     try {
       const updatedSession = await sessionsApi.update(id, {
         name: sessionName.trim(),
-        scheduledDateTime: scheduledDateTime || null,
+        scheduledDateTime: scheduledDateTime,
         playerIds: selectedPlayerIds || []
       });
       setSessions(sessions.map(session =>
