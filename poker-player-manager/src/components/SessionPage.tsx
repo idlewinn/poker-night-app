@@ -227,72 +227,66 @@ function SessionPage(): React.JSX.Element {
   const { totalBuyIn, totalCashOut, netResult } = calculateTotals();
 
   return (
-    <Container maxWidth="lg" sx={{ py: 2 }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 1, sm: 2 }, px: { xs: 1, sm: 2 } }}>
       {/* Session Header */}
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-          <EventNote sx={{ fontSize: 28, color: 'primary.main' }} />
-          <Typography variant="h4" component="h1" fontWeight="bold">
+      <Paper sx={{ p: { xs: 1.5, sm: 2 }, mb: { xs: 1.5, sm: 2 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, mb: { xs: 0.5, sm: 1 } }}>
+          <EventNote sx={{ fontSize: { xs: 20, sm: 28 }, color: 'primary.main' }} />
+          <Typography
+            variant="h5"
+            component="h1"
+            fontWeight="bold"
+            sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}
+          >
             {session.name || 'Poker Night'}
           </Typography>
         </Box>
 
         {session.scheduledDateTime && (
-          <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+          <Typography
+            variant="h6"
+            color="text.secondary"
+            sx={{
+              mb: { xs: 0.5, sm: 1 },
+              fontSize: { xs: '0.875rem', sm: '1rem' }
+            }}
+          >
             {formatScheduledDate(session.scheduledDateTime)}
           </Typography>
         )}
 
-        <Typography variant="body2" color="text.secondary">
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+        >
           Session ID: {session.id} • Created {new Date(session.createdAt).toLocaleDateString()}
         </Typography>
       </Paper>
 
       {/* Financial Summary */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} md={4}>
+      <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ mb: { xs: 1.5, sm: 2 } }}>
+        <Grid item xs={6} sm={6}>
           <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <TrendingDown sx={{ fontSize: 40, color: 'error.main', mb: 1 }} />
-              <Typography variant="h4" fontWeight="bold" color="error.main">
+            <CardContent sx={{ textAlign: 'center', py: { xs: 1.5, sm: 2 } }}>
+              <TrendingDown sx={{ fontSize: { xs: 24, sm: 32 }, color: 'error.main', mb: 0.5 }} />
+              <Typography variant="h5" fontWeight="bold" color="error.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
                 {formatCurrency(totalBuyIn)}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                 Total Buy-In
               </Typography>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid item xs={6} sm={6}>
           <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <AccountBalance sx={{
-                fontSize: 40,
-                color: netResult >= 0 ? 'success.main' : 'error.main',
-                mb: 1
-              }} />
-              <Typography
-                variant="h4"
-                fontWeight="bold"
-                color={netResult >= 0 ? 'success.main' : 'error.main'}
-              >
-                {formatCurrency(Math.abs(netResult))}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Net {netResult >= 0 ? 'Gain' : 'Loss'}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" fontWeight="bold" color="primary.main">
+            <CardContent sx={{ textAlign: 'center', py: { xs: 1.5, sm: 2 } }}>
+              <Typography variant="h5" fontWeight="bold" color="primary.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' }, mt: { xs: 2, sm: 2.5 } }}>
                 {sessionPlayers.length}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                 Players
               </Typography>
             </CardContent>
@@ -302,22 +296,38 @@ function SessionPage(): React.JSX.Element {
 
       {/* Player Financial Details */}
       <Paper sx={{ overflow: 'hidden' }}>
-        <Box sx={{ p: 3, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
-          <Typography variant="h5" fontWeight="bold">
+        <Box sx={{ p: { xs: 1.5, sm: 2 }, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
+          <Typography
+            variant="h6"
+            fontWeight="bold"
+            sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+          >
             Winnings
           </Typography>
         </Box>
         
         <TableContainer>
-          <Table>
+          <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell><strong>Player</strong></TableCell>
-                <TableCell><strong>Status</strong></TableCell>
-                <TableCell align="right"><strong>Buy-In</strong></TableCell>
-                <TableCell align="right"><strong>Cash-Out</strong></TableCell>
-                <TableCell align="right"><strong>Net Result</strong></TableCell>
-                <TableCell align="center"><strong>Actions</strong></TableCell>
+                <TableCell sx={{ py: { xs: 0.5, sm: 1 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                  <strong>Player</strong>
+                </TableCell>
+                <TableCell sx={{ py: { xs: 0.5, sm: 1 }, fontSize: { xs: '0.75rem', sm: '0.875rem' }, display: { xs: 'none', sm: 'table-cell' } }}>
+                  <strong>Status</strong>
+                </TableCell>
+                <TableCell align="right" sx={{ py: { xs: 0.5, sm: 1 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                  <strong>Buy-In</strong>
+                </TableCell>
+                <TableCell align="right" sx={{ py: { xs: 0.5, sm: 1 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                  <strong>Cash-Out</strong>
+                </TableCell>
+                <TableCell align="right" sx={{ py: { xs: 0.5, sm: 1 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                  <strong>Net</strong>
+                </TableCell>
+                <TableCell align="center" sx={{ py: { xs: 0.5, sm: 1 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                  <strong>Actions</strong>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -328,24 +338,32 @@ function SessionPage(): React.JSX.Element {
                 
                 return (
                   <TableRow key={sessionPlayer.player_id} hover>
-                    <TableCell>
+                    <TableCell sx={{ py: { xs: 0.5, sm: 1 } }}>
                       <Box>
-                        <Typography variant="subtitle1" fontWeight={500}>
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight={500}
+                          sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                        >
                           {player?.name || 'Unknown Player'}
                         </Typography>
                         {player?.email && (
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ fontSize: { xs: '0.625rem', sm: '0.75rem' }, display: { xs: 'none', sm: 'block' } }}
+                          >
                             {player.email}
                           </Typography>
                         )}
                       </Box>
                     </TableCell>
-                    
-                    <TableCell>
+
+                    <TableCell sx={{ py: { xs: 0.5, sm: 1 }, display: { xs: 'none', sm: 'table-cell' } }}>
                       <PlayerStatusBadge status={sessionPlayer.status} />
                     </TableCell>
                     
-                    <TableCell align="right">
+                    <TableCell align="right" sx={{ py: { xs: 0.5, sm: 1 } }}>
                       {isEditing ? (
                         <TextField
                           size="small"
@@ -356,16 +374,20 @@ function SessionPage(): React.JSX.Element {
                             buy_in: e.target.value
                           })}
                           inputProps={{ min: 0, step: 0.01 }}
-                          sx={{ width: 100 }}
+                          sx={{ width: { xs: 70, sm: 100 } }}
                         />
                       ) : (
-                        <Typography variant="body1" fontWeight={500}>
+                        <Typography
+                          variant="body2"
+                          fontWeight={500}
+                          sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                        >
                           {formatCurrency(sessionPlayer.buy_in)}
                         </Typography>
                       )}
                     </TableCell>
-                    
-                    <TableCell align="right">
+
+                    <TableCell align="right" sx={{ py: { xs: 0.5, sm: 1 } }}>
                       {isEditing ? (
                         <TextField
                           size="small"
@@ -376,42 +398,49 @@ function SessionPage(): React.JSX.Element {
                             cash_out: e.target.value
                           })}
                           inputProps={{ min: 0, step: 0.01 }}
-                          sx={{ width: 100 }}
+                          sx={{ width: { xs: 70, sm: 100 } }}
                         />
                       ) : (
-                        <Typography variant="body1" fontWeight={500}>
+                        <Typography
+                          variant="body2"
+                          fontWeight={500}
+                          sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                        >
                           {formatCurrency(sessionPlayer.cash_out)}
                         </Typography>
                       )}
                     </TableCell>
-                    
-                    <TableCell align="right">
+
+                    <TableCell align="right" sx={{ py: { xs: 0.5, sm: 1 } }}>
                       <Chip
                         label={formatCurrency(Math.abs(netResult))}
                         color={netResult >= 0 ? 'success' : 'error'}
                         variant={netResult === 0 ? 'outlined' : 'filled'}
                         size="small"
+                        sx={{ fontSize: { xs: '0.625rem', sm: '0.75rem' }, height: { xs: 20, sm: 24 } }}
                       />
                     </TableCell>
                     
-                    <TableCell align="center">
+                    <TableCell align="center" sx={{ py: { xs: 0.5, sm: 1 } }}>
                       {isEditing ? (
-                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
                           <IconButton
                             size="small"
                             color="success"
                             onClick={handleSaveFinancials}
                             disabled={updating}
+                            sx={{ p: { xs: 0.25, sm: 0.5 } }}
                           >
-                            <Save />
+                            <Save sx={{ fontSize: { xs: 16, sm: 20 } }} />
                           </IconButton>
                           <IconButton
                             size="small"
                             color="error"
                             onClick={handleCancelEdit}
                             disabled={updating}
+                            sx={{ p: { xs: 0.25, sm: 0.5 } }}
                           >
-                            <Cancel />
+                            <Cancel sx={{ fontSize: { xs: 16, sm: 20 } }} />
                           </IconButton>
                         </Box>
                       ) : (
@@ -419,8 +448,9 @@ function SessionPage(): React.JSX.Element {
                           size="small"
                           color="primary"
                           onClick={() => handleEditFinancials(sessionPlayer)}
+                          sx={{ p: { xs: 0.25, sm: 0.5 } }}
                         >
-                          <Edit />
+                          <Edit sx={{ fontSize: { xs: 16, sm: 20 } }} />
                         </IconButton>
                       )}
                     </TableCell>
@@ -432,12 +462,14 @@ function SessionPage(): React.JSX.Element {
         </TableContainer>
 
         {/* Add Player Button */}
-        <Box sx={{ p: 2, textAlign: 'center', borderTop: '1px solid', borderColor: 'divider' }}>
+        <Box sx={{ p: { xs: 1, sm: 1.5 }, textAlign: 'center', borderTop: '1px solid', borderColor: 'divider' }}>
           <Button
             variant="outlined"
-            startIcon={<Add />}
+            startIcon={<Add sx={{ fontSize: { xs: 16, sm: 20 } }} />}
             onClick={() => setAddPlayerModalOpen(true)}
             disabled={getAvailablePlayersToAdd().length === 0}
+            size="small"
+            sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
           >
             Add Player
           </Button>
