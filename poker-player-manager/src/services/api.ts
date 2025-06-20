@@ -5,6 +5,9 @@ import {
   UpdatePlayerRequest,
   CreateSessionRequest,
   UpdateSessionRequest,
+  UpdatePlayerStatusRequest,
+  UpdatePlayerFinancialsRequest,
+  PlayerStatus,
   HealthCheckResponse
 } from '../types/index';
 
@@ -86,6 +89,20 @@ export const sessionsApi = {
   delete: (id: number): Promise<{ message: string }> => apiRequest<{ message: string }>(`/sessions/${id}`, {
     method: 'DELETE',
   }),
+
+  // Update player status in session
+  updatePlayerStatus: (sessionId: number, playerId: number, status: PlayerStatus): Promise<{ message: string; status: PlayerStatus }> =>
+    apiRequest<{ message: string; status: PlayerStatus }>(`/sessions/${sessionId}/players/${playerId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    }),
+
+  // Update player financials in session
+  updatePlayerFinancials: (sessionId: number, playerId: number, financials: UpdatePlayerFinancialsRequest): Promise<{ message: string; buy_in?: number; cash_out?: number }> =>
+    apiRequest<{ message: string; buy_in?: number; cash_out?: number }>(`/sessions/${sessionId}/players/${playerId}/financials`, {
+      method: 'PUT',
+      body: JSON.stringify(financials),
+    }),
 };
 
 // Health check

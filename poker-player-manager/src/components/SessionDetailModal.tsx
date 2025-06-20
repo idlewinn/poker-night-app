@@ -12,6 +12,7 @@ import {
 import { Close, EventNote } from '@mui/icons-material';
 import { Session, Player, PlayerStatus } from '../types/index';
 import SessionPlayerList from './SessionPlayerList';
+import SessionStatusSummary from './SessionStatusSummary';
 
 interface SessionDetailModalProps {
   open: boolean;
@@ -102,8 +103,10 @@ function SessionDetailModal({
           </Typography>
         </Box>
 
-        {/* Player List */}
+        {/* Status Summary and Player List */}
         <Box sx={{ p: 3 }}>
+          <SessionStatusSummary session={session} />
+
           <SessionPlayerList
             session={session}
             players={players}

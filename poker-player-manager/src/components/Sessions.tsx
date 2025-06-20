@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Box, Button, Paper, Typography } from '@mui/material';
+import { Box, Button, Paper, Typography, Snackbar, Alert } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import SessionList from './SessionList';
 import CreateSessionModal from './CreateSessionModal';
 import EditSessionModal from './EditSessionModal';
 import SessionDetailModal from './SessionDetailModal';
-import { SessionsProps, Session } from '../types/index';
+import { SessionsProps, Session, PlayerStatus } from '../types/index';
+import { sessionsApi } from '../services/api';
 
 function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemoveSession }: SessionsProps): React.JSX.Element {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
@@ -13,6 +14,8 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
   const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
   const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null);
   const [sessionToView, setSessionToView] = useState<Session | null>(null);
+  const [notification, setNotification] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
 
   const handleOpenCreateModal = (): void => {
     setIsCreateModalOpen(true);
@@ -48,6 +51,47 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
 
   const handleUpdateSession = (sessionId: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): void => {
     onUpdateSession(sessionId, sessionName, selectedPlayerIds, scheduledDateTime);
+  };
+
+  const handleStatusChange = async (playerId: number, newStatus: PlayerStatus): Promise<void> => {
+    if (!sessionToView) return;
+
+    setIsUpdatingStatus(true);
+    try {
+      await sessionsApi.updatePlayerStatus(sessionToView.id, playerId, newStatus);
+
+      // Update the local session data
+      const updatedSession = { ...sessionToView };
+      if (updatedSession.players) {
+        updatedSession.players = updatedSession.players.map(sp =>
+          sp.player_id === playerId ? { ...sp, status: newStatus } : sp
+        );
+      }
+      setSessionToView(updatedSession);
+
+      // Show success notification
+      setNotification({
+        message: `Player status updated to "${newStatus}"`,
+        severity: 'success'
+      });
+
+      // Refresh sessions data (this will trigger a re-fetch from parent)
+      // Note: In a real app, you might want to update the sessions state directly
+      // or use a state management solution like Redux
+
+    } catch (error) {
+      console.error('Failed to update player status:', error);
+      setNotification({
+        message: 'Failed to update player status',
+        severity: 'error'
+      });
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  const handleCloseNotification = (): void => {
+    setNotification(null);
   };
 
   return (
@@ -137,7 +181,24 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
         onClose={handleCloseDetailModal}
         session={sessionToView}
         players={players}
+        onStatusChange={handleStatusChange}
       />
+
+      {/* Status Update Notifications */}
+      <Snackbar
+        open={!!notification}
+        autoHideDuration={4000}
+        onClose={handleCloseNotification}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notification?.severity}
+          sx={{ width: '100%' }}
+        >
+          {notification?.message}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

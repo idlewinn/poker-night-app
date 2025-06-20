@@ -63,6 +63,8 @@ function initializeDatabase(): void {
       session_id INTEGER NOT NULL,
       player_id INTEGER NOT NULL,
       status TEXT DEFAULT 'Invited' CHECK (status IN ('Invited', 'In', 'Out', 'Maybe', 'Attending but not playing')),
+      buy_in DECIMAL(10,2) DEFAULT 0.00,
+      cash_out DECIMAL(10,2) DEFAULT 0.00,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE,
       FOREIGN KEY (player_id) REFERENCES players (id) ON DELETE CASCADE,
@@ -73,13 +75,22 @@ function initializeDatabase(): void {
       console.error('Error creating session_players table:', err.message);
     } else {
       console.log('Session_players table ready');
-      // Add status column if it doesn't exist (for existing databases)
-      db.run(`ALTER TABLE session_players ADD COLUMN status TEXT DEFAULT 'Invited' CHECK (status IN ('Invited', 'In', 'Out', 'Maybe', 'Attending but not playing'))`, (alterErr: Error | null) => {
-        if (alterErr && !alterErr.message.includes('duplicate column name')) {
-          console.error('Error adding status column:', alterErr.message);
-        } else if (!alterErr) {
-          console.log('Status column added to session_players table');
-        }
+
+      // Add columns if they don't exist (for existing databases)
+      const alterQueries = [
+        `ALTER TABLE session_players ADD COLUMN status TEXT DEFAULT 'Invited' CHECK (status IN ('Invited', 'In', 'Out', 'Maybe', 'Attending but not playing'))`,
+        `ALTER TABLE session_players ADD COLUMN buy_in DECIMAL(10,2) DEFAULT 0.00`,
+        `ALTER TABLE session_players ADD COLUMN cash_out DECIMAL(10,2) DEFAULT 0.00`
+      ];
+
+      alterQueries.forEach((query, index) => {
+        db.run(query, (alterErr: Error | null) => {
+          if (alterErr && !alterErr.message.includes('duplicate column name')) {
+            console.error(`Error adding column ${index + 1}:`, alterErr.message);
+          } else if (!alterErr) {
+            console.log(`Column ${index + 1} added to session_players table`);
+          }
+        });
       });
     }
   });

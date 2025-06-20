@@ -5,6 +5,7 @@ import {
   CreateSessionRequest,
   UpdateSessionRequest,
   UpdatePlayerStatusRequest,
+  UpdatePlayerFinancialsRequest,
   SessionQueryResult,
   TypedRequest,
   PlayerStatus
@@ -32,7 +33,9 @@ router.get('/', (req: Request, res: Response) => {
       s.*,
       GROUP_CONCAT(p.id) as player_ids,
       GROUP_CONCAT(p.name) as player_names,
-      GROUP_CONCAT(sp.status) as player_statuses
+      GROUP_CONCAT(sp.status) as player_statuses,
+      GROUP_CONCAT(sp.buy_in) as player_buy_ins,
+      GROUP_CONCAT(sp.cash_out) as player_cash_outs
     FROM sessions s
     LEFT JOIN session_players sp ON s.id = sp.session_id
     LEFT JOIN players p ON sp.player_id = p.id
@@ -57,6 +60,8 @@ router.get('/', (req: Request, res: Response) => {
           session_id: row.id,
           player_id: parseInt(id),
           status: row.player_statuses ? row.player_statuses.split(',')[index] as PlayerStatus : 'Invited' as PlayerStatus,
+          buy_in: row.player_buy_ins ? parseFloat(row.player_buy_ins.split(',')[index]) || 0 : 0,
+          cash_out: row.player_cash_outs ? parseFloat(row.player_cash_outs.split(',')[index]) || 0 : 0,
           created_at: row.created_at,
           player: {
             id: parseInt(id),
@@ -98,6 +103,58 @@ router.get('/:id', (req: Request, res: Response) => {
         scheduledDateTime: row.scheduled_datetime,
         createdAt: row.created_at,
         playerIds: row.player_ids ? row.player_ids.split(',').map(id => parseInt(id)) : []
+      };
+      res.json(session);
+    }
+  });
+});
+
+// GET session by ID
+router.get('/:id', (req: Request, res: Response): void => {
+  const { id } = req.params;
+
+  const sql = `
+    SELECT
+      s.*,
+      GROUP_CONCAT(p.id) as player_ids,
+      GROUP_CONCAT(p.name) as player_names,
+      GROUP_CONCAT(sp.status) as player_statuses,
+      GROUP_CONCAT(sp.buy_in) as player_buy_ins,
+      GROUP_CONCAT(sp.cash_out) as player_cash_outs
+    FROM sessions s
+    LEFT JOIN session_players sp ON s.id = sp.session_id
+    LEFT JOIN players p ON sp.player_id = p.id
+    WHERE s.id = ?
+    GROUP BY s.id
+  `;
+
+  db.get(sql, [id], (err: Error | null, row: any) => {
+    if (err) {
+      console.error('Error fetching session:', err.message);
+      res.status(500).json({ error: 'Failed to fetch session' });
+    } else if (!row) {
+      res.status(404).json({ error: 'Session not found' });
+    } else {
+      const session: SessionWithPlayers = {
+        id: row.id,
+        name: row.name,
+        scheduledDateTime: row.scheduled_datetime,
+        createdAt: row.created_at,
+        playerIds: row.player_ids ? row.player_ids.split(',').map((id: string) => parseInt(id)) : [],
+        players: row.player_ids ? row.player_ids.split(',').map((id: string, index: number) => ({
+          id: index + 1, // session_player id (not critical for frontend)
+          session_id: row.id,
+          player_id: parseInt(id),
+          status: row.player_statuses ? row.player_statuses.split(',')[index] as PlayerStatus : 'Invited' as PlayerStatus,
+          buy_in: row.player_buy_ins ? parseFloat(row.player_buy_ins.split(',')[index]) || 0 : 0,
+          cash_out: row.player_cash_outs ? parseFloat(row.player_cash_outs.split(',')[index]) || 0 : 0,
+          created_at: row.created_at,
+          player: {
+            id: parseInt(id),
+            name: row.player_names.split(',')[index],
+            created_at: row.created_at
+          }
+        })) : []
       };
       res.json(session);
     }
@@ -210,6 +267,14 @@ router.put('/:sessionId/players/:playerId/status', (req: TypedRequest<UpdatePlay
   const { sessionId, playerId } = req.params;
   const { status } = req.body;
 
+  if (!sessionId || !playerId) {
+    res.status(400).json({ error: 'Session ID and Player ID are required' });
+    return;
+  }
+
+  const sessionIdNum = parseInt(sessionId);
+  const playerIdNum = parseInt(playerId);
+
   if (!status) {
     res.status(400).json({ error: 'Status is required' });
     return;
@@ -223,7 +288,7 @@ router.put('/:sessionId/players/:playerId/status', (req: TypedRequest<UpdatePlay
 
   const sql = 'UPDATE session_players SET status = ? WHERE session_id = ? AND player_id = ?';
 
-  db.run(sql, [status, sessionId, playerId], function(this: any, err: Error | null) {
+  db.run(sql, [status, sessionIdNum, playerIdNum], function(this: any, err: Error | null) {
     if (err) {
       console.error('Error updating player status:', err.message);
       res.status(500).json({ error: 'Failed to update player status' });
@@ -231,6 +296,65 @@ router.put('/:sessionId/players/:playerId/status', (req: TypedRequest<UpdatePlay
       res.status(404).json({ error: 'Player not found in session' });
     } else {
       res.json({ message: 'Player status updated successfully', status });
+    }
+  });
+});
+
+// PUT update player financials in session
+router.put('/:sessionId/players/:playerId/financials', (req: TypedRequest<UpdatePlayerFinancialsRequest>, res: Response): void => {
+  const { sessionId, playerId } = req.params;
+  const { buy_in, cash_out } = req.body;
+
+  if (!sessionId || !playerId) {
+    res.status(400).json({ error: 'Session ID and Player ID are required' });
+    return;
+  }
+
+  const sessionIdNum = parseInt(sessionId);
+  const playerIdNum = parseInt(playerId);
+
+  if (buy_in === undefined && cash_out === undefined) {
+    res.status(400).json({ error: 'At least one of buy_in or cash_out is required' });
+    return;
+  }
+
+  // Validate that amounts are non-negative numbers
+  if ((buy_in !== undefined && (isNaN(buy_in) || buy_in < 0)) ||
+      (cash_out !== undefined && (isNaN(cash_out) || cash_out < 0))) {
+    res.status(400).json({ error: 'Buy-in and cash-out amounts must be non-negative numbers' });
+    return;
+  }
+
+  // Build dynamic SQL based on what fields are being updated
+  const updates: string[] = [];
+  const params: (number | string)[] = [];
+
+  if (buy_in !== undefined) {
+    updates.push('buy_in = ?');
+    params.push(buy_in);
+  }
+
+  if (cash_out !== undefined) {
+    updates.push('cash_out = ?');
+    params.push(cash_out);
+  }
+
+  params.push(sessionIdNum, playerIdNum);
+
+  const sql = `UPDATE session_players SET ${updates.join(', ')} WHERE session_id = ? AND player_id = ?`;
+
+  db.run(sql, params, function(this: any, err: Error | null) {
+    if (err) {
+      console.error('Error updating player financials:', err.message);
+      res.status(500).json({ error: 'Failed to update player financials' });
+    } else if (this.changes === 0) {
+      res.status(404).json({ error: 'Player not found in session' });
+    } else {
+      res.json({
+        message: 'Player financials updated successfully',
+        buy_in: buy_in || null,
+        cash_out: cash_out || null
+      });
     }
   });
 });

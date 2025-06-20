@@ -33,10 +33,12 @@ function SessionPlayerList({
     session.playerIds.includes(player.id)
   );
 
-  // For now, we'll show all players as "Invited" since we haven't implemented
-  // the backend integration yet. This will be updated when we connect to the API.
+  // Get player status from session data
   const getPlayerStatus = (playerId: number): PlayerStatus => {
-    // TODO: Get actual status from session.players when backend is connected
+    if (session.players) {
+      const sessionPlayer = session.players.find(sp => sp.player_id === playerId);
+      return sessionPlayer?.status || 'Invited';
+    }
     return 'Invited';
   };
 

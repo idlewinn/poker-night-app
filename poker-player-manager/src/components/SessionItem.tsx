@@ -27,17 +27,25 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails }: Sess
     session.playerIds.includes(player.id)
   );
 
-  // For now, we'll show all players as "Invited" since we haven't implemented
-  // the backend integration yet. This will be updated when we connect to the API.
+  // Calculate status counts from session data
   const getStatusCounts = () => {
     const counts = {
-      'Invited': sessionPlayers.length,
+      'Invited': 0,
       'In': 0,
       'Out': 0,
       'Maybe': 0,
       'Attending but not playing': 0
     };
-    // TODO: Calculate actual status counts from session.players when backend is connected
+
+    if (session.players) {
+      session.players.forEach(sessionPlayer => {
+        counts[sessionPlayer.status]++;
+      });
+    } else {
+      // Fallback: if no status data, assume all are invited
+      counts['Invited'] = sessionPlayers.length;
+    }
+
     return counts;
   };
 

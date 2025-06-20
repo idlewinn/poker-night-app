@@ -14,6 +14,8 @@ export interface SessionPlayer {
   session_id: number;
   player_id: number;
   status: PlayerStatus;
+  buy_in: number;
+  cash_out: number;
   created_at: string;
   player?: Player; // Optional populated player data
 }
@@ -114,6 +116,11 @@ export interface UpdateSessionRequest {
 
 export interface UpdatePlayerStatusRequest {
   status: PlayerStatus;
+}
+
+export interface UpdatePlayerFinancialsRequest {
+  buy_in?: number;
+  cash_out?: number;
 }
 
 export interface HealthCheckResponse {

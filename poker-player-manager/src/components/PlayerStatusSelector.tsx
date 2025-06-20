@@ -20,6 +20,7 @@ interface PlayerStatusSelectorProps {
   status: PlayerStatus;
   onStatusChange: (newStatus: PlayerStatus) => void;
   disabled?: boolean;
+  loading?: boolean;
   size?: 'small' | 'medium';
 }
 
@@ -56,11 +57,12 @@ const statusOptions: { value: PlayerStatus; label: string; icon: React.ReactNode
   }
 ];
 
-function PlayerStatusSelector({ 
-  status, 
-  onStatusChange, 
-  disabled = false, 
-  size = 'small' 
+function PlayerStatusSelector({
+  status,
+  onStatusChange,
+  disabled = false,
+  loading = false,
+  size = 'small'
 }: PlayerStatusSelectorProps): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -72,7 +74,7 @@ function PlayerStatusSelector({
   const currentOption = statusOptions.find(option => option.value === status);
 
   return (
-    <FormControl size={size} disabled={disabled}>
+    <FormControl size={size} disabled={disabled || loading}>
       <Select
         value={status}
         onChange={handleChange}
