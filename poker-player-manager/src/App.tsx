@@ -122,7 +122,7 @@ const theme = createTheme({
   spacing: 8,
 })
 
-function App(): JSX.Element {
+function App(): React.JSX.Element {
   const [players, setPlayers] = useState<Player[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeTab, setActiveTab] = useState<TabValue>(0);
@@ -186,7 +186,7 @@ function App(): JSX.Element {
     }
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: TabValue): void => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: TabValue): void => {
     setActiveTab(newValue);
   };
 

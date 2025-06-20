@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Grid, Paper } from '@mui/material';
+import { Box, Typography, Paper } from '@mui/material';
 import { Groups } from '@mui/icons-material';
 import PlayerItem from './PlayerItem';
 import { PlayerListProps } from '../types/index';
@@ -57,17 +57,27 @@ function PlayerList({ players, onRemovePlayer, onRenamePlayer }: PlayerListProps
         <Groups sx={{ color: 'primary.main' }} />
         Players ({players.length})
       </Typography>
-      <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'repeat(1, 1fr)',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(3, 1fr)',
+            xl: 'repeat(4, 1fr)'
+          },
+          gap: { xs: 2, sm: 2, md: 3 }
+        }}
+      >
         {players.map(player => (
-          <Grid item xs={12} sm={6} md={4} xl={3} key={player.id}>
-            <PlayerItem
-              player={player}
-              onRemove={() => onRemovePlayer(player.id)}
-              onRename={(newName) => onRenamePlayer(player.id, newName)}
-            />
-          </Grid>
+          <PlayerItem
+            key={player.id}
+            player={player}
+            onRemove={() => onRemovePlayer(player.id)}
+            onRename={(newName) => onRenamePlayer(player.id, newName)}
+          />
         ))}
-      </Grid>
+      </Box>
     </Box>
   )
 }
