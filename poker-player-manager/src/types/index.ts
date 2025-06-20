@@ -7,12 +7,24 @@ export interface Player {
 }
 
 // Session Types
+export type PlayerStatus = 'Invited' | 'In' | 'Out' | 'Maybe' | 'Attending but not playing';
+
+export interface SessionPlayer {
+  id: number;
+  session_id: number;
+  player_id: number;
+  status: PlayerStatus;
+  created_at: string;
+  player?: Player; // Optional populated player data
+}
+
 export interface Session {
   id: number;
   name: string;
   scheduledDateTime: string | null;
   createdAt: string;
   playerIds: number[];
+  players?: SessionPlayer[]; // Optional populated player data with status
 }
 
 // Component Props Types
@@ -96,6 +108,10 @@ export interface UpdateSessionRequest {
   name?: string;
   scheduledDateTime: string;
   playerIds?: number[];
+}
+
+export interface UpdatePlayerStatusRequest {
+  status: PlayerStatus;
 }
 
 export interface HealthCheckResponse {

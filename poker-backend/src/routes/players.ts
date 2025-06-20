@@ -78,14 +78,19 @@ router.put('/:id', (req: TypedRequest<UpdatePlayerRequest>, res: Response): void
   const { id } = req.params;
   const { name, email } = req.body;
 
+  console.log('PUT /api/players/:id received:', { id, name, email, emailType: typeof email });
+
   if (!name || !name.trim()) {
     res.status(400).json({ error: 'Player name is required' });
     return;
   }
 
+  const emailValue = email?.trim() || null;
+  console.log('Email value to be saved:', emailValue);
+
   const sql = 'UPDATE players SET name = ?, email = ? WHERE id = ?';
 
-  db.run(sql, [name.trim(), email?.trim() || null, id], function(this: any, err: Error | null) {
+  db.run(sql, [name.trim(), emailValue, id], function(this: any, err: Error | null) {
     if (err) {
       if (err.message.includes('UNIQUE constraint failed')) {
         res.status(409).json({ error: 'Player name already exists' });

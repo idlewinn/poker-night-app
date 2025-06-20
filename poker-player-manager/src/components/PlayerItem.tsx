@@ -24,8 +24,25 @@ function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.
   const [editEmail, setEditEmail] = useState<string>(player.email || '');
 
   const handleSave = (): void => {
-    if (editName.trim() && (editName !== player.name || editEmail !== (player.email || ''))) {
-      onRename(editName, editEmail.trim() || undefined);
+    if (editName.trim()) {
+      // Check if either name or email has changed
+      const nameChanged = editName !== player.name;
+      const emailChanged = editEmail !== (player.email || '');
+
+      console.log('PlayerItem handleSave debug:', {
+        editName,
+        editEmail,
+        playerName: player.name,
+        playerEmail: player.email,
+        nameChanged,
+        emailChanged
+      });
+
+      if (nameChanged || emailChanged) {
+        const emailToSend = editEmail.trim() || undefined;
+        console.log('Calling onRename with:', { name: editName, email: emailToSend });
+        onRename(editName, emailToSend);
+      }
     }
     setIsEditing(false);
     setEditName(player.name);

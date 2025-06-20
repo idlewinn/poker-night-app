@@ -62,6 +62,7 @@ function initializeDatabase(): void {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       session_id INTEGER NOT NULL,
       player_id INTEGER NOT NULL,
+      status TEXT DEFAULT 'Invited' CHECK (status IN ('Invited', 'In', 'Out', 'Maybe', 'Attending but not playing')),
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE,
       FOREIGN KEY (player_id) REFERENCES players (id) ON DELETE CASCADE,
@@ -72,6 +73,14 @@ function initializeDatabase(): void {
       console.error('Error creating session_players table:', err.message);
     } else {
       console.log('Session_players table ready');
+      // Add status column if it doesn't exist (for existing databases)
+      db.run(`ALTER TABLE session_players ADD COLUMN status TEXT DEFAULT 'Invited' CHECK (status IN ('Invited', 'In', 'Out', 'Maybe', 'Attending but not playing'))`, (alterErr: Error | null) => {
+        if (alterErr && !alterErr.message.includes('duplicate column name')) {
+          console.error('Error adding status column:', alterErr.message);
+        } else if (!alterErr) {
+          console.log('Status column added to session_players table');
+        }
+      });
     }
   });
 }

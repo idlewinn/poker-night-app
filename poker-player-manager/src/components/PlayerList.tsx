@@ -74,7 +74,7 @@ function PlayerList({ players, onRemovePlayer, onRenamePlayer }: PlayerListProps
             key={player.id}
             player={player}
             onRemove={() => onRemovePlayer(player.id)}
-            onRename={(newName) => onRenamePlayer(player.id, newName)}
+            onRename={(newName, newEmail) => onRenamePlayer(player.id, newName, newEmail)}
           />
         ))}
       </Box>

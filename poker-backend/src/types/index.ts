@@ -13,11 +13,15 @@ export interface Session {
   created_at: string;
 }
 
+export type PlayerStatus = 'Invited' | 'In' | 'Out' | 'Maybe' | 'Attending but not playing';
+
 export interface SessionPlayer {
   id: number;
   session_id: number;
   player_id: number;
+  status: PlayerStatus;
   created_at: string;
+  player?: Player; // Optional populated player data
 }
 
 // API Request/Response Types
@@ -41,6 +45,10 @@ export interface UpdateSessionRequest {
   name?: string;
   scheduledDateTime: string;
   playerIds?: number[];
+}
+
+export interface UpdatePlayerStatusRequest {
+  status: PlayerStatus;
 }
 
 // Frontend-compatible Session type (with playerIds array)

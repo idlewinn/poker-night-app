@@ -1,11 +1,13 @@
 import express, { Request, Response } from 'express';
 import db from '../database/db';
-import { 
-  SessionWithPlayers, 
-  CreateSessionRequest, 
-  UpdateSessionRequest, 
+import {
+  SessionWithPlayers,
+  CreateSessionRequest,
+  UpdateSessionRequest,
+  UpdatePlayerStatusRequest,
   SessionQueryResult,
-  TypedRequest 
+  TypedRequest,
+  PlayerStatus
 } from '../types/index';
 
 const router = express.Router();
@@ -190,27 +192,57 @@ router.delete('/:id', (req: Request, res: Response) => {
   });
 });
 
-// Helper function to add players to session
+// PUT update player status in session
+router.put('/:sessionId/players/:playerId/status', (req: TypedRequest<UpdatePlayerStatusRequest>, res: Response): void => {
+  const { sessionId, playerId } = req.params;
+  const { status } = req.body;
+
+  if (!status) {
+    res.status(400).json({ error: 'Status is required' });
+    return;
+  }
+
+  const validStatuses: PlayerStatus[] = ['Invited', 'In', 'Out', 'Maybe', 'Attending but not playing'];
+  if (!validStatuses.includes(status as PlayerStatus)) {
+    res.status(400).json({ error: 'Invalid status' });
+    return;
+  }
+
+  const sql = 'UPDATE session_players SET status = ? WHERE session_id = ? AND player_id = ?';
+
+  db.run(sql, [status, sessionId, playerId], function(this: any, err: Error | null) {
+    if (err) {
+      console.error('Error updating player status:', err.message);
+      res.status(500).json({ error: 'Failed to update player status' });
+    } else if (this.changes === 0) {
+      res.status(404).json({ error: 'Player not found in session' });
+    } else {
+      res.json({ message: 'Player status updated successfully', status });
+    }
+  });
+});
+
+// Helper function to add players to session with default "Invited" status
 function addPlayersToSession(sessionId: number, playerIds: number[], callback: (err: Error | null) => void): void {
   if (!playerIds || playerIds.length === 0) {
     return callback(null);
   }
-  
-  const placeholders = playerIds.map(() => '(?, ?)').join(', ');
-  const sql = `INSERT INTO session_players (session_id, player_id) VALUES ${placeholders}`;
-  const params: (number)[] = [];
-  
+
+  const placeholders = playerIds.map(() => '(?, ?, ?)').join(', ');
+  const sql = `INSERT INTO session_players (session_id, player_id, status) VALUES ${placeholders}`;
+  const params: (number | string)[] = [];
+
   playerIds.forEach(playerId => {
-    params.push(sessionId, playerId);
+    params.push(sessionId, playerId, 'Invited');
   });
-  
+
   db.run(sql, params, callback);
 }
 
 // Helper function to fetch session by ID and return response
 function fetchSessionById(sessionId: number, res: Response): void {
   const sql = `
-    SELECT 
+    SELECT
       s.*,
       GROUP_CONCAT(p.id) as player_ids,
       GROUP_CONCAT(p.name) as player_names
@@ -220,7 +252,7 @@ function fetchSessionById(sessionId: number, res: Response): void {
     WHERE s.id = ?
     GROUP BY s.id
   `;
-  
+
   db.get(sql, [sessionId], (err: Error | null, row: SessionQueryResult | undefined) => {
     if (err) {
       console.error('Error fetching created/updated session:', err.message);

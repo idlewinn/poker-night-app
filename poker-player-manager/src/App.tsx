@@ -164,7 +164,9 @@ function App(): React.JSX.Element {
         requestData.email = email.trim();
       }
 
+      console.log('Adding player with data:', requestData);
       const newPlayer = await playersApi.create(requestData);
+      console.log('Player created successfully:', newPlayer);
       setPlayers([...players, newPlayer]);
     } catch (err) {
       console.error('Failed to add player:', err);
@@ -184,15 +186,19 @@ function App(): React.JSX.Element {
 
   const renamePlayer = async (id: number, newName: string, newEmail?: string): Promise<void> => {
     try {
-      const requestData: UpdatePlayerRequest = {
+      const requestData: any = {
         name: newName.trim()
       };
 
-      if (newEmail?.trim()) {
-        requestData.email = newEmail.trim();
+      // Always include email in the request, even if it's empty (to clear existing email)
+      if (newEmail !== undefined) {
+        const trimmedEmail = newEmail.trim();
+        requestData.email = trimmedEmail || null; // Send null to clear empty emails
       }
 
+      console.log('Updating player with data:', requestData);
       const updatedPlayer = await playersApi.update(id, requestData);
+      console.log('Player updated successfully:', updatedPlayer);
       setPlayers(players.map(player =>
         player.id === id ? updatedPlayer : player
       ));
