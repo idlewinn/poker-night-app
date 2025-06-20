@@ -51,7 +51,7 @@ function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.
       elevation={2}
       sx={{
         height: '100%',
-        minHeight: '140px', // Fixed minimum height for consistency
+        minHeight: '160px', // Increased minimum height for email display
         maxWidth: '100%', // Ensure cards don't overflow container
         display: 'flex',
         flexDirection: 'column',
@@ -134,7 +134,7 @@ function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.
           </Box>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2, flex: 1, minHeight: '80px' }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2, flex: 1, minHeight: '90px' }}>
               <Avatar
                 sx={{
                   bgcolor: 'primary.main',
@@ -165,21 +165,20 @@ function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.
                 >
                   {player.name}
                 </Typography>
-                {player.email && (
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: 'text.secondary',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      fontSize: '0.875rem',
-                    }}
-                    title={player.email}
-                  >
-                    {player.email}
-                  </Typography>
-                )}
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'text.secondary',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    fontSize: '0.875rem',
+                    fontStyle: player.email ? 'normal' : 'italic',
+                  }}
+                  title={player.email || 'No email address'}
+                >
+                  {player.email || 'No email address'}
+                </Typography>
               </Box>
             </Box>
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
