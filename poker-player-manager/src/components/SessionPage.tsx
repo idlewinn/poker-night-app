@@ -19,7 +19,15 @@ import {
   Chip,
   TextField,
   Button,
-  IconButton
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction
 } from '@mui/material';
 import {
   EventNote,
@@ -28,7 +36,9 @@ import {
   AccountBalance,
   Edit,
   Save,
-  Cancel
+  Cancel,
+  Add,
+  Person
 } from '@mui/icons-material';
 import { Session, Player, SessionPlayer } from '../types/index';
 import { sessionsApi, playersApi } from '../services/api';
@@ -52,6 +62,7 @@ function SessionPage(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [editingFinancials, setEditingFinancials] = useState<EditingFinancials | null>(null);
   const [updating, setUpdating] = useState<boolean>(false);
+  const [addPlayerModalOpen, setAddPlayerModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -123,6 +134,24 @@ function SessionPage(): React.JSX.Element {
     setEditingFinancials(null);
   };
 
+  const handleAddPlayer = async (playerId: number): Promise<void> => {
+    if (!session) return;
+
+    try {
+      setUpdating(true);
+      await sessionsApi.updatePlayerStatus(session.id, playerId, 'In');
+
+      // Refresh session data
+      const updatedSession = await sessionsApi.getById(session.id);
+      setSession(updatedSession);
+      setAddPlayerModalOpen(false);
+    } catch (err) {
+      console.error('Failed to add player:', err);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -148,7 +177,21 @@ function SessionPage(): React.JSX.Element {
 
   const getSessionPlayers = (): SessionPlayer[] => {
     if (!session?.players) return [];
-    return session.players;
+    // Only show players with "In" status
+    return session.players.filter(player => player.status === 'In');
+  };
+
+  const getAvailablePlayersToAdd = () => {
+    if (!session?.players) return players;
+
+    // Get player IDs that are already in the session
+    const sessionPlayerIds = session.players.map(sp => sp.player_id);
+
+    // Return players not in the session, or players in session but not with "In" status
+    return players.filter(player => {
+      const sessionPlayer = session.players?.find(sp => sp.player_id === player.id);
+      return !sessionPlayer || sessionPlayer.status !== 'In';
+    });
   };
 
   const calculateTotals = () => {
@@ -184,30 +227,30 @@ function SessionPage(): React.JSX.Element {
   const { totalBuyIn, totalCashOut, netResult } = calculateTotals();
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 2 }}>
       {/* Session Header */}
-      <Paper sx={{ p: 4, mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <EventNote sx={{ fontSize: 32, color: 'primary.main' }} />
-          <Typography variant="h3" component="h1" fontWeight="bold">
+      <Paper sx={{ p: 2, mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+          <EventNote sx={{ fontSize: 28, color: 'primary.main' }} />
+          <Typography variant="h4" component="h1" fontWeight="bold">
             {session.name || 'Poker Night'}
           </Typography>
         </Box>
-        
+
         {session.scheduledDateTime && (
-          <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
             {formatScheduledDate(session.scheduledDateTime)}
           </Typography>
         )}
-        
-        <Typography variant="body1" color="text.secondary">
+
+        <Typography variant="body2" color="text.secondary">
           Session ID: {session.id} • Created {new Date(session.createdAt).toLocaleDateString()}
         </Typography>
       </Paper>
 
       {/* Financial Summary */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={3}>
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} md={4}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <TrendingDown sx={{ fontSize: 40, color: 'error.main', mb: 1 }} />
@@ -220,32 +263,18 @@ function SessionPage(): React.JSX.Element {
             </CardContent>
           </Card>
         </Grid>
-        
-        <Grid item xs={12} md={3}>
+
+        <Grid item xs={12} md={4}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
-              <TrendingUp sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
-              <Typography variant="h4" fontWeight="bold" color="success.main">
-                {formatCurrency(totalCashOut)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total Cash-Out
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <AccountBalance sx={{ 
-                fontSize: 40, 
-                color: netResult >= 0 ? 'success.main' : 'error.main', 
-                mb: 1 
+              <AccountBalance sx={{
+                fontSize: 40,
+                color: netResult >= 0 ? 'success.main' : 'error.main',
+                mb: 1
               }} />
-              <Typography 
-                variant="h4" 
-                fontWeight="bold" 
+              <Typography
+                variant="h4"
+                fontWeight="bold"
                 color={netResult >= 0 ? 'success.main' : 'error.main'}
               >
                 {formatCurrency(Math.abs(netResult))}
@@ -256,8 +285,8 @@ function SessionPage(): React.JSX.Element {
             </CardContent>
           </Card>
         </Grid>
-        
-        <Grid item xs={12} md={3}>
+
+        <Grid item xs={12} md={4}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" fontWeight="bold" color="primary.main">
@@ -401,7 +430,67 @@ function SessionPage(): React.JSX.Element {
             </TableBody>
           </Table>
         </TableContainer>
+
+        {/* Add Player Button */}
+        <Box sx={{ p: 2, textAlign: 'center', borderTop: '1px solid', borderColor: 'divider' }}>
+          <Button
+            variant="outlined"
+            startIcon={<Add />}
+            onClick={() => setAddPlayerModalOpen(true)}
+            disabled={getAvailablePlayersToAdd().length === 0}
+          >
+            Add Player
+          </Button>
+        </Box>
       </Paper>
+
+      {/* Add Player Modal */}
+      <Dialog
+        open={addPlayerModalOpen}
+        onClose={() => setAddPlayerModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Add Player to Session</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Select a player to add to this session. Their status will be set to "In".
+          </Typography>
+
+          <List>
+            {getAvailablePlayersToAdd().map((player) => (
+              <ListItem key={player.id}>
+                <Person sx={{ mr: 1, color: 'text.secondary' }} />
+                <ListItemText
+                  primary={player.name}
+                  secondary={player.email}
+                />
+                <ListItemSecondaryAction>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => handleAddPlayer(player.id)}
+                    disabled={updating}
+                  >
+                    Add
+                  </Button>
+                </ListItemSecondaryAction>
+              </ListItem>
+            ))}
+          </List>
+
+          {getAvailablePlayersToAdd().length === 0 && (
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+              All players are already in this session.
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddPlayerModalOpen(false)}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

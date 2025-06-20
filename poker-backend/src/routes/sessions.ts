@@ -365,12 +365,12 @@ function addPlayersToSession(sessionId: number, playerIds: number[], callback: (
     return callback(null);
   }
 
-  const placeholders = playerIds.map(() => '(?, ?, ?)').join(', ');
-  const sql = `INSERT INTO session_players (session_id, player_id, status) VALUES ${placeholders}`;
+  const placeholders = playerIds.map(() => '(?, ?, ?, ?, ?)').join(', ');
+  const sql = `INSERT INTO session_players (session_id, player_id, status, buy_in, cash_out) VALUES ${placeholders}`;
   const params: (number | string)[] = [];
 
   playerIds.forEach(playerId => {
-    params.push(sessionId, playerId, 'Invited');
+    params.push(sessionId, playerId, 'Invited', 0, 0);
   });
 
   db.run(sql, params, callback);
