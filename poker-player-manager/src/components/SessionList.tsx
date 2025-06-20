@@ -1,9 +1,10 @@
+import React from 'react';
 import { Box, Typography, Grid, Paper } from '@mui/material';
 import { EventNote } from '@mui/icons-material';
 import SessionItem from './SessionItem';
 import { SessionListProps } from '../types/index';
 
-function SessionList({ sessions, players, onRemoveSession, onEditSession }: SessionListProps): JSX.Element {
+function SessionList({ sessions, players, onRemoveSession, onEditSession }: SessionListProps): React.JSX.Element {
   if (sessions.length === 0) {
     return (
       <Paper

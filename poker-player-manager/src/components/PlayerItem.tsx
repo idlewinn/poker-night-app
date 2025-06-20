@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -18,7 +18,7 @@ import {
 } from '@mui/icons-material';
 import { PlayerItemProps } from '../types/index';
 
-function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): JSX.Element {
+function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.Element {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editName, setEditName] = useState<string>(player.name);
 

@@ -1,9 +1,10 @@
+import React from 'react';
 import { Box, Typography, Grid, Paper } from '@mui/material';
 import { Groups } from '@mui/icons-material';
 import PlayerItem from './PlayerItem';
 import { PlayerListProps } from '../types/index';
 
-function PlayerList({ players, onRemovePlayer, onRenamePlayer }: PlayerListProps): JSX.Element {
+function PlayerList({ players, onRemovePlayer, onRenamePlayer }: PlayerListProps): React.JSX.Element {
   if (players.length === 0) {
     return (
       <Paper

@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Card,
   CardContent,
@@ -18,7 +19,7 @@ import {
 } from '@mui/icons-material';
 import { SessionItemProps } from '../types/index';
 
-function SessionItem({ session, players, onRemove, onEdit }: SessionItemProps): JSX.Element {
+function SessionItem({ session, players, onRemove, onEdit }: SessionItemProps): React.JSX.Element {
   // Get player names for this session
   const sessionPlayers = players.filter(player => 
     session.playerIds.includes(player.id)

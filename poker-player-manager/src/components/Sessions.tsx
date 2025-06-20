@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Box, Button, Paper, Typography } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import SessionList from './SessionList';
@@ -6,7 +6,7 @@ import CreateSessionModal from './CreateSessionModal';
 import EditSessionModal from './EditSessionModal';
 import { SessionsProps, Session } from '../types/index';
 
-function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemoveSession }: SessionsProps): JSX.Element {
+function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemoveSession }: SessionsProps): React.JSX.Element {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null);

@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Box, TextField, Button, Typography, Paper } from '@mui/material';
 import { PersonAdd } from '@mui/icons-material';
 import { AddPlayerFormProps } from '../types/index';
 
-function AddPlayerForm({ onAddPlayer }: AddPlayerFormProps): JSX.Element {
+function AddPlayerForm({ onAddPlayer }: AddPlayerFormProps): React.JSX.Element {
   const [playerName, setPlayerName] = useState<string>('');
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {

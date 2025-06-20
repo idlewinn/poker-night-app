@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -55,7 +55,7 @@ const getDefaultSessionDate = (): Dayjs => {
   return nearestSaturday.hour(19).minute(0).second(0);
 };
 
-function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateSessionModalProps): JSX.Element {
+function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateSessionModalProps): React.JSX.Element {
   const [sessionName, setSessionName] = useState<string>('');
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<number[]>([]);
   const [scheduledDateTime, setScheduledDateTime] = useState<Dayjs>(getDefaultSessionDate());
