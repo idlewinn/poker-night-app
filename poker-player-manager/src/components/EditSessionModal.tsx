@@ -58,21 +58,21 @@ const getDefaultSessionDate = (): Dayjs => {
 };
 
 function EditSessionModal({ open, onClose, onUpdateSession, players, session }: EditSessionModalProps): React.JSX.Element {
-  const [sessionName, setSessionName] = useState<string>('');
+  const [sessionName, setSessionName] = useState<string>('Poker Night');
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<number[]>([]);
   const [scheduledDateTime, setScheduledDateTime] = useState<Dayjs | null>(null);
 
   // Initialize form with session data when modal opens
   useEffect(() => {
     if (session && open) {
-      setSessionName(session.name);
+      setSessionName(session.name || 'Poker Night');
       setSelectedPlayerIds(session.playerIds || []);
       setScheduledDateTime(session.scheduledDateTime ? dayjs(session.scheduledDateTime) : getDefaultSessionDate());
     }
   }, [session, open]);
 
   const handleClose = (): void => {
-    setSessionName('');
+    setSessionName('Poker Night');
     setSelectedPlayerIds([]);
     setScheduledDateTime(getDefaultSessionDate());
     onClose();
@@ -81,17 +81,14 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }: 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     if (session && scheduledDateTime) {
-      // Use session name if provided, otherwise generate from date/time
-      const finalSessionName = sessionName.trim() || generateSessionName(scheduledDateTime);
+      // Use session name if provided, otherwise default to "Poker Night"
+      const finalSessionName = sessionName.trim() || 'Poker Night';
       onUpdateSession(session.id, finalSessionName, selectedPlayerIds, scheduledDateTime.toISOString());
       handleClose();
     }
   };
 
-  // Helper function to generate session name from date/time
-  const generateSessionName = (dateTime: Dayjs): string => {
-    return dateTime.format('MMM DD, YYYY [at] h A');
-  };
+
 
   const handleAddPlayer = (playerId: number): void => {
     if (!selectedPlayerIds.includes(playerId)) {
@@ -152,10 +149,10 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }: 
               label="Session Name"
               value={sessionName}
               onChange={(e) => setSessionName(e.target.value)}
-              placeholder="Optional - will use date/time if empty"
+              placeholder="Defaults to 'Poker Night'"
               variant="outlined"
               slotProps={{ htmlInput: { maxLength: 50 } }}
-              helperText="Leave empty to auto-generate from date/time"
+              helperText="Customize the session name or leave as 'Poker Night'"
               sx={{ mb: 3 }}
             />
             

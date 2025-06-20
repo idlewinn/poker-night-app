@@ -57,12 +57,12 @@ const getDefaultSessionDate = (): Dayjs => {
 };
 
 function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateSessionModalProps): React.JSX.Element {
-  const [sessionName, setSessionName] = useState<string>('');
+  const [sessionName, setSessionName] = useState<string>('Poker Night');
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<number[]>([]);
   const [scheduledDateTime, setScheduledDateTime] = useState<Dayjs>(getDefaultSessionDate());
 
   const handleClose = (): void => {
-    setSessionName('');
+    setSessionName('Poker Night');
     setSelectedPlayerIds([]);
     setScheduledDateTime(getDefaultSessionDate());
     onClose();
@@ -71,17 +71,14 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     if (scheduledDateTime) {
-      // Use session name if provided, otherwise generate from date/time
-      const finalSessionName = sessionName.trim() || generateSessionName(scheduledDateTime);
+      // Use session name if provided, otherwise default to "Poker Night"
+      const finalSessionName = sessionName.trim() || 'Poker Night';
       onCreateSession(finalSessionName, selectedPlayerIds, scheduledDateTime.toISOString());
       handleClose();
     }
   };
 
-  // Helper function to generate session name from date/time
-  const generateSessionName = (dateTime: Dayjs): string => {
-    return dateTime.format('MMM DD, YYYY [at] h A');
-  };
+
 
   const handleAddPlayer = (playerId: number): void => {
     if (!selectedPlayerIds.includes(playerId)) {
@@ -140,10 +137,10 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
               label="Session Name"
               value={sessionName}
               onChange={(e) => setSessionName(e.target.value)}
-              placeholder="Optional - will use date/time if empty"
+              placeholder="Defaults to 'Poker Night'"
               variant="outlined"
               slotProps={{ htmlInput: { maxLength: 50 } }}
-              helperText="Leave empty to auto-generate from date/time"
+              helperText="Customize the session name or leave as 'Poker Night'"
               sx={{ mb: 3 }}
             />
 
