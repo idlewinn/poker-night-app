@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -8,39 +8,40 @@ import {
   TextField,
   Tooltip,
   Avatar
-} from '@mui/material'
+} from '@mui/material';
 import {
   Edit,
   Delete,
   Check,
   Close,
   Person
-} from '@mui/icons-material'
+} from '@mui/icons-material';
+import { PlayerItemProps } from '../types/index';
 
-function PlayerItem({ player, onRemove, onRename }) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editName, setEditName] = useState(player.name)
+function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): JSX.Element {
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editName, setEditName] = useState<string>(player.name);
 
-  const handleSave = () => {
+  const handleSave = (): void => {
     if (editName.trim() && editName !== player.name) {
-      onRename(editName)
+      onRename(editName);
     }
-    setIsEditing(false)
-    setEditName(player.name)
-  }
+    setIsEditing(false);
+    setEditName(player.name);
+  };
 
-  const handleCancel = () => {
-    setIsEditing(false)
-    setEditName(player.name)
-  }
+  const handleCancel = (): void => {
+    setIsEditing(false);
+    setEditName(player.name);
+  };
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter') {
-      handleSave()
+      handleSave();
     } else if (e.key === 'Escape') {
-      handleCancel()
+      handleCancel();
     }
-  }
+  };
 
   return (
     <Card
@@ -189,4 +190,4 @@ function PlayerItem({ player, onRemove, onRename }) {
   )
 }
 
-export default PlayerItem
+export default PlayerItem;

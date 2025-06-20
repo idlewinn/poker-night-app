@@ -1,17 +1,18 @@
-import { useState } from 'react'
-import { Box, TextField, Button, Typography, Paper } from '@mui/material'
-import { PersonAdd } from '@mui/icons-material'
+import { useState } from 'react';
+import { Box, TextField, Button, Typography, Paper } from '@mui/material';
+import { PersonAdd } from '@mui/icons-material';
+import { AddPlayerFormProps } from '../types/index';
 
-function AddPlayerForm({ onAddPlayer }) {
-  const [playerName, setPlayerName] = useState('')
+function AddPlayerForm({ onAddPlayer }: AddPlayerFormProps): JSX.Element {
+  const [playerName, setPlayerName] = useState<string>('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+    e.preventDefault();
     if (playerName.trim()) {
-      onAddPlayer(playerName)
-      setPlayerName('')
+      onAddPlayer(playerName);
+      setPlayerName('');
     }
-  }
+  };
 
   return (
     <Paper
@@ -77,4 +78,4 @@ function AddPlayerForm({ onAddPlayer }) {
   )
 }
 
-export default AddPlayerForm
+export default AddPlayerForm;

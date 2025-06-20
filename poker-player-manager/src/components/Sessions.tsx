@@ -1,40 +1,41 @@
-import { useState } from 'react'
-import { Box, Button, Paper, Typography } from '@mui/material'
-import { Add, EventNote } from '@mui/icons-material'
-import SessionList from './SessionList'
-import CreateSessionModal from './CreateSessionModal'
-import EditSessionModal from './EditSessionModal'
+import { useState } from 'react';
+import { Box, Button, Paper, Typography } from '@mui/material';
+import { Add } from '@mui/icons-material';
+import SessionList from './SessionList';
+import CreateSessionModal from './CreateSessionModal';
+import EditSessionModal from './EditSessionModal';
+import { SessionsProps, Session } from '../types/index';
 
-function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemoveSession }) {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [sessionToEdit, setSessionToEdit] = useState(null)
+function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemoveSession }: SessionsProps): JSX.Element {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null);
 
-  const handleOpenCreateModal = () => {
-    setIsCreateModalOpen(true)
-  }
+  const handleOpenCreateModal = (): void => {
+    setIsCreateModalOpen(true);
+  };
 
-  const handleCloseCreateModal = () => {
-    setIsCreateModalOpen(false)
-  }
+  const handleCloseCreateModal = (): void => {
+    setIsCreateModalOpen(false);
+  };
 
-  const handleOpenEditModal = (session) => {
-    setSessionToEdit(session)
-    setIsEditModalOpen(true)
-  }
+  const handleOpenEditModal = (session: Session): void => {
+    setSessionToEdit(session);
+    setIsEditModalOpen(true);
+  };
 
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false)
-    setSessionToEdit(null)
-  }
+  const handleCloseEditModal = (): void => {
+    setIsEditModalOpen(false);
+    setSessionToEdit(null);
+  };
 
-  const handleCreateSession = (sessionName, selectedPlayerIds, scheduledDateTime) => {
-    onCreateSession(sessionName, selectedPlayerIds, scheduledDateTime)
-  }
+  const handleCreateSession = (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): void => {
+    onCreateSession(sessionName, selectedPlayerIds, scheduledDateTime);
+  };
 
-  const handleUpdateSession = (sessionId, sessionName, selectedPlayerIds, scheduledDateTime) => {
-    onUpdateSession(sessionId, sessionName, selectedPlayerIds, scheduledDateTime)
-  }
+  const handleUpdateSession = (sessionId: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): void => {
+    onUpdateSession(sessionId, sessionName, selectedPlayerIds, scheduledDateTime);
+  };
 
   return (
     <Box>
@@ -120,4 +121,4 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
   )
 }
 
-export default Sessions
+export default Sessions;

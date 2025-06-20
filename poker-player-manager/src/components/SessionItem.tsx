@@ -7,7 +7,7 @@ import {
   Tooltip,
   Avatar,
   Chip
-} from '@mui/material'
+} from '@mui/material';
 import {
   Delete,
   Edit,
@@ -15,30 +15,31 @@ import {
   Groups,
   CalendarToday,
   Schedule
-} from '@mui/icons-material'
+} from '@mui/icons-material';
+import { SessionItemProps } from '../types/index';
 
-function SessionItem({ session, players, onRemove, onEdit }) {
+function SessionItem({ session, players, onRemove, onEdit }: SessionItemProps): JSX.Element {
   // Get player names for this session
   const sessionPlayers = players.filter(player => 
     session.playerIds.includes(player.id)
   )
 
   // Format the creation date
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
-    })
-  }
+    });
+  };
 
   // Format the scheduled date
-  const formatScheduledDate = (dateString) => {
-    if (!dateString) return null
-    const date = new Date(dateString)
+  const formatScheduledDate = (dateString: string | null): string | null => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
@@ -46,8 +47,8 @@ function SessionItem({ session, players, onRemove, onEdit }) {
       year: 'numeric',
       hour: 'numeric',
       hour12: true
-    })
-  }
+    });
+  };
 
   return (
     <Card
@@ -199,4 +200,4 @@ function SessionItem({ session, players, onRemove, onEdit }) {
   )
 }
 
-export default SessionItem
+export default SessionItem;

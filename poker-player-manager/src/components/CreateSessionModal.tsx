@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -16,11 +16,11 @@ import {
   Chip,
   Paper,
   Divider
-} from '@mui/material'
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
-import dayjs from 'dayjs'
+} from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import {
   Add,
   Remove,
@@ -28,10 +28,11 @@ import {
   Groups,
   Person,
   Schedule
-} from '@mui/icons-material'
+} from '@mui/icons-material';
+import { CreateSessionModalProps } from '../types/index';
 
 // Helper function to get the nearest Saturday 3 weeks from today at 7pm
-const getDefaultSessionDate = () => {
+const getDefaultSessionDate = (): Dayjs => {
   const today = dayjs();
   const threeWeeksFromToday = today.add(3, 'week');
 
@@ -54,42 +55,42 @@ const getDefaultSessionDate = () => {
   return nearestSaturday.hour(19).minute(0).second(0);
 };
 
-function CreateSessionModal({ open, onClose, onCreateSession, players }) {
-  const [sessionName, setSessionName] = useState('')
-  const [selectedPlayerIds, setSelectedPlayerIds] = useState([])
-  const [scheduledDateTime, setScheduledDateTime] = useState(getDefaultSessionDate())
+function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateSessionModalProps): JSX.Element {
+  const [sessionName, setSessionName] = useState<string>('');
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState<number[]>([]);
+  const [scheduledDateTime, setScheduledDateTime] = useState<Dayjs>(getDefaultSessionDate());
 
-  const handleClose = () => {
-    setSessionName('')
-    setSelectedPlayerIds([])
-    setScheduledDateTime(getDefaultSessionDate())
-    onClose()
-  }
+  const handleClose = (): void => {
+    setSessionName('');
+    setSelectedPlayerIds([]);
+    setScheduledDateTime(getDefaultSessionDate());
+    onClose();
+  };
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+    e.preventDefault();
     if (scheduledDateTime) {
       // Use session name if provided, otherwise generate from date/time
-      const finalSessionName = sessionName.trim() || generateSessionName(scheduledDateTime)
-      onCreateSession(finalSessionName, selectedPlayerIds, scheduledDateTime.toISOString())
-      handleClose()
+      const finalSessionName = sessionName.trim() || generateSessionName(scheduledDateTime);
+      onCreateSession(finalSessionName, selectedPlayerIds, scheduledDateTime.toISOString());
+      handleClose();
     }
-  }
+  };
 
   // Helper function to generate session name from date/time
-  const generateSessionName = (dateTime) => {
-    return dateTime.format('MMM DD, YYYY [at] h A')
-  }
+  const generateSessionName = (dateTime: Dayjs): string => {
+    return dateTime.format('MMM DD, YYYY [at] h A');
+  };
 
-  const handleAddPlayer = (playerId) => {
+  const handleAddPlayer = (playerId: number): void => {
     if (!selectedPlayerIds.includes(playerId)) {
-      setSelectedPlayerIds([...selectedPlayerIds, playerId])
+      setSelectedPlayerIds([...selectedPlayerIds, playerId]);
     }
-  }
+  };
 
-  const handleRemovePlayer = (playerId) => {
-    setSelectedPlayerIds(selectedPlayerIds.filter(id => id !== playerId))
-  }
+  const handleRemovePlayer = (playerId: number): void => {
+    setSelectedPlayerIds(selectedPlayerIds.filter(id => id !== playerId));
+  };
 
   const availablePlayers = players.filter(player => 
     !selectedPlayerIds.includes(player.id)
@@ -287,4 +288,4 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }) {
   )
 }
 
-export default CreateSessionModal
+export default CreateSessionModal;

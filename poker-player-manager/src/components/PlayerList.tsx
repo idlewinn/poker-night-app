@@ -1,8 +1,9 @@
-import { Box, Typography, Grid, Paper } from '@mui/material'
-import { Groups } from '@mui/icons-material'
-import PlayerItem from './PlayerItem'
+import { Box, Typography, Grid, Paper } from '@mui/material';
+import { Groups } from '@mui/icons-material';
+import PlayerItem from './PlayerItem';
+import { PlayerListProps } from '../types/index';
 
-function PlayerList({ players, onRemovePlayer, onRenamePlayer }) {
+function PlayerList({ players, onRemovePlayer, onRenamePlayer }: PlayerListProps): JSX.Element {
   if (players.length === 0) {
     return (
       <Paper
@@ -70,4 +71,4 @@ function PlayerList({ players, onRemovePlayer, onRenamePlayer }) {
   )
 }
 
-export default PlayerList
+export default PlayerList;

@@ -1,8 +1,9 @@
-import { Box, Typography, Grid, Paper } from '@mui/material'
-import { EventNote } from '@mui/icons-material'
-import SessionItem from './SessionItem'
+import { Box, Typography, Grid, Paper } from '@mui/material';
+import { EventNote } from '@mui/icons-material';
+import SessionItem from './SessionItem';
+import { SessionListProps } from '../types/index';
 
-function SessionList({ sessions, players, onRemoveSession, onEditSession }) {
+function SessionList({ sessions, players, onRemoveSession, onEditSession }: SessionListProps): JSX.Element {
   if (sessions.length === 0) {
     return (
       <Paper
@@ -71,4 +72,4 @@ function SessionList({ sessions, players, onRemoveSession, onEditSession }) {
   )
 }
 
-export default SessionList
+export default SessionList;
