@@ -27,7 +27,8 @@ import {
   EventNote,
   Groups,
   Person,
-  Schedule
+  Schedule,
+  GroupAdd
 } from '@mui/icons-material';
 import { CreateSessionModalProps } from '../types/index';
 
@@ -90,6 +91,10 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
 
   const handleRemovePlayer = (playerId: number): void => {
     setSelectedPlayerIds(selectedPlayerIds.filter(id => id !== playerId));
+  };
+
+  const handleInviteAll = (): void => {
+    setSelectedPlayerIds(players.map(player => player.id));
   };
 
   const availablePlayers = players.filter(player => 
@@ -166,19 +171,32 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
             </LocalizationProvider>
           </Box>
 
-          <Typography
-            variant="h6"
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              mb: 2,
-              fontWeight: 600
-            }}
-          >
-            <Groups sx={{ color: 'primary.main' }} />
-            Select Players
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                fontWeight: 600
+              }}
+            >
+              <Groups sx={{ color: 'primary.main' }} />
+              Select Players
+            </Typography>
+
+            {availablePlayers.length > 0 && (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<GroupAdd />}
+                onClick={handleInviteAll}
+                sx={{ ml: 2 }}
+              >
+                Invite All
+              </Button>
+            )}
+          </Box>
 
           <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
             {/* Available Players */}

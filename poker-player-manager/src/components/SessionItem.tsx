@@ -16,12 +16,13 @@ import {
   Groups,
   CalendarToday,
   Schedule,
-  Visibility
+  Mail,
+  Launch
 } from '@mui/icons-material';
 import { SessionItemProps } from '../types/index';
 import PlayerStatusBadge from './PlayerStatusBadge';
 
-function SessionItem({ session, players, onRemove, onEdit, onViewDetails }: SessionItemProps): React.JSX.Element {
+function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onViewSession }: SessionItemProps): React.JSX.Element {
   // Get players that are in this session
   const sessionPlayers = players.filter(player =>
     session.playerIds.includes(player.id)
@@ -205,7 +206,7 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails }: Sess
 
           {/* Actions */}
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-            <Tooltip title="View details" arrow>
+            <Tooltip title="Invite Status" arrow>
               <IconButton
                 onClick={onViewDetails}
                 color="info"
@@ -218,7 +219,23 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails }: Sess
                   },
                 }}
               >
-                <Visibility />
+                <Mail />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="View Session Page" arrow>
+              <IconButton
+                onClick={onViewSession}
+                color="secondary"
+                size="medium"
+                sx={{
+                  bgcolor: 'secondary.light',
+                  color: 'secondary.contrastText',
+                  '&:hover': {
+                    bgcolor: 'secondary.main',
+                  },
+                }}
+              >
+                <Launch />
               </IconButton>
             </Tooltip>
             <Tooltip title="Edit session" arrow>

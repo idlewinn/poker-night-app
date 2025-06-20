@@ -52,6 +52,7 @@ export interface SessionItemProps {
   onRemove: () => void;
   onEdit: () => void;
   onViewDetails: () => void;
+  onViewSession: () => void;
 }
 
 export interface SessionListProps {
@@ -60,6 +61,7 @@ export interface SessionListProps {
   onRemoveSession: (id: number) => void;
   onEditSession: (session: Session) => void;
   onViewSessionDetails: (session: Session) => void;
+  onViewSession: (session: Session) => void;
 }
 
 export interface CreateSessionModalProps {

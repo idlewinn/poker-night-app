@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, Button, Paper, Typography, Snackbar, Alert } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import SessionList from './SessionList';
@@ -9,6 +10,7 @@ import { SessionsProps, Session, PlayerStatus } from '../types/index';
 import { sessionsApi } from '../services/api';
 
 function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemoveSession }: SessionsProps): React.JSX.Element {
+  const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
@@ -94,6 +96,10 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
     setNotification(null);
   };
 
+  const handleViewSession = (session: Session): void => {
+    navigate(`/session/${session.id}`);
+  };
+
   return (
     <Box>
       {/* Create Session Section */}
@@ -157,6 +163,7 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
         onRemoveSession={onRemoveSession}
         onEditSession={handleOpenEditModal}
         onViewSessionDetails={handleOpenDetailModal}
+        onViewSession={handleViewSession}
       />
 
       {/* Create Session Modal */}
