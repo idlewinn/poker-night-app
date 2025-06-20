@@ -68,10 +68,17 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (sessionName.trim() && scheduledDateTime) {
-      onCreateSession(sessionName, selectedPlayerIds, scheduledDateTime.toISOString())
+    if (scheduledDateTime) {
+      // Use session name if provided, otherwise generate from date/time
+      const finalSessionName = sessionName.trim() || generateSessionName(scheduledDateTime)
+      onCreateSession(finalSessionName, selectedPlayerIds, scheduledDateTime.toISOString())
       handleClose()
     }
+  }
+
+  // Helper function to generate session name from date/time
+  const generateSessionName = (dateTime) => {
+    return dateTime.format('MMM DD, YYYY [at] h A')
   }
 
   const handleAddPlayer = (playerId) => {
@@ -127,10 +134,10 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }) {
               label="Session Name"
               value={sessionName}
               onChange={(e) => setSessionName(e.target.value)}
-              placeholder="Enter session name..."
+              placeholder="Optional - will use date/time if empty"
               variant="outlined"
-              required
-              inputProps={{ maxLength: 50 }}
+              slotProps={{ htmlInput: { maxLength: 50 } }}
+              helperText="Leave empty to auto-generate from date/time"
               sx={{ mb: 3 }}
             />
 
@@ -269,7 +276,7 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }) {
           <Button
             type="submit"
             variant="contained"
-            disabled={!sessionName.trim() || !scheduledDateTime}
+            disabled={!scheduledDateTime}
             startIcon={<EventNote />}
           >
             Create Session

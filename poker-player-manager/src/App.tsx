@@ -6,7 +6,7 @@ import PlayerList from './components/PlayerList';
 import AddPlayerForm from './components/AddPlayerForm';
 import Sessions from './components/Sessions';
 import { playersApi, sessionsApi } from './services/api';
-import { Player, Session, TabValue } from './types/index';
+import { Player, Session, TabValue, CreateSessionRequest, UpdateSessionRequest } from './types/index';
 import './App.css';
 
 // Create a custom theme for the poker app
@@ -219,11 +219,17 @@ function App(): JSX.Element {
 
   const addSession = async (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): Promise<void> => {
     try {
-      const newSession = await sessionsApi.create({
-        name: sessionName.trim(),
+      const requestData: CreateSessionRequest = {
         scheduledDateTime: scheduledDateTime,
         playerIds: selectedPlayerIds || []
-      });
+      };
+
+      // Only include name if it's not empty
+      if (sessionName.trim()) {
+        requestData.name = sessionName.trim();
+      }
+
+      const newSession = await sessionsApi.create(requestData);
       setSessions([...sessions, newSession]);
     } catch (err) {
       console.error('Failed to add session:', err);
@@ -243,11 +249,17 @@ function App(): JSX.Element {
 
   const updateSession = async (id: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): Promise<void> => {
     try {
-      const updatedSession = await sessionsApi.update(id, {
-        name: sessionName.trim(),
+      const requestData: UpdateSessionRequest = {
         scheduledDateTime: scheduledDateTime,
         playerIds: selectedPlayerIds || []
-      });
+      };
+
+      // Only include name if it's not empty
+      if (sessionName.trim()) {
+        requestData.name = sessionName.trim();
+      }
+
+      const updatedSession = await sessionsApi.update(id, requestData);
       setSessions(sessions.map(session =>
         session.id === id ? updatedSession : session
       ));

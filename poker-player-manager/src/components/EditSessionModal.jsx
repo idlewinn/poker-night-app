@@ -78,10 +78,17 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }) 
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (sessionName.trim() && session && scheduledDateTime) {
-      onUpdateSession(session.id, sessionName, selectedPlayerIds, scheduledDateTime.toISOString())
+    if (session && scheduledDateTime) {
+      // Use session name if provided, otherwise generate from date/time
+      const finalSessionName = sessionName.trim() || generateSessionName(scheduledDateTime)
+      onUpdateSession(session.id, finalSessionName, selectedPlayerIds, scheduledDateTime.toISOString())
       handleClose()
     }
+  }
+
+  // Helper function to generate session name from date/time
+  const generateSessionName = (dateTime) => {
+    return dateTime.format('MMM DD, YYYY [at] h A')
   }
 
   const handleAddPlayer = (playerId) => {
@@ -139,10 +146,10 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }) 
               label="Session Name"
               value={sessionName}
               onChange={(e) => setSessionName(e.target.value)}
-              placeholder="Enter session name..."
+              placeholder="Optional - will use date/time if empty"
               variant="outlined"
-              required
-              inputProps={{ maxLength: 50 }}
+              slotProps={{ htmlInput: { maxLength: 50 } }}
+              helperText="Leave empty to auto-generate from date/time"
               sx={{ mb: 3 }}
             />
             
@@ -281,7 +288,7 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }) 
           <Button
             type="submit"
             variant="contained"
-            disabled={!sessionName.trim() || !scheduledDateTime}
+            disabled={!scheduledDateTime}
             startIcon={<Edit />}
           >
             Update Session

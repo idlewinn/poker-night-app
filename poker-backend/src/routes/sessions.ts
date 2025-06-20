@@ -10,6 +10,19 @@ import {
 
 const router = express.Router();
 
+// Helper function to generate session name from date/time
+function generateSessionNameFromDateTime(dateTimeString: string): string {
+  const date = new Date(dateTimeString);
+  const options: Intl.DateTimeFormatOptions = {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    hour12: true
+  };
+  return date.toLocaleDateString('en-US', options);
+}
+
 // GET all sessions with their players
 router.get('/', (req: Request, res: Response) => {
   const sql = `
@@ -80,19 +93,17 @@ router.get('/:id', (req: Request, res: Response) => {
 router.post('/', (req: TypedRequest<CreateSessionRequest>, res: Response): void => {
   const { name, scheduledDateTime, playerIds } = req.body;
 
-  if (!name || !name.trim()) {
-    res.status(400).json({ error: 'Session name is required' });
-    return;
-  }
-
   if (!scheduledDateTime) {
     res.status(400).json({ error: 'Scheduled date and time is required' });
     return;
   }
+
+  // Generate session name from date/time if not provided
+  const sessionName = name?.trim() || generateSessionNameFromDateTime(scheduledDateTime);
   
   const sql = 'INSERT INTO sessions (name, scheduled_datetime) VALUES (?, ?)';
 
-  db.run(sql, [name.trim(), scheduledDateTime], function(this: any, err: Error | null) {
+  db.run(sql, [sessionName, scheduledDateTime], function(this: any, err: Error | null) {
     if (err) {
       console.error('Error creating session:', err.message);
       res.status(500).json({ error: 'Failed to create session' });
@@ -121,19 +132,17 @@ router.put('/:id', (req: TypedRequest<UpdateSessionRequest>, res: Response): voi
   const { id } = req.params;
   const { name, scheduledDateTime, playerIds } = req.body;
 
-  if (!name || !name.trim()) {
-    res.status(400).json({ error: 'Session name is required' });
-    return;
-  }
-
   if (!scheduledDateTime) {
     res.status(400).json({ error: 'Scheduled date and time is required' });
     return;
   }
+
+  // Generate session name from date/time if not provided
+  const sessionName = name?.trim() || generateSessionNameFromDateTime(scheduledDateTime);
   
   const sql = 'UPDATE sessions SET name = ?, scheduled_datetime = ? WHERE id = ?';
 
-  db.run(sql, [name.trim(), scheduledDateTime, id], function(this: any, err: Error | null) {
+  db.run(sql, [sessionName, scheduledDateTime, id], function(this: any, err: Error | null) {
     if (err) {
       console.error('Error updating session:', err.message);
       res.status(500).json({ error: 'Failed to update session' });

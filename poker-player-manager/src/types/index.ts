@@ -84,13 +84,13 @@ export interface UpdatePlayerRequest {
 }
 
 export interface CreateSessionRequest {
-  name: string;
+  name?: string;
   scheduledDateTime: string;
   playerIds?: number[];
 }
 
 export interface UpdateSessionRequest {
-  name: string;
+  name?: string;
   scheduledDateTime: string;
   playerIds?: number[];
 }
