@@ -144,6 +144,21 @@ function SessionPage(): React.JSX.Element {
     });
   };
 
+  const getSessionDisplayName = (session: Session): string => {
+    // If session name is empty or looks like a date, show "Poker Night"
+    if (!session.name || session.name.trim() === '') {
+      return 'Poker Night';
+    }
+
+    // Check if the name looks like a date (contains numbers and common date separators)
+    const datePattern = /^\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|^\d{4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2}/;
+    if (datePattern.test(session.name.trim())) {
+      return 'Poker Night';
+    }
+
+    return session.name;
+  };
+
   const getSessionPlayers = (): SessionPlayer[] => {
     if (!session?.players) return [];
     return session.players;
@@ -188,7 +203,7 @@ function SessionPage(): React.JSX.Element {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
           <EventNote sx={{ fontSize: 32, color: 'primary.main' }} />
           <Typography variant="h3" component="h1" fontWeight="bold">
-            {session.name}
+            {getSessionDisplayName(session)}
           </Typography>
         </Box>
         
@@ -273,7 +288,7 @@ function SessionPage(): React.JSX.Element {
       <Paper sx={{ overflow: 'hidden' }}>
         <Box sx={{ p: 3, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
           <Typography variant="h5" fontWeight="bold">
-            Player Financial Summary
+            Winnings
           </Typography>
         </Box>
         

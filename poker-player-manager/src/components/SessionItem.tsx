@@ -52,6 +52,21 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onView
 
   const statusCounts = getStatusCounts();
 
+  const getSessionDisplayName = (session: Session): string => {
+    // If session name is empty or looks like a date, show "Poker Night"
+    if (!session.name || session.name.trim() === '') {
+      return 'Poker Night';
+    }
+
+    // Check if the name looks like a date (contains numbers and common date separators)
+    const datePattern = /^\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|^\d{4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2}/;
+    if (datePattern.test(session.name.trim())) {
+      return 'Poker Night';
+    }
+
+    return session.name;
+  };
+
   // Format the creation date
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -131,9 +146,9 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onView
                 width: { xs: '120px', sm: '140px', md: '160px' },
                 fontSize: { xs: '1rem', sm: '1.25rem' },
               }}
-              title={session.name}
+              title={getSessionDisplayName(session)}
             >
-              {session.name}
+              {getSessionDisplayName(session)}
             </Typography>
           </Box>
 
@@ -206,22 +221,6 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onView
 
           {/* Actions */}
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-            <Tooltip title="Invite Status" arrow>
-              <IconButton
-                onClick={onViewDetails}
-                color="info"
-                size="medium"
-                sx={{
-                  bgcolor: 'info.light',
-                  color: 'info.contrastText',
-                  '&:hover': {
-                    bgcolor: 'info.main',
-                  },
-                }}
-              >
-                <Mail />
-              </IconButton>
-            </Tooltip>
             <Tooltip title="View Session Page" arrow>
               <IconButton
                 onClick={onViewSession}
@@ -236,6 +235,22 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onView
                 }}
               >
                 <Launch />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Invite Status" arrow>
+              <IconButton
+                onClick={onViewDetails}
+                color="info"
+                size="medium"
+                sx={{
+                  bgcolor: 'info.light',
+                  color: 'info.contrastText',
+                  '&:hover': {
+                    bgcolor: 'info.main',
+                  },
+                }}
+              >
+                <Mail />
               </IconButton>
             </Tooltip>
             <Tooltip title="Edit session" arrow>
