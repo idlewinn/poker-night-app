@@ -75,39 +75,6 @@ router.get('/', (req: Request, res: Response) => {
   });
 });
 
-// GET session by ID with players
-router.get('/:id', (req: Request, res: Response) => {
-  const { id } = req.params;
-  const sql = `
-    SELECT 
-      s.*,
-      GROUP_CONCAT(p.id) as player_ids,
-      GROUP_CONCAT(p.name) as player_names
-    FROM sessions s
-    LEFT JOIN session_players sp ON s.id = sp.session_id
-    LEFT JOIN players p ON sp.player_id = p.id
-    WHERE s.id = ?
-    GROUP BY s.id
-  `;
-  
-  db.get(sql, [id], (err: Error | null, row: SessionQueryResult | undefined) => {
-    if (err) {
-      console.error('Error fetching session:', err.message);
-      res.status(500).json({ error: 'Failed to fetch session' });
-    } else if (!row) {
-      res.status(404).json({ error: 'Session not found' });
-    } else {
-      const session: SessionWithPlayers = {
-        id: row.id,
-        name: row.name,
-        scheduledDateTime: row.scheduled_datetime,
-        createdAt: row.created_at,
-        playerIds: row.player_ids ? row.player_ids.split(',').map(id => parseInt(id)) : []
-      };
-      res.json(session);
-    }
-  });
-});
 
 // GET session by ID
 router.get('/:id', (req: Request, res: Response): void => {
