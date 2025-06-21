@@ -1,21 +1,14 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  Typography,
-  IconButton,
-  Box,
-  TextField,
-  Tooltip,
-  Avatar
-} from '@mui/material';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Edit,
-  Delete,
+  Trash2,
   Check,
-  Close,
-  Person
-} from '@mui/icons-material';
+  X,
+  User
+} from 'lucide-react';
 import { PlayerItemProps } from '../types/index';
 
 function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.Element {
@@ -64,175 +57,97 @@ function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.
   };
 
   return (
-    <Card
-      elevation={2}
-      sx={{
-        height: '100%',
-        minHeight: '160px', // Increased minimum height for email display
-        maxWidth: '100%', // Ensure cards don't overflow container
-        display: 'flex',
-        flexDirection: 'column',
-        border: '1px solid',
-        borderColor: 'divider',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          borderColor: 'primary.main',
-          elevation: 8,
-        },
-      }}
-    >
-      <CardContent
-        sx={{
-          p: 3,
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
+    <Card className="h-full min-h-[160px] flex flex-col border transition-all duration-300 hover:border-primary hover:shadow-lg">
+      <CardContent className="p-6 flex-1 flex flex-col">
         {isEditing ? (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              fullWidth
-              label="Player Name"
-              variant="outlined"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              onKeyDown={handleKeyPress}
-              autoFocus
-              size="medium"
-              placeholder="Enter player name..."
-              required
-            />
-            <TextField
-              fullWidth
-              label="Email Address"
-              type="email"
-              variant="outlined"
-              value={editEmail}
-              onChange={(e) => setEditEmail(e.target.value)}
-              onKeyDown={handleKeyPress}
-              size="medium"
-              placeholder="Enter email address (optional)..."
-            />
-            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-              <Tooltip title="Save changes" arrow>
-                <IconButton
-                  onClick={handleSave}
-                  color="success"
-                  size="medium"
-                  sx={{
-                    bgcolor: 'success.light',
-                    color: 'success.contrastText',
-                    '&:hover': {
-                      bgcolor: 'success.main',
-                    },
-                  }}
-                >
-                  <Check />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Cancel" arrow>
-                <IconButton
-                  onClick={handleCancel}
-                  color="error"
-                  size="medium"
-                  sx={{
-                    bgcolor: 'error.light',
-                    color: 'error.contrastText',
-                    '&:hover': {
-                      bgcolor: 'error.main',
-                    },
-                  }}
-                >
-                  <Close />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Box>
-        ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2, flex: 1, minHeight: '90px' }}>
-              <Avatar
-                sx={{
-                  bgcolor: 'primary.main',
-                  mr: 2,
-                  width: 48,
-                  height: 48,
-                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
-                  mt: 0.5,
-                }}
+          <div className="flex flex-col gap-4">
+            <div className="space-y-2">
+              <label htmlFor="player-name" className="text-sm font-medium">
+                Player Name
+              </label>
+              <Input
+                id="player-name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                onKeyDown={handleKeyPress}
+                autoFocus
+                placeholder="Enter player name..."
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="player-email" className="text-sm font-medium">
+                Email Address
+              </label>
+              <Input
+                id="player-email"
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder="Enter email address (optional)..."
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                onClick={handleSave}
+                size="sm"
+                className="bg-green-600 hover:bg-green-700"
               >
-                <Person sx={{ fontSize: 24 }} />
-              </Avatar>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography
-                  variant="h6"
-                  component="div"
-                  sx={{
-                    fontWeight: 600,
-                    color: 'text.primary',
-                    lineHeight: 1.3,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    fontSize: { xs: '1rem', sm: '1.25rem' },
-                    mb: 0.5,
-                  }}
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={handleCancel}
+                variant="outline"
+                size="sm"
+                className="border-red-200 text-red-600 hover:bg-red-50"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col h-full">
+            <div className="flex items-start mb-4 flex-1 min-h-[90px]">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mr-4 mt-1 shadow-lg">
+                <User className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3
+                  className="font-semibold text-lg leading-tight truncate mb-1 text-sm sm:text-lg"
                   title={player.name}
                 >
                   {player.name}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: 'text.secondary',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    fontSize: '0.875rem',
-                    fontStyle: player.email ? 'normal' : 'italic',
-                  }}
+                </h3>
+                <p
+                  className={`text-sm text-muted-foreground truncate ${!player.email ? 'italic' : ''}`}
                   title={player.email || 'No email address'}
                 >
                   {player.email || 'No email address'}
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-              <Tooltip title="Rename player" arrow>
-                <IconButton
-                  onClick={() => setIsEditing(true)}
-                  color="primary"
-                  size="medium"
-                  sx={{
-                    bgcolor: 'primary.light',
-                    color: 'primary.contrastText',
-                    '&:hover': {
-                      bgcolor: 'primary.main',
-                    },
-                  }}
-                >
-                  <Edit />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Remove player" arrow>
-                <IconButton
-                  onClick={onRemove}
-                  color="error"
-                  size="medium"
-                  sx={{
-                    bgcolor: 'error.light',
-                    color: 'error.contrastText',
-                    '&:hover': {
-                      bgcolor: 'error.main',
-                    },
-                  }}
-                >
-                  <Delete />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Box>
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                onClick={() => setIsEditing(true)}
+                variant="outline"
+                size="sm"
+                className="bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100"
+                title="Rename player"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={onRemove}
+                variant="outline"
+                size="sm"
+                className="bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
+                title="Remove player"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>

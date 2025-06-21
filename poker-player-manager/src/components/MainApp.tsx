@@ -1,84 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Container, Typography, Box, Tabs, Tab, CircularProgress, Alert } from '@mui/material';
-import { Groups, EventNote } from '@mui/icons-material';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Users, Calendar, Loader2, AlertCircle, X } from 'lucide-react';
 import PlayerList from './PlayerList';
 import AddPlayerForm from './AddPlayerForm';
 import Sessions from './Sessions';
 import { playersApi, sessionsApi } from '../services/api';
 import { Player, Session, TabValue, CreateSessionRequest, UpdateSessionRequest, CreatePlayerRequest } from '../types/index';
 
-// Create a custom theme for the poker app
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#667eea',
-      light: '#9bb5ff',
-      dark: '#3f51b5',
-    },
-    secondary: {
-      main: '#764ba2',
-      light: '#a478d4',
-      dark: '#4a2c73',
-    },
-    background: {
-      default: '#f5f7fa',
-      paper: '#ffffff',
-    },
-  },
-  typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontWeight: 700,
-    },
-    h2: {
-      fontWeight: 600,
-    },
-    h3: {
-      fontWeight: 600,
-    },
-  },
-  shape: {
-    borderRadius: 12,
-  },
-  components: {
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          '&:hover': {
-            boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
-          },
-        },
-      },
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-          fontWeight: 600,
-          borderRadius: 8,
-        },
-      },
-    },
-  },
-});
-
 function MainApp(): React.JSX.Element {
   const location = useLocation();
   const navigate = useNavigate();
   const [players, setPlayers] = useState<Player[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [activeTab, setActiveTab] = useState<TabValue>(0);
+  const [activeTab, setActiveTab] = useState<string>('players');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   // Determine active tab based on current URL
-  const getTabFromPath = (pathname: string): TabValue => {
-    if (pathname === '/sessions') return 1;
-    return 0; // Default to players tab for '/' and '/players'
+  const getTabFromPath = (pathname: string): string => {
+    if (pathname === '/sessions') return 'sessions';
+    return 'players'; // Default to players tab for '/' and '/players'
   };
 
   // Set active tab based on current URL
@@ -113,14 +57,12 @@ function MainApp(): React.JSX.Element {
       const requestData: CreatePlayerRequest = {
         name: name.trim()
       };
-      
+
       if (email?.trim()) {
         requestData.email = email.trim();
       }
-      
-      console.log('Adding player with data:', requestData);
+
       const newPlayer = await playersApi.create(requestData);
-      console.log('Player created successfully:', newPlayer);
       setPlayers([...players, newPlayer]);
     } catch (err) {
       console.error('Failed to add player:', err);
@@ -143,20 +85,16 @@ function MainApp(): React.JSX.Element {
       const requestData: any = {
         name: newName.trim()
       };
-      
-      // Always include email in the request, even if it's empty (to clear existing email)
+
       if (newEmail !== undefined) {
         const trimmedEmail = newEmail.trim();
         if (trimmedEmail) {
           requestData.email = trimmedEmail;
         }
-        // If email is empty, we don't set the property (it remains undefined)
       }
-      
-      console.log('Updating player with data:', requestData);
+
       const updatedPlayer = await playersApi.update(id, requestData);
-      console.log('Player updated successfully:', updatedPlayer);
-      setPlayers(players.map(player => 
+      setPlayers(players.map(player =>
         player.id === id ? updatedPlayer : player
       ));
     } catch (err) {
@@ -165,12 +103,11 @@ function MainApp(): React.JSX.Element {
     }
   };
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: TabValue): void => {
-    setActiveTab(newValue);
-    // Navigate to the appropriate URL
-    if (newValue === 0) {
+  const handleTabChange = (value: string): void => {
+    setActiveTab(value);
+    if (value === 'players') {
       navigate('/players');
-    } else if (newValue === 1) {
+    } else if (value === 'sessions') {
       navigate('/sessions');
     }
   };
@@ -179,29 +116,6 @@ function MainApp(): React.JSX.Element {
     setError(null);
   };
 
-  // Show loading spinner while data is loading
-  if (loading) {
-    return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Box
-          sx={{
-            minHeight: '100vh',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Box sx={{ textAlign: 'center', color: 'white' }}>
-            <CircularProgress size={60} sx={{ color: 'white', mb: 2 }} />
-            <Typography variant="h6">Loading Poker Night...</Typography>
-          </Box>
-        </Box>
-      </ThemeProvider>
-    )
-  }
-
   const addSession = async (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): Promise<void> => {
     try {
       const requestData: CreateSessionRequest = {
@@ -209,7 +123,6 @@ function MainApp(): React.JSX.Element {
         playerIds: selectedPlayerIds || []
       };
 
-      // Only include name if it's not empty
       if (sessionName.trim()) {
         requestData.name = sessionName.trim();
       }
@@ -239,7 +152,6 @@ function MainApp(): React.JSX.Element {
         playerIds: selectedPlayerIds || []
       };
 
-      // Only include name if it's not empty
       if (sessionName.trim()) {
         requestData.name = sessionName.trim();
       }
@@ -254,112 +166,81 @@ function MainApp(): React.JSX.Element {
     }
   };
 
+  // Show loading spinner while data is loading
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+        <div className="text-center text-white">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
+          <h2 className="text-xl font-semibold">Loading Poker Night...</h2>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box
-        sx={{
-          minHeight: '100vh',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          py: { xs: 2, sm: 4 },
-          px: { xs: 1, sm: 2 },
-        }}
-      >
-        <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
-          <Box
-            textAlign="center"
-            mb={{ xs: 3, sm: 5 }}
-            sx={{
-              color: 'white',
-            }}
-          >
-            <Typography
-              variant="h3"
-              component="h1"
-              gutterBottom
-              sx={{
-                textShadow: '2px 2px 8px rgba(0,0,0,0.3)',
-                mb: 2,
-              }}
-            >
-              🃏 Poker Player Manager
-            </Typography>
-            <Typography
-              variant="h6"
-              sx={{
-                opacity: 0.95,
-                fontWeight: 400,
-              }}
-            >
-              Manage your poker night players with style
-            </Typography>
-          </Box>
+    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-4 sm:p-8">
+      <div className="container mx-auto max-w-6xl">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-4 drop-shadow-lg">
+            🃏 Poker Player Manager
+          </h1>
+          <p className="text-xl text-white/90 font-medium">
+            Manage your poker night players with style
+          </p>
+        </div>
 
-          <Box
-            sx={{
-              backgroundColor: 'background.paper',
-              borderRadius: 4,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-              backdropFilter: 'blur(10px)',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Navigation Tabs */}
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tabs
-                value={activeTab}
-                onChange={handleTabChange}
-                aria-label="poker app navigation tabs"
-                sx={{
-                  px: { xs: 2, sm: 3 },
-                  '& .MuiTab-root': {
-                    minHeight: 64,
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                  },
-                }}
-              >
-                <Tab
-                  icon={<Groups />}
-                  label="Players"
-                  iconPosition="start"
-                  sx={{ gap: 1 }}
-                />
-                <Tab
-                  icon={<EventNote />}
-                  label="Sessions"
-                  iconPosition="start"
-                  sx={{ gap: 1 }}
-                />
-              </Tabs>
-            </Box>
-
-            {/* Error Alert */}
-            {error && (
-              <Box sx={{ p: { xs: 2, sm: 3 }, pb: 0 }}>
-                <Alert
-                  severity="error"
-                  onClose={clearError}
-                  sx={{ mb: 2 }}
+        {/* Main Content Card */}
+        <Card className="bg-white/95 backdrop-blur-sm shadow-2xl">
+          {/* Error Alert */}
+          {error && (
+            <div className="p-6 pb-0">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-red-800 text-sm">{error}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearError}
+                  className="text-red-600 hover:text-red-800 hover:bg-red-100 p-1 h-auto"
                 >
-                  {error}
-                </Alert>
-              </Box>
-            )}
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
 
-            {/* Tab Content */}
-            <Box sx={{ p: { xs: 3, sm: 5 } }}>
-              {activeTab === 0 && (
-                <Box>
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <div className="border-b border-gray-200 px-6 pt-6">
+              <TabsList className="grid w-full grid-cols-2 max-w-md">
+                <TabsTrigger value="players" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Players
+                </TabsTrigger>
+                <TabsTrigger value="sessions" className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Sessions
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <div className="p-6">
+              <TabsContent value="players" className="mt-0">
+                <div className="space-y-6">
                   <AddPlayerForm onAddPlayer={addPlayer} />
                   <PlayerList
                     players={players}
                     onRemovePlayer={removePlayer}
                     onRenamePlayer={renamePlayer}
                   />
-                </Box>
-              )}
-              {activeTab === 1 && (
+                </div>
+              </TabsContent>
+
+              <TabsContent value="sessions" className="mt-0">
                 <Sessions
                   sessions={sessions}
                   players={players}
@@ -367,13 +248,13 @@ function MainApp(): React.JSX.Element {
                   onUpdateSession={updateSession}
                   onRemoveSession={removeSession}
                 />
-              )}
-            </Box>
-          </Box>
-        </Container>
-      </Box>
-    </ThemeProvider>
-  )
+              </TabsContent>
+            </div>
+          </Tabs>
+        </Card>
+      </div>
+    </div>
+  );
 }
 
 export default MainApp;
