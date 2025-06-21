@@ -8,6 +8,8 @@ function App(): React.JSX.Element {
   return (
     <Routes>
       <Route path="/" element={<MainApp />} />
+      <Route path="/players" element={<MainApp />} />
+      <Route path="/sessions" element={<MainApp />} />
       <Route path="/session/:sessionId" element={<SessionPage />} />
     </Routes>
   );

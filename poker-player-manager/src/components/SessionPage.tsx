@@ -228,7 +228,7 @@ function SessionPage(): React.JSX.Element {
       <Paper sx={{ p: { xs: 1.5, sm: 2 }, mb: { xs: 1.5, sm: 2 } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, mb: { xs: 0.5, sm: 1 } }}>
           <IconButton
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/sessions')}
             size="small"
             sx={{
               mr: { xs: 0.5, sm: 1 },

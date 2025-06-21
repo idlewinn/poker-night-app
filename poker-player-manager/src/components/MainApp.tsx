@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline, Container, Typography, Box, Tabs, Tab, CircularProgress, Alert } from '@mui/material';
 import { Groups, EventNote } from '@mui/icons-material';
@@ -66,11 +67,24 @@ const theme = createTheme({
 });
 
 function MainApp(): React.JSX.Element {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [players, setPlayers] = useState<Player[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeTab, setActiveTab] = useState<TabValue>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Determine active tab based on current URL
+  const getTabFromPath = (pathname: string): TabValue => {
+    if (pathname === '/sessions') return 1;
+    return 0; // Default to players tab for '/' and '/players'
+  };
+
+  // Set active tab based on current URL
+  useEffect(() => {
+    setActiveTab(getTabFromPath(location.pathname));
+  }, [location.pathname]);
 
   // Load initial data
   useEffect(() => {
@@ -153,6 +167,12 @@ function MainApp(): React.JSX.Element {
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: TabValue): void => {
     setActiveTab(newValue);
+    // Navigate to the appropriate URL
+    if (newValue === 0) {
+      navigate('/players');
+    } else if (newValue === 1) {
+      navigate('/sessions');
+    }
   };
 
   const clearError = (): void => {
