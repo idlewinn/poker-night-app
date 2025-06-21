@@ -13,7 +13,6 @@ import {
   TableRow,
   Card,
   CardContent,
-  Grid,
   CircularProgress,
   Alert,
   Chip,
@@ -26,14 +25,12 @@ import {
   DialogActions,
   List,
   ListItem,
-  ListItemText,
-  ListItemSecondaryAction
+  ListItemText
 } from '@mui/material';
+
 import {
   EventNote,
-  TrendingUp,
   TrendingDown,
-  AccountBalance,
   Edit,
   Save,
   Cancel,
@@ -44,7 +41,7 @@ import { Session, Player, SessionPlayer } from '../types/index';
 import { sessionsApi, playersApi } from '../services/api';
 import PlayerStatusBadge from './PlayerStatusBadge';
 
-interface SessionPageParams {
+interface SessionPageParams extends Record<string, string | undefined> {
   sessionId: string;
 }
 
@@ -184,9 +181,6 @@ function SessionPage(): React.JSX.Element {
   const getAvailablePlayersToAdd = () => {
     if (!session?.players) return players;
 
-    // Get player IDs that are already in the session
-    const sessionPlayerIds = session.players.map(sp => sp.player_id);
-
     // Return players not in the session, or players in session but not with "In" status
     return players.filter(player => {
       const sessionPlayer = session.players?.find(sp => sp.player_id === player.id);
@@ -224,7 +218,7 @@ function SessionPage(): React.JSX.Element {
   }
 
   const sessionPlayers = getSessionPlayers();
-  const { totalBuyIn, totalCashOut, netResult } = calculateTotals();
+  const { totalBuyIn } = calculateTotals();
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 1, sm: 2 }, px: { xs: 1, sm: 2 } }}>
@@ -265,8 +259,8 @@ function SessionPage(): React.JSX.Element {
       </Paper>
 
       {/* Financial Summary */}
-      <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ mb: { xs: 1.5, sm: 2 } }}>
-        <Grid item xs={6} sm={6}>
+      <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, mb: { xs: 1.5, sm: 2 } }}>
+        <Box sx={{ flex: 1 }}>
           <Card>
             <CardContent sx={{ textAlign: 'center', py: { xs: 1.5, sm: 2 } }}>
               <TrendingDown sx={{ fontSize: { xs: 24, sm: 32 }, color: 'error.main', mb: 0.5 }} />
@@ -278,9 +272,9 @@ function SessionPage(): React.JSX.Element {
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
-        <Grid item xs={6} sm={6}>
+        <Box sx={{ flex: 1 }}>
           <Card>
             <CardContent sx={{ textAlign: 'center', py: { xs: 1.5, sm: 2 } }}>
               <Typography variant="h5" fontWeight="bold" color="primary.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' }, mt: { xs: 2, sm: 2.5 } }}>
@@ -291,8 +285,8 @@ function SessionPage(): React.JSX.Element {
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       {/* Player Financial Details */}
       <Paper sx={{ overflow: 'hidden' }}>
@@ -373,7 +367,7 @@ function SessionPage(): React.JSX.Element {
                             ...editingFinancials,
                             buy_in: e.target.value
                           })}
-                          inputProps={{ min: 0, step: 0.01 }}
+                          slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
                           sx={{ width: { xs: 70, sm: 100 } }}
                         />
                       ) : (
@@ -397,7 +391,7 @@ function SessionPage(): React.JSX.Element {
                             ...editingFinancials,
                             cash_out: e.target.value
                           })}
-                          inputProps={{ min: 0, step: 0.01 }}
+                          slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
                           sx={{ width: { xs: 70, sm: 100 } }}
                         />
                       ) : (
@@ -491,22 +485,22 @@ function SessionPage(): React.JSX.Element {
 
           <List>
             {getAvailablePlayersToAdd().map((player) => (
-              <ListItem key={player.id}>
-                <Person sx={{ mr: 1, color: 'text.secondary' }} />
-                <ListItemText
-                  primary={player.name}
-                  secondary={player.email}
-                />
-                <ListItemSecondaryAction>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => handleAddPlayer(player.id)}
-                    disabled={updating}
-                  >
-                    Add
-                  </Button>
-                </ListItemSecondaryAction>
+              <ListItem key={player.id} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                  <Person sx={{ mr: 1, color: 'text.secondary' }} />
+                  <ListItemText
+                    primary={player.name}
+                    secondary={player.email}
+                  />
+                </Box>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => handleAddPlayer(player.id)}
+                  disabled={updating}
+                >
+                  Add
+                </Button>
               </ListItem>
             ))}
           </List>
