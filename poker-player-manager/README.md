@@ -1,4 +1,4 @@
-# 🃏 Poker Player Manager
+# 🃏 Poker Night
 
 A modern React application for managing poker night players. Built with React 18, Vite, and modern CSS for a smooth and responsive user experience.
 
@@ -24,7 +24,7 @@ A modern React application for managing poker night players. Built with React 18
 1. Clone the repository:
    ```bash
    git clone <repository-url>
-   cd poker-player-manager
+   cd poker-night
    ```
 
 2. Install dependencies:
