@@ -23,10 +23,8 @@ import { SessionItemProps } from '../types/index';
 import PlayerStatusBadge from './PlayerStatusBadge';
 
 function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onViewSession }: SessionItemProps): React.JSX.Element {
-  // Get players that are in this session
-  const sessionPlayers = players.filter(player =>
-    session.playerIds.includes(player.id)
-  );
+  // Session players are now directly available in session.players
+  const sessionPlayers = session.players;
 
   // Calculate status counts from session data
   const getStatusCounts = () => {
@@ -38,14 +36,9 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onView
       'Attending but not playing': 0
     };
 
-    if (session.players) {
-      session.players.forEach(sessionPlayer => {
-        counts[sessionPlayer.status]++;
-      });
-    } else {
-      // Fallback: if no status data, assume all are invited
-      counts['Invited'] = sessionPlayers.length;
-    }
+    sessionPlayers.forEach(sessionPlayer => {
+      counts[sessionPlayer.status]++;
+    });
 
     return counts;
   };
@@ -168,10 +161,10 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onView
             {/* Player chips */}
             {sessionPlayers.length > 0 && (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-                {sessionPlayers.slice(0, 3).map(player => (
+                {sessionPlayers.slice(0, 3).map(sessionPlayer => (
                   <Chip
-                    key={player.id}
-                    label={player.name}
+                    key={sessionPlayer.player_id}
+                    label={sessionPlayer.player.name}
                     size="small"
                     variant="outlined"
                     sx={{ fontSize: '0.75rem' }}

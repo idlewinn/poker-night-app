@@ -180,14 +180,11 @@ function SessionPage(): React.JSX.Element {
     return session.players.filter(player => player.status === 'In');
   };
 
-  const getAvailablePlayersToAdd = () => {
+  const getAvailablePlayersToAdd = (): Player[] => {
     if (!session?.players) return players;
 
-    // Return players not in the session, or players in session but not with "In" status
-    return players.filter(player => {
-      const sessionPlayer = session.players?.find(sp => sp.player_id === player.id);
-      return !sessionPlayer || sessionPlayer.status !== 'In';
-    });
+    const sessionPlayerIds = session.players.map(sp => sp.player_id);
+    return players.filter(player => !sessionPlayerIds.includes(player.id));
   };
 
   const calculateTotals = () => {
@@ -338,7 +335,7 @@ function SessionPage(): React.JSX.Element {
             </TableHead>
             <TableBody>
               {sessionPlayers.map((sessionPlayer) => {
-                const player = players.find(p => p.id === sessionPlayer.player_id);
+                const player = sessionPlayer.player;
                 const netResult = sessionPlayer.cash_out - sessionPlayer.buy_in;
                 const isEditing = editingFinancials?.playerId === sessionPlayer.player_id;
                 

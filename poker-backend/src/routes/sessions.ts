@@ -54,7 +54,6 @@ router.get('/', (req: Request, res: Response) => {
         name: row.name,
         scheduledDateTime: row.scheduled_datetime,
         createdAt: row.created_at,
-        playerIds: row.player_ids ? row.player_ids.split(',').map((id: string) => parseInt(id)) : [],
         players: row.player_ids ? row.player_ids.split(',').map((id: string, index: number) => ({
           id: index + 1, // session_player id (not critical for frontend)
           session_id: row.id,
@@ -107,7 +106,6 @@ router.get('/:id', (req: Request, res: Response): void => {
         name: row.name,
         scheduledDateTime: row.scheduled_datetime,
         createdAt: row.created_at,
-        playerIds: row.player_ids ? row.player_ids.split(',').map((id: string) => parseInt(id)) : [],
         players: row.player_ids ? row.player_ids.split(',').map((id: string, index: number) => ({
           id: index + 1, // session_player id (not critical for frontend)
           session_id: row.id,
@@ -409,7 +407,10 @@ function fetchSessionById(sessionId: number, res: Response): void {
     SELECT
       s.*,
       GROUP_CONCAT(p.id) as player_ids,
-      GROUP_CONCAT(p.name) as player_names
+      GROUP_CONCAT(p.name) as player_names,
+      GROUP_CONCAT(sp.status) as player_statuses,
+      GROUP_CONCAT(sp.buy_in) as player_buy_ins,
+      GROUP_CONCAT(sp.cash_out) as player_cash_outs
     FROM sessions s
     LEFT JOIN session_players sp ON s.id = sp.session_id
     LEFT JOIN players p ON sp.player_id = p.id
@@ -417,7 +418,7 @@ function fetchSessionById(sessionId: number, res: Response): void {
     GROUP BY s.id
   `;
 
-  db.get(sql, [sessionId], (err: Error | null, row: SessionQueryResult | undefined) => {
+  db.get(sql, [sessionId], (err: Error | null, row: any) => {
     if (err) {
       console.error('Error fetching created/updated session:', err.message);
       res.status(500).json({ error: 'Session saved but failed to fetch' });
@@ -427,7 +428,20 @@ function fetchSessionById(sessionId: number, res: Response): void {
         name: row.name,
         scheduledDateTime: row.scheduled_datetime,
         createdAt: row.created_at,
-        playerIds: row.player_ids ? row.player_ids.split(',').map(id => parseInt(id)) : []
+        players: row.player_ids ? row.player_ids.split(',').map((id: string, index: number) => ({
+          id: index + 1, // session_player id (not critical for frontend)
+          session_id: row.id,
+          player_id: parseInt(id),
+          status: row.player_statuses ? row.player_statuses.split(',')[index] as PlayerStatus : 'Invited' as PlayerStatus,
+          buy_in: row.player_buy_ins ? parseFloat(row.player_buy_ins.split(',')[index]) || 0 : 0,
+          cash_out: row.player_cash_outs ? parseFloat(row.player_cash_outs.split(',')[index]) || 0 : 0,
+          created_at: row.created_at,
+          player: {
+            id: parseInt(id),
+            name: row.player_names.split(',')[index],
+            created_at: row.created_at
+          }
+        })) : []
       };
       res.status(201).json(session);
     } else {

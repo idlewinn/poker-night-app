@@ -58,14 +58,13 @@ export interface UpdatePlayerFinancialsRequest {
   cash_out?: number;
 }
 
-// Frontend-compatible Session type (with playerIds array)
+// Frontend-compatible Session type (with full player data)
 export interface SessionWithPlayers {
   id: number;
   name: string;
   scheduledDateTime: string | null;
   createdAt: string;
-  playerIds: number[];
-  players?: SessionPlayer[]; // Optional populated player data with status
+  players: SessionPlayer[]; // Always populated player data with status
 }
 
 // API Response Types

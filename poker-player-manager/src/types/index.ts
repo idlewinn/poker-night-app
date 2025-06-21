@@ -25,8 +25,7 @@ export interface Session {
   name: string;
   scheduledDateTime: string | null;
   createdAt: string;
-  playerIds: number[];
-  players?: SessionPlayer[]; // Optional populated player data with status
+  players: SessionPlayer[]; // Always populated player data with status
 }
 
 // Component Props Types
