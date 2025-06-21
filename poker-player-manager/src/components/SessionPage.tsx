@@ -183,8 +183,13 @@ function SessionPage(): React.JSX.Element {
   const getAvailablePlayersToAdd = (): Player[] => {
     if (!session?.players) return players;
 
-    const sessionPlayerIds = session.players.map(sp => sp.player_id);
-    return players.filter(player => !sessionPlayerIds.includes(player.id));
+    // Return players who are either:
+    // 1. Not in the session at all, OR
+    // 2. In the session but not with "In" status
+    return players.filter(player => {
+      const sessionPlayer = session.players?.find(sp => sp.player_id === player.id);
+      return !sessionPlayer || sessionPlayer.status !== 'In';
+    });
   };
 
   const calculateTotals = () => {
@@ -489,7 +494,7 @@ function SessionPage(): React.JSX.Element {
         <DialogTitle>Add Player to Session</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Select a player to add to this session. Their status will be set to "In".
+            Select a player to add or change their status to "In".
           </Typography>
 
           <List>
@@ -516,7 +521,7 @@ function SessionPage(): React.JSX.Element {
 
           {getAvailablePlayersToAdd().length === 0 && (
             <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-              All players are already in this session.
+              All players are already marked as "In" for this session.
             </Typography>
           )}
         </DialogContent>
