@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -35,7 +35,8 @@ import {
   Save,
   Cancel,
   Add,
-  Person
+  Person,
+  ArrowBack
 } from '@mui/icons-material';
 import { Session, Player, SessionPlayer } from '../types/index';
 import { sessionsApi, playersApi } from '../services/api';
@@ -53,6 +54,7 @@ interface EditingFinancials {
 
 function SessionPage(): React.JSX.Element {
   const { sessionId } = useParams<SessionPageParams>();
+  const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -136,7 +138,7 @@ function SessionPage(): React.JSX.Element {
 
     try {
       setUpdating(true);
-      await sessionsApi.updatePlayerStatus(session.id, playerId, 'In');
+      await sessionsApi.addPlayerToSession(session.id, playerId, 'In');
 
       // Refresh session data
       const updatedSession = await sessionsApi.getById(session.id);
@@ -225,6 +227,16 @@ function SessionPage(): React.JSX.Element {
       {/* Session Header */}
       <Paper sx={{ p: { xs: 1.5, sm: 2 }, mb: { xs: 1.5, sm: 2 } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, mb: { xs: 0.5, sm: 1 } }}>
+          <IconButton
+            onClick={() => navigate('/')}
+            size="small"
+            sx={{
+              mr: { xs: 0.5, sm: 1 },
+              p: { xs: 0.5, sm: 1 }
+            }}
+          >
+            <ArrowBack sx={{ fontSize: { xs: 18, sm: 24 } }} />
+          </IconButton>
           <EventNote sx={{ fontSize: { xs: 20, sm: 28 }, color: 'primary.main' }} />
           <Typography
             variant="h5"

@@ -97,6 +97,13 @@ export const sessionsApi = {
       body: JSON.stringify({ status }),
     }),
 
+  // Add player to session (or update existing player status)
+  addPlayerToSession: (sessionId: number, playerId: number, status: PlayerStatus): Promise<{ message: string; status: PlayerStatus; action: string }> =>
+    apiRequest<{ message: string; status: PlayerStatus; action: string }>(`/sessions/${sessionId}/players/${playerId}`, {
+      method: 'POST',
+      body: JSON.stringify({ status }),
+    }),
+
   // Update player financials in session
   updatePlayerFinancials: (sessionId: number, playerId: number, financials: UpdatePlayerFinancialsRequest): Promise<{ message: string; buy_in?: number; cash_out?: number }> =>
     apiRequest<{ message: string; buy_in?: number; cash_out?: number }>(`/sessions/${sessionId}/players/${playerId}/financials`, {

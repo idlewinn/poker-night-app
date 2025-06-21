@@ -359,6 +359,66 @@ router.put('/:sessionId/players/:playerId/financials', (req: TypedRequest<Update
   });
 });
 
+// POST add player to session (or update existing player status)
+router.post('/:sessionId/players/:playerId', (req: TypedRequest<UpdatePlayerStatusRequest>, res: Response): void => {
+  const { sessionId, playerId } = req.params;
+  const { status } = req.body;
+
+  if (!sessionId || !playerId) {
+    res.status(400).json({ error: 'Session ID and Player ID are required' });
+    return;
+  }
+
+  const sessionIdNum = parseInt(sessionId);
+  const playerIdNum = parseInt(playerId);
+
+  if (!status) {
+    res.status(400).json({ error: 'Status is required' });
+    return;
+  }
+
+  const validStatuses: PlayerStatus[] = ['Invited', 'In', 'Out', 'Maybe', 'Attending but not playing'];
+  if (!validStatuses.includes(status as PlayerStatus)) {
+    res.status(400).json({ error: 'Invalid status' });
+    return;
+  }
+
+  // First check if player already exists in session
+  const checkSql = 'SELECT id FROM session_players WHERE session_id = ? AND player_id = ?';
+
+  db.get(checkSql, [sessionIdNum, playerIdNum], (err: Error | null, row: any) => {
+    if (err) {
+      console.error('Error checking player existence:', err.message);
+      res.status(500).json({ error: 'Failed to check player status' });
+      return;
+    }
+
+    if (row) {
+      // Player exists, update their status
+      const updateSql = 'UPDATE session_players SET status = ? WHERE session_id = ? AND player_id = ?';
+      db.run(updateSql, [status, sessionIdNum, playerIdNum], function(this: any, err: Error | null) {
+        if (err) {
+          console.error('Error updating player status:', err.message);
+          res.status(500).json({ error: 'Failed to update player status' });
+        } else {
+          res.json({ message: 'Player status updated successfully', status, action: 'updated' });
+        }
+      });
+    } else {
+      // Player doesn't exist, add them with the specified status
+      const insertSql = 'INSERT INTO session_players (session_id, player_id, status, buy_in, cash_out) VALUES (?, ?, ?, 0, 0)';
+      db.run(insertSql, [sessionIdNum, playerIdNum, status], function(this: any, err: Error | null) {
+        if (err) {
+          console.error('Error adding player to session:', err.message);
+          res.status(500).json({ error: 'Failed to add player to session' });
+        } else {
+          res.json({ message: 'Player added to session successfully', status, action: 'added' });
+        }
+      });
+    }
+  });
+});
+
 // Helper function to add players to session with default "Invited" status
 function addPlayersToSession(sessionId: number, playerIds: number[], callback: (err: Error | null) => void): void {
   if (!playerIds || playerIds.length === 0) {
