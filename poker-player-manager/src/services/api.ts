@@ -5,7 +5,6 @@ import {
   UpdatePlayerRequest,
   CreateSessionRequest,
   UpdateSessionRequest,
-  UpdatePlayerStatusRequest,
   UpdatePlayerFinancialsRequest,
   PlayerStatus,
   HealthCheckResponse
