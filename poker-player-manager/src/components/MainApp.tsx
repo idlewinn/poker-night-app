@@ -7,6 +7,7 @@ import { Users, Calendar, Loader2, AlertCircle, X } from 'lucide-react';
 import PlayerList from './PlayerList';
 import AddPlayerForm from './AddPlayerForm';
 import Sessions from './Sessions';
+import PlayerDetailModal from './PlayerDetailModal';
 import { playersApi, sessionsApi } from '../services/api';
 import { Player, Session, TabValue, CreateSessionRequest, UpdateSessionRequest, CreatePlayerRequest } from '../types/index';
 
@@ -18,6 +19,8 @@ function MainApp(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<string>('players');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [playerDetailModalOpen, setPlayerDetailModalOpen] = useState<boolean>(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   // Determine active tab based on current URL
   const getTabFromPath = (pathname: string): string => {
@@ -103,6 +106,16 @@ function MainApp(): React.JSX.Element {
     }
   };
 
+  const handleViewPlayerDetails = (player: Player) => {
+    setSelectedPlayer(player);
+    setPlayerDetailModalOpen(true);
+  };
+
+  const handleClosePlayerDetailModal = () => {
+    setPlayerDetailModalOpen(false);
+    setSelectedPlayer(null);
+  };
+
   const handleTabChange = (value: string): void => {
     setActiveTab(value);
     if (value === 'players') {
@@ -169,8 +182,8 @@ function MainApp(): React.JSX.Element {
   // Show loading spinner while data is loading
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-        <div className="text-center text-white">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center text-foreground">
           <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
           <h2 className="text-xl font-semibold">Loading Poker Night...</h2>
         </div>
@@ -179,20 +192,17 @@ function MainApp(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-4 sm:p-8">
-      <div className="container mx-auto max-w-6xl">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto max-w-6xl p-4 sm:p-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4 drop-shadow-lg">
-            🃏 Poker Player Manager
+          <h1 className="text-4xl font-bold text-foreground mb-4 drop-shadow-lg">
+            🃏 Poker Night
           </h1>
-          <p className="text-xl text-white/90 font-medium">
-            Manage your poker night players with style
-          </p>
         </div>
 
         {/* Main Content Card */}
-        <Card className="bg-white/95 backdrop-blur-sm shadow-2xl">
+        <Card className="bg-card/95 backdrop-blur-sm shadow-2xl">
           {/* Error Alert */}
           {error && (
             <div className="p-6 pb-0">
@@ -236,6 +246,7 @@ function MainApp(): React.JSX.Element {
                     players={players}
                     onRemovePlayer={removePlayer}
                     onRenamePlayer={renamePlayer}
+                    onViewPlayerDetails={handleViewPlayerDetails}
                   />
                 </div>
               </TabsContent>
@@ -252,6 +263,14 @@ function MainApp(): React.JSX.Element {
             </div>
           </Tabs>
         </Card>
+
+        {/* Player Detail Modal */}
+        <PlayerDetailModal
+          open={playerDetailModalOpen}
+          onClose={handleClosePlayerDetailModal}
+          player={selectedPlayer}
+          sessions={sessions}
+        />
       </div>
     </div>
   );

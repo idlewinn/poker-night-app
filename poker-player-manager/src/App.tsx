@@ -1,8 +1,8 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import MainApp from './components/MainApp';
-import SessionPageTest from './components/SessionPageTest';
-import './App.css';
+import SessionPage from './components/SessionPage';
+import InvitePage from './components/InvitePage';
 
 function App(): React.JSX.Element {
   return (
@@ -11,7 +11,8 @@ function App(): React.JSX.Element {
         <Route path="/" element={<MainApp />} />
         <Route path="/players" element={<MainApp />} />
         <Route path="/sessions" element={<MainApp />} />
-        <Route path="/session/:sessionId" element={<SessionPageTest />} />
+        <Route path="/session/:sessionId" element={<SessionPage />} />
+        <Route path="/invite/:sessionId/:encodedEmail" element={<InvitePage />} />
       </Routes>
     </div>
   );

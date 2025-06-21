@@ -7,11 +7,12 @@ import {
   Trash2,
   Check,
   X,
-  User
+  User,
+  Eye
 } from 'lucide-react';
 import { PlayerItemProps } from '../types/index';
 
-function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.Element {
+function PlayerItem({ player, onRemove, onRename, onViewDetails }: PlayerItemProps): React.JSX.Element {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editName, setEditName] = useState<string>(player.name);
   const [editEmail, setEditEmail] = useState<string>(player.email || '');
@@ -57,13 +58,13 @@ function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.
   };
 
   return (
-    <Card className="h-full min-h-[160px] flex flex-col border transition-all duration-300 hover:border-primary hover:shadow-lg">
-      <CardContent className="p-6 flex-1 flex flex-col">
+    <Card className="h-full transition-all duration-200 hover:shadow-md">
+      <CardContent className="p-4 flex flex-col h-full">
         {isEditing ? (
-          <div className="flex flex-col gap-4">
-            <div className="space-y-2">
-              <label htmlFor="player-name" className="text-sm font-medium">
-                Player Name
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label htmlFor="player-name" className="text-xs font-medium text-gray-700">
+                Name *
               </label>
               <Input
                 id="player-name"
@@ -73,11 +74,12 @@ function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.
                 autoFocus
                 placeholder="Enter player name..."
                 required
+                className="text-sm"
               />
             </div>
-            <div className="space-y-2">
-              <label htmlFor="player-email" className="text-sm font-medium">
-                Email Address
+            <div className="space-y-1">
+              <label htmlFor="player-email" className="text-xs font-medium text-gray-700">
+                Email
               </label>
               <Input
                 id="player-email"
@@ -85,42 +87,43 @@ function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.
                 value={editEmail}
                 onChange={(e) => setEditEmail(e.target.value)}
                 onKeyDown={handleKeyPress}
-                placeholder="Enter email address (optional)..."
+                placeholder="Enter email (optional)..."
+                className="text-sm"
               />
             </div>
-            <div className="flex gap-2 justify-end">
+            <div className="flex gap-2 justify-end pt-2">
               <Button
                 onClick={handleSave}
                 size="sm"
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 text-white"
               >
-                <Check className="h-4 w-4" />
+                <Check className="h-3 w-3" />
               </Button>
               <Button
                 onClick={handleCancel}
                 variant="outline"
                 size="sm"
-                className="border-red-200 text-red-600 hover:bg-red-50"
+                className="border-gray-300 text-gray-600 hover:bg-gray-50"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 w-3" />
               </Button>
             </div>
           </div>
         ) : (
           <div className="flex flex-col h-full">
-            <div className="flex items-start mb-4 flex-1 min-h-[90px]">
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mr-4 mt-1 shadow-lg">
-                <User className="h-6 w-6 text-primary-foreground" />
+            <div className="flex items-start mb-3 flex-1">
+              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                <User className="h-5 w-5 text-primary-foreground" />
               </div>
               <div className="flex-1 min-w-0">
                 <h3
-                  className="font-semibold text-lg leading-tight truncate mb-1 text-sm sm:text-lg"
+                  className="font-semibold text-gray-900 leading-tight truncate mb-1"
                   title={player.name}
                 >
                   {player.name}
                 </h3>
                 <p
-                  className={`text-sm text-muted-foreground truncate ${!player.email ? 'italic' : ''}`}
+                  className={`text-sm text-gray-600 truncate ${!player.email ? 'italic' : ''}`}
                   title={player.email || 'No email address'}
                 >
                   {player.email || 'No email address'}
@@ -128,20 +131,31 @@ function PlayerItem({ player, onRemove, onRename }: PlayerItemProps): React.JSX.
               </div>
             </div>
             <div className="flex gap-2 justify-end">
+              {onViewDetails && (
+                <Button
+                  onClick={onViewDetails}
+                  variant="ghost"
+                  size="sm"
+                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  title="View player details"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              )}
               <Button
                 onClick={() => setIsEditing(true)}
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100"
-                title="Rename player"
+                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                title="Edit player"
               >
                 <Edit className="h-4 w-4" />
               </Button>
               <Button
                 onClick={onRemove}
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 title="Remove player"
               >
                 <Trash2 className="h-4 w-4" />

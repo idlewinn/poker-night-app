@@ -33,12 +33,14 @@ export interface PlayerItemProps {
   player: Player;
   onRemove: () => void;
   onRename: (newName: string, newEmail?: string) => void;
+  onViewDetails?: () => void;
 }
 
 export interface PlayerListProps {
   players: Player[];
   onRemovePlayer: (id: number) => void;
   onRenamePlayer: (id: number, newName: string, newEmail?: string) => void;
+  onViewPlayerDetails?: (player: Player) => void;
 }
 
 export interface AddPlayerFormProps {
@@ -61,6 +63,7 @@ export interface SessionListProps {
   onEditSession: (session: Session) => void;
   onViewSessionDetails: (session: Session) => void;
   onViewSession: (session: Session) => void;
+  hideHeader?: boolean;
 }
 
 export interface CreateSessionModalProps {

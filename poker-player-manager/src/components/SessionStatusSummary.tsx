@@ -1,20 +1,13 @@
 import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  LinearProgress
-} from '@mui/material';
-import { 
-  CheckCircle, 
-  Cancel, 
-  Help, 
-  PersonOff, 
+  CheckCircle,
+  X,
+  HelpCircle,
+  UserX,
   Mail,
   TrendingUp
-} from '@mui/icons-material';
+} from 'lucide-react';
 import { Session, PlayerStatus } from '../types/index';
 
 interface SessionStatusSummaryProps {
@@ -32,7 +25,7 @@ interface StatusSummary {
 
 function SessionStatusSummary({ session }: SessionStatusSummaryProps): React.JSX.Element {
   const getStatusSummary = (): StatusSummary[] => {
-    const totalPlayers = session.playerIds.length;
+    const totalPlayers = session.players?.length || 0;
     
     const counts = {
       'Invited': 0,
@@ -56,31 +49,31 @@ function SessionStatusSummary({ session }: SessionStatusSummaryProps): React.JSX
       {
         status: 'In' as PlayerStatus,
         color: '#4caf50',
-        icon: <CheckCircle />,
+        icon: <CheckCircle className="h-4 w-4" />,
         label: 'Confirmed In'
       },
       {
         status: 'Maybe' as PlayerStatus,
         color: '#ff9800',
-        icon: <Help />,
+        icon: <HelpCircle className="h-4 w-4" />,
         label: 'Maybe'
       },
       {
         status: 'Attending but not playing' as PlayerStatus,
         color: '#2196f3',
-        icon: <PersonOff />,
+        icon: <UserX className="h-4 w-4" />,
         label: 'Attending (Not Playing)'
       },
       {
         status: 'Invited' as PlayerStatus,
         color: '#757575',
-        icon: <Mail />,
+        icon: <Mail className="h-4 w-4" />,
         label: 'Pending Response'
       },
       {
         status: 'Out' as PlayerStatus,
         color: '#f44336',
-        icon: <Cancel />,
+        icon: <X className="h-4 w-4" />,
         label: 'Can\'t Attend'
       }
     ];
@@ -93,101 +86,94 @@ function SessionStatusSummary({ session }: SessionStatusSummaryProps): React.JSX
   };
 
   const statusSummary = getStatusSummary();
-  const totalPlayers = session.playerIds.length;
+  const totalPlayers = session.players?.length || 0;
   const confirmedPlayers = statusSummary.find(s => s.status === 'In')?.count || 0;
   const attendingPlayers = confirmedPlayers + (statusSummary.find(s => s.status === 'Attending but not playing')?.count || 0);
 
   if (totalPlayers === 0) {
     return (
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <TrendingUp />
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
             Session Status
-          </Typography>
-          <Typography color="text.secondary">
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
             No players in this session yet.
-          </Typography>
+          </p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card sx={{ mb: 3 }}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <TrendingUp />
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5" />
           Session Status Summary
-        </Typography>
-        
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
         {/* Key Metrics */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={4}>
-            <Box textAlign="center">
-              <Typography variant="h4" color="primary" fontWeight="bold">
-                {totalPlayers}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total Invited
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={4}>
-            <Box textAlign="center">
-              <Typography variant="h4" color="success.main" fontWeight="bold">
-                {confirmedPlayers}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Playing
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={4}>
-            <Box textAlign="center">
-              <Typography variant="h4" color="info.main" fontWeight="bold">
-                {attendingPlayers}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Attending
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="text-center">
+            <div className="text-3xl font-bold text-primary">
+              {totalPlayers}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Total Invited
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-green-600">
+              {confirmedPlayers}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Playing
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-blue-600">
+              {attendingPlayers}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Attending
+            </div>
+          </div>
+        </div>
 
         {/* Status Breakdown */}
-        <Box>
+        <div className="space-y-4">
           {statusSummary.map((item) => (
-            <Box key={item.status} sx={{ mb: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <span style={{ color: item.color, display: 'flex', alignItems: 'center' }}>
+            <div key={item.status} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span style={{ color: item.color }} className="flex items-center">
                     {item.icon}
                   </span>
-                  <Typography variant="body2" fontWeight={500}>
+                  <span className="text-sm font-medium">
                     {item.label}
-                  </Typography>
-                </Box>
-                <Typography variant="body2" color="text.secondary">
+                  </span>
+                </div>
+                <span className="text-sm text-muted-foreground">
                   {item.count} ({Math.round(item.percentage)}%)
-                </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={item.percentage}
-                sx={{
-                  height: 6,
-                  borderRadius: 3,
-                  backgroundColor: 'grey.200',
-                  '& .MuiLinearProgress-bar': {
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="h-2 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${item.percentage}%`,
                     backgroundColor: item.color,
-                    borderRadius: 3,
-                  },
-                }}
-              />
-            </Box>
+                  }}
+                />
+              </div>
+            </div>
           ))}
-        </Box>
+        </div>
       </CardContent>
     </Card>
   );

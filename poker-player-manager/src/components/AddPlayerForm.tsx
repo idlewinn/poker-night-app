@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, Paper } from '@mui/material';
-import { PersonAdd } from '@mui/icons-material';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { UserPlus } from 'lucide-react';
 import { AddPlayerFormProps } from '../types/index';
 
 function AddPlayerForm({ onAddPlayer }: AddPlayerFormProps): React.JSX.Element {
@@ -17,76 +19,55 @@ function AddPlayerForm({ onAddPlayer }: AddPlayerFormProps): React.JSX.Element {
   };
 
   return (
-    <Paper
-      elevation={3}
-      sx={{
-        p: { xs: 3, sm: 4 },
-        mb: { xs: 3, sm: 5 },
-        background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
-        border: '1px solid',
-        borderColor: 'divider',
-      }}
-    >
-      <Typography
-        variant="h4"
-        component="h2"
-        gutterBottom
-        sx={{
-          mb: 3,
-          color: 'text.primary',
-          fontWeight: 600,
-        }}
-      >
-        Add New Player
-      </Typography>
-      <Box component="form" onSubmit={handleSubmit}>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-          }}
-        >
-          <TextField
-            fullWidth
-            label="Player Name"
-            variant="outlined"
-            value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
-            placeholder="Enter player name..."
-            required
-            slotProps={{ htmlInput: { maxLength: 50 } }}
-            size="large"
-          />
+    <Card className="bg-gradient-to-br from-muted/50 to-card border shadow-lg mb-6">
+      <CardHeader>
+        <CardTitle className="text-2xl font-semibold text-foreground">
+          Add New Player
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="player-name" className="text-sm font-medium text-foreground">
+              Player Name
+            </label>
+            <Input
+              id="player-name"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              placeholder="Enter player name..."
+              required
+              maxLength={50}
+              className="h-12"
+            />
+          </div>
 
-          <TextField
-            fullWidth
-            label="Email Address"
-            type="email"
-            variant="outlined"
-            value={playerEmail}
-            onChange={(e) => setPlayerEmail(e.target.value)}
-            placeholder="Enter email address (optional)..."
-            slotProps={{ htmlInput: { maxLength: 100 } }}
-            size="large"
-          />
+          <div className="space-y-2">
+            <label htmlFor="player-email" className="text-sm font-medium text-foreground">
+              Email Address
+            </label>
+            <Input
+              id="player-email"
+              type="email"
+              value={playerEmail}
+              onChange={(e) => setPlayerEmail(e.target.value)}
+              placeholder="Enter email address (optional)..."
+              maxLength={100}
+              className="h-12"
+            />
+          </div>
 
           <Button
             type="submit"
-            variant="contained"
-            size="large"
-            startIcon={<PersonAdd />}
             disabled={!playerName.trim()}
-            sx={{
-              height: 56,
-              fontSize: '1rem',
-            }}
+            className="w-full h-14 text-base font-medium"
           >
+            <UserPlus className="h-5 w-5 mr-2" />
             Add Player
           </Button>
-        </Box>
-      </Box>
-    </Paper>
+        </form>
+      </CardContent>
+    </Card>
   )
 }
 

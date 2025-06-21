@@ -1,15 +1,13 @@
 import React from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  IconButton
-} from '@mui/material';
-import { Close, EventNote } from '@mui/icons-material';
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { X, Calendar } from 'lucide-react';
 import { Session, Player, PlayerStatus } from '../types/index';
 import SessionPlayerList from './SessionPlayerList';
 import SessionStatusSummary from './SessionStatusSummary';
@@ -48,79 +46,44 @@ function SessionDetailModal({
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          minHeight: '60vh',
-        },
-      }}
-    >
-      <DialogTitle
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          pb: 1,
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <EventNote />
-          <Typography variant="h6" component="div">
-            {session.name}
-          </Typography>
-        </Box>
-        <IconButton
-          onClick={onClose}
-          sx={{ color: 'primary.contrastText' }}
-        >
-          <Close />
-        </IconButton>
-      </DialogTitle>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
+            <Calendar className="h-6 w-6 text-primary" />
+            {session.name || 'Session Details'}
+          </DialogTitle>
+        </DialogHeader>
 
-      <DialogContent sx={{ p: 0 }}>
-        {/* Session Info */}
-        <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
-          {session.scheduledDateTime && (
-            <Typography variant="body1" sx={{ mb: 1 }}>
-              <strong>Scheduled:</strong> {formatScheduledDate(session.scheduledDateTime)}
-            </Typography>
-          )}
-          <Typography variant="body2" color="text.secondary">
-            Created {new Date(session.createdAt).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </Typography>
-        </Box>
+        <div className="space-y-6">
+          {/* Session Info */}
+          <div className="border-b pb-4">
+            {session.scheduledDateTime && (
+              <p className="text-base mb-2">
+                <strong>Scheduled:</strong> {formatScheduledDate(session.scheduledDateTime)}
+              </p>
+            )}
+          </div>
 
-        {/* Status Summary and Player List */}
-        <Box sx={{ p: 3 }}>
-          <SessionStatusSummary session={session} />
+          {/* Status Summary and Player List */}
+          <div className="space-y-4">
+            <SessionStatusSummary session={session} />
 
-          <SessionPlayerList
-            session={session}
-            players={players}
-            onStatusChange={onStatusChange}
-            readonly={!onStatusChange}
-          />
-        </Box>
+            <SessionPlayerList
+              session={session}
+              players={players}
+              onStatusChange={onStatusChange}
+              readonly={!onStatusChange}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </DialogFooter>
       </DialogContent>
-
-      <DialogActions sx={{ p: 3, pt: 0 }}>
-        <Button onClick={onClose} variant="outlined">
-          Close
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }

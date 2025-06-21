@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Button, Paper, Typography, Snackbar, Alert } from '@mui/material';
-import { Add } from '@mui/icons-material';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, Calendar } from 'lucide-react';
 import SessionList from './SessionList';
 import CreateSessionModal from './CreateSessionModal';
 import EditSessionModal from './EditSessionModal';
@@ -101,60 +102,21 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
   };
 
   return (
-    <Box>
-      {/* Create Session Section */}
-      <Paper
-        elevation={3}
-        sx={{
-          p: { xs: 3, sm: 4 },
-          mb: { xs: 3, sm: 5 },
-          background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
-          border: '1px solid',
-          borderColor: 'divider',
-        }}
-      >
-        <Typography
-          variant="h4"
-          component="h2"
-          gutterBottom
-          sx={{
-            mb: 3,
-            color: 'text.primary',
-            fontWeight: 600,
-          }}
+    <div>
+      {/* Sessions Header with Create Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <h2 className="text-2xl font-semibold text-foreground flex items-center gap-3">
+          <Calendar className="h-7 w-7 text-primary" />
+          Sessions ({sessions.length})
+        </h2>
+        <Button
+          onClick={handleOpenCreateModal}
+          className="h-10 w-full sm:w-auto"
         >
-          Create New Session
-        </Typography>
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 2,
-            alignItems: 'center',
-            flexDirection: { xs: 'column', sm: 'row' },
-          }}
-        >
-          <Typography
-            variant="body1"
-            color="text.secondary"
-            sx={{ flex: 1, textAlign: { xs: 'center', sm: 'left' } }}
-          >
-            Start a new poker session and add players to join the game.
-          </Typography>
-          <Button
-            variant="contained"
-            size="large"
-            startIcon={<Add />}
-            onClick={handleOpenCreateModal}
-            sx={{
-              minWidth: { xs: '100%', sm: 180 },
-              height: 56,
-              fontSize: '1rem',
-            }}
-          >
-            Create Session
-          </Button>
-        </Box>
-      </Paper>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Session
+        </Button>
+      </div>
 
       {/* Sessions List */}
       <SessionList
@@ -164,6 +126,7 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
         onEditSession={handleOpenEditModal}
         onViewSessionDetails={handleOpenDetailModal}
         onViewSession={handleViewSession}
+        hideHeader={true}
       />
 
       {/* Create Session Modal */}
@@ -192,21 +155,24 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
       />
 
       {/* Status Update Notifications */}
-      <Snackbar
-        open={!!notification}
-        autoHideDuration={4000}
-        onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={handleCloseNotification}
-          severity={notification?.severity}
-          sx={{ width: '100%' }}
-        >
-          {notification?.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+      {notification && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
+          <div className={`px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 ${
+            notification.severity === 'success'
+              ? 'bg-green-100 border border-green-200 text-green-800'
+              : 'bg-red-100 border border-red-200 text-red-800'
+          }`}>
+            <span>{notification.message}</span>
+            <button
+              onClick={handleCloseNotification}
+              className="text-current hover:opacity-70"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

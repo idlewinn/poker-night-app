@@ -1,19 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  FormControl,
   Select,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  SelectChangeEvent
-} from '@mui/material';
-import { 
-  CheckCircle, 
-  Cancel, 
-  Help, 
-  PersonOff, 
-  Mail 
-} from '@mui/icons-material';
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  CheckCircle,
+  X,
+  HelpCircle,
+  UserX,
+  Mail
+} from 'lucide-react';
 import { PlayerStatus } from '../types/index';
 
 interface PlayerStatusSelectorProps {
@@ -28,31 +27,31 @@ const statusOptions: { value: PlayerStatus; label: string; icon: React.ReactNode
   {
     value: 'Invited',
     label: 'Invited',
-    icon: <Mail />,
+    icon: <Mail className="h-4 w-4" />,
     color: '#757575'
   },
   {
     value: 'In',
     label: 'In',
-    icon: <CheckCircle />,
+    icon: <CheckCircle className="h-4 w-4" />,
     color: '#4caf50'
   },
   {
     value: 'Out',
     label: 'Out',
-    icon: <Cancel />,
+    icon: <X className="h-4 w-4" />,
     color: '#f44336'
   },
   {
     value: 'Maybe',
     label: 'Maybe',
-    icon: <Help />,
+    icon: <HelpCircle className="h-4 w-4" />,
     color: '#ff9800'
   },
   {
     value: 'Attending but not playing',
     label: 'Attending (not playing)',
-    icon: <PersonOff />,
+    icon: <UserX className="h-4 w-4" />,
     color: '#2196f3'
   }
 ];
@@ -64,73 +63,44 @@ function PlayerStatusSelector({
   loading = false,
   size = 'small'
 }: PlayerStatusSelectorProps): React.JSX.Element {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleChange = (event: SelectChangeEvent<PlayerStatus>) => {
-    const newStatus = event.target.value as PlayerStatus;
-    onStatusChange(newStatus);
-  };
-
   const currentOption = statusOptions.find(option => option.value === status);
 
   return (
-    <FormControl size={size} disabled={disabled || loading}>
-      <Select
-        value={status}
-        onChange={handleChange}
-        open={isOpen}
-        onOpen={() => setIsOpen(true)}
-        onClose={() => setIsOpen(false)}
-        displayEmpty
-        sx={{
-          minWidth: 140,
-          '& .MuiSelect-select': {
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            py: 0.5,
-          },
-          '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: currentOption?.color,
-          },
-          '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: currentOption?.color,
-          },
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: currentOption?.color,
-          },
-        }}
-        renderValue={(selected) => {
-          const option = statusOptions.find(opt => opt.value === selected);
-          return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ color: option?.color, display: 'flex', alignItems: 'center' }}>
-                {option?.icon}
+    <Select
+      value={status}
+      onValueChange={onStatusChange}
+      disabled={disabled || loading}
+    >
+      <SelectTrigger
+        className={`min-w-[140px] ${size === 'small' ? 'h-8 text-sm' : 'h-10'}`}
+        style={{ borderColor: currentOption?.color }}
+      >
+        <SelectValue>
+          <div className="flex items-center gap-2">
+            <span style={{ color: currentOption?.color }} className="flex items-center">
+              {currentOption?.icon}
+            </span>
+            <span className={size === 'small' ? 'text-sm' : 'text-base'}>
+              {currentOption?.label}
+            </span>
+          </div>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {statusOptions.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            <div className="flex items-center gap-2">
+              <span style={{ color: option.color }} className="flex items-center">
+                {option.icon}
               </span>
-              <span style={{ fontSize: size === 'small' ? '0.875rem' : '1rem' }}>
-                {option?.label}
+              <span className={size === 'small' ? 'text-sm' : 'text-base'}>
+                {option.label}
               </span>
             </div>
-          );
-        }}
-      >
-        {statusOptions.map((option) => (
-          <MenuItem key={option.value} value={option.value}>
-            <ListItemIcon sx={{ color: option.color, minWidth: '32px' }}>
-              {option.icon}
-            </ListItemIcon>
-            <ListItemText 
-              primary={option.label}
-              sx={{
-                '& .MuiListItemText-primary': {
-                  fontSize: size === 'small' ? '0.875rem' : '1rem'
-                }
-              }}
-            />
-          </MenuItem>
+          </SelectItem>
         ))}
-      </Select>
-    </FormControl>
+      </SelectContent>
+    </Select>
   );
 }
 

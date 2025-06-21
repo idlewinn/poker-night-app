@@ -1,43 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import {
-  Box,
-  Container,
-  Typography,
-  Paper,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  Card,
-  CardContent,
-  CircularProgress,
-  Alert,
-  Chip,
-  TextField,
-  Button,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  List,
-  ListItem,
-  ListItemText
-} from '@mui/material';
-
+} from '@/components/ui/table';
 import {
-  EventNote,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Calendar,
   TrendingDown,
-  Edit,
   Save,
-  Cancel,
-  Add,
-  Person,
-  ArrowBack
-} from '@mui/icons-material';
+  X,
+  Plus,
+  User,
+  ArrowLeft,
+  Loader2,
+  AlertCircle
+} from 'lucide-react';
 import { Session, Player, SessionPlayer } from '../types/index';
 import { sessionsApi, playersApi } from '../services/api';
 import PlayerStatusBadge from './PlayerStatusBadge';
@@ -92,10 +90,15 @@ function SessionPage(): React.JSX.Element {
   }, [sessionId]);
 
   const handleEditFinancials = (sessionPlayer: SessionPlayer) => {
+    // If we're already editing a different player, don't switch
+    if (editingFinancials && editingFinancials.playerId !== sessionPlayer.player_id) {
+      return;
+    }
+
     setEditingFinancials({
       playerId: sessionPlayer.player_id,
       buy_in: sessionPlayer.buy_in.toString(),
-      cash_out: sessionPlayer.cash_out.toString()
+      cash_out: sessionPlayer.cash_out > 0 ? sessionPlayer.cash_out.toString() : ''
     });
   };
 
@@ -105,7 +108,7 @@ function SessionPage(): React.JSX.Element {
     try {
       setUpdating(true);
       const buy_in = parseFloat(editingFinancials.buy_in) || 0;
-      const cash_out = parseFloat(editingFinancials.cash_out) || 0;
+      const cash_out = editingFinancials.cash_out === '' ? 0 : parseFloat(editingFinancials.cash_out) || 0;
 
       // Update via API
       await sessionsApi.updatePlayerFinancials(session.id, editingFinancials.playerId, { buy_in, cash_out });
@@ -158,6 +161,26 @@ function SessionPage(): React.JSX.Element {
     }).format(amount);
   };
 
+  // Generate buy-in options in increments of $25
+  const getBuyInOptions = (): number[] => {
+    const options = [];
+    for (let i = 0; i <= 1000; i += 25) {
+      options.push(i);
+    }
+    return options;
+  };
+
+  // Get color class for buy-in amount
+  const getBuyInColorClass = (amount: number): string => {
+    if (amount === 0) return 'text-gray-600'; // Free/No buy-in
+    if (amount >= 25 && amount <= 100) return 'text-green-600 font-medium';
+    if (amount >= 125 && amount <= 200) return 'text-yellow-600 font-medium';
+    if (amount >= 225 && amount <= 300) return 'text-orange-600 font-medium';
+    if (amount >= 325 && amount <= 400) return 'text-red-600 font-medium';
+    if (amount >= 425 && amount <= 1000) return 'text-purple-600 font-medium';
+    return 'text-gray-600';
+  };
+
   const formatScheduledDate = (dateString: string | null): string | null => {
     if (!dateString) return null;
     const date = new Date(dateString);
@@ -195,29 +218,31 @@ function SessionPage(): React.JSX.Element {
   const calculateTotals = () => {
     const sessionPlayers = getSessionPlayers();
     const totalBuyIn = sessionPlayers.reduce((sum, sp) => sum + sp.buy_in, 0);
-    const totalCashOut = sessionPlayers.reduce((sum, sp) => sum + sp.cash_out, 0);
+    // Only include cash-out amounts that are actually set (> 0)
+    const totalCashOut = sessionPlayers.reduce((sum, sp) => sum + (sp.cash_out > 0 ? sp.cash_out : 0), 0);
     const netResult = totalCashOut - totalBuyIn;
-    
+
     return { totalBuyIn, totalCashOut, netResult };
   };
 
   if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-          <CircularProgress size={60} />
-        </Box>
-      </Container>
+      <div className="container mx-auto max-w-6xl py-8">
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <Loader2 className="h-12 w-12 animate-spin" />
+        </div>
+      </div>
     );
   }
 
   if (error || !session) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="error">
-          {error || 'Session not found'}
-        </Alert>
-      </Container>
+      <div className="container mx-auto max-w-6xl py-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-red-600" />
+          <p className="text-red-800">{error || 'Session not found'}</p>
+        </div>
+      </div>
     );
   }
 
@@ -225,241 +250,195 @@ function SessionPage(): React.JSX.Element {
   const { totalBuyIn } = calculateTotals();
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 1, sm: 2 }, px: { xs: 1, sm: 2 } }}>
+    <div className="container mx-auto max-w-4xl py-4 px-4">
       {/* Session Header */}
-      <Paper sx={{ p: { xs: 1.5, sm: 2 }, mb: { xs: 1.5, sm: 2 } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, mb: { xs: 0.5, sm: 1 } }}>
-          <IconButton
-            onClick={() => navigate('/sessions')}
-            size="small"
-            sx={{
-              mr: { xs: 0.5, sm: 1 },
-              p: { xs: 0.5, sm: 1 }
-            }}
-          >
-            <ArrowBack sx={{ fontSize: { xs: 18, sm: 24 } }} />
-          </IconButton>
-          <EventNote sx={{ fontSize: { xs: 20, sm: 28 }, color: 'primary.main' }} />
-          <Typography
-            variant="h5"
-            component="h1"
-            fontWeight="bold"
-            sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}
-          >
-            {session.name || 'Poker Night'}
-          </Typography>
-        </Box>
+      <Card className="mb-6">
+        <div className="p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/sessions')}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <Calendar className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold text-gray-900">
+              {session.name || 'Poker Night'}
+            </h1>
+          </div>
 
-        {session.scheduledDateTime && (
-          <Typography
-            variant="h6"
-            color="text.secondary"
-            sx={{
-              mb: { xs: 0.5, sm: 1 },
-              fontSize: { xs: '0.875rem', sm: '1rem' }
-            }}
-          >
-            {formatScheduledDate(session.scheduledDateTime)}
-          </Typography>
-        )}
+          {session.scheduledDateTime && (
+            <h2 className="text-gray-600 mb-2 ml-14">
+              {formatScheduledDate(session.scheduledDateTime)}
+            </h2>
+          )}
 
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-        >
-          Session ID: {session.id} • Created {new Date(session.createdAt).toLocaleDateString()}
-        </Typography>
-      </Paper>
+          <p className="text-sm text-gray-500 ml-14">
+            Session ID: {session.id} • Created {new Date(session.createdAt).toLocaleDateString()}
+          </p>
+        </div>
+      </Card>
 
       {/* Financial Summary */}
-      <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, mb: { xs: 1.5, sm: 2 } }}>
-        <Box sx={{ flex: 1 }}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center', py: { xs: 1.5, sm: 2 } }}>
-              <TrendingDown sx={{ fontSize: { xs: 24, sm: 32 }, color: 'error.main', mb: 0.5 }} />
-              <Typography variant="h5" fontWeight="bold" color="error.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
-                {formatCurrency(totalBuyIn)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                Total Buy-In
-              </Typography>
-            </CardContent>
-          </Card>
-        </Box>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <Card>
+          <CardContent className="text-center py-6">
+            <TrendingDown className="h-8 w-8 text-red-600 mx-auto mb-3" />
+            <div className="text-2xl font-bold text-red-600">
+              {formatCurrency(totalBuyIn)}
+            </div>
+            <div className="text-sm text-gray-600">
+              Total Buy-In
+            </div>
+          </CardContent>
+        </Card>
 
-        <Box sx={{ flex: 1 }}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center', py: { xs: 1.5, sm: 2 } }}>
-              <Typography variant="h5" fontWeight="bold" color="primary.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' }, mt: { xs: 2, sm: 2.5 } }}>
-                {sessionPlayers.length}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                Players
-              </Typography>
-            </CardContent>
-          </Card>
-        </Box>
-      </Box>
+        <Card>
+          <CardContent className="text-center py-6">
+            <User className="h-8 w-8 text-primary mx-auto mb-3" />
+            <div className="text-2xl font-bold text-primary">
+              {sessionPlayers.length}
+            </div>
+            <div className="text-sm text-gray-600">
+              Players
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Player Financial Details */}
-      <Paper sx={{ overflow: 'hidden' }}>
-        <Box sx={{ p: { xs: 1.5, sm: 2 }, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
-          <Typography
-            variant="h6"
-            fontWeight="bold"
-            sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
-          >
+      <Card className="overflow-hidden">
+        <div className="p-4 bg-primary text-primary-foreground">
+          <h3 className="text-lg font-bold">
             Winnings
-          </Typography>
-        </Box>
-        
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
+          </h3>
+        </div>
+
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell sx={{ py: { xs: 0.5, sm: 1 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                  <strong>Player</strong>
-                </TableCell>
-                <TableCell sx={{ py: { xs: 0.5, sm: 1 }, fontSize: { xs: '0.75rem', sm: '0.875rem' }, display: { xs: 'none', sm: 'table-cell' } }}>
-                  <strong>Status</strong>
-                </TableCell>
-                <TableCell align="right" sx={{ py: { xs: 0.5, sm: 1 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                  <strong>Buy-In</strong>
-                </TableCell>
-                <TableCell align="right" sx={{ py: { xs: 0.5, sm: 1 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                  <strong>Cash-Out</strong>
-                </TableCell>
-                <TableCell align="right" sx={{ py: { xs: 0.5, sm: 1 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                  <strong>Net</strong>
-                </TableCell>
-                <TableCell align="center" sx={{ py: { xs: 0.5, sm: 1 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                  <strong>Actions</strong>
-                </TableCell>
+                <TableHead className="py-3 text-sm font-semibold">
+                  Player
+                </TableHead>
+                <TableHead className="py-3 text-sm font-semibold hidden sm:table-cell">
+                  Status
+                </TableHead>
+                <TableHead className="py-3 text-sm font-semibold text-right">
+                  Buy-In
+                </TableHead>
+                <TableHead className="py-3 text-sm font-semibold text-right">
+                  Cash-Out
+                </TableHead>
+                <TableHead className="py-3 text-sm font-semibold text-right">
+                  Net
+                </TableHead>
               </TableRow>
-            </TableHead>
+            </TableHeader>
             <TableBody>
               {sessionPlayers.map((sessionPlayer) => {
                 const player = sessionPlayer.player;
                 const netResult = sessionPlayer.cash_out - sessionPlayer.buy_in;
                 const isEditing = editingFinancials?.playerId === sessionPlayer.player_id;
-                
+
                 return (
-                  <TableRow key={sessionPlayer.player_id} hover>
-                    <TableCell sx={{ py: { xs: 0.5, sm: 1 } }}>
-                      <Box>
-                        <Typography
-                          variant="subtitle2"
-                          fontWeight={500}
-                          sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                        >
+                  <TableRow
+                    key={sessionPlayer.player_id}
+                    className={`
+                      ${!editingFinancials ? 'cursor-pointer hover:bg-gray-50' : ''}
+                      ${editingFinancials?.playerId === sessionPlayer.player_id ? 'bg-blue-50 border-l-4 border-blue-500' : ''}
+                      ${editingFinancials && editingFinancials.playerId !== sessionPlayer.player_id ? 'opacity-50' : ''}
+                    `}
+                    onClick={() => !editingFinancials && handleEditFinancials(sessionPlayer)}
+                  >
+                    <TableCell className="py-3">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
                           {player?.name || 'Unknown Player'}
-                        </Typography>
+                        </div>
                         {player?.email && (
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ fontSize: { xs: '0.625rem', sm: '0.75rem' }, display: { xs: 'none', sm: 'block' } }}
-                          >
+                          <div className="text-xs text-gray-600 hidden sm:block">
                             {player.email}
-                          </Typography>
+                          </div>
                         )}
-                      </Box>
+                      </div>
                     </TableCell>
 
-                    <TableCell sx={{ py: { xs: 0.5, sm: 1 }, display: { xs: 'none', sm: 'table-cell' } }}>
+                    <TableCell className="py-3 hidden sm:table-cell">
                       <PlayerStatusBadge status={sessionPlayer.status} />
                     </TableCell>
-                    
-                    <TableCell align="right" sx={{ py: { xs: 0.5, sm: 1 } }}>
+
+                    <TableCell className="py-3 text-right">
                       {isEditing ? (
-                        <TextField
-                          size="small"
-                          type="number"
-                          value={editingFinancials.buy_in}
-                          onChange={(e) => setEditingFinancials({
-                            ...editingFinancials,
-                            buy_in: e.target.value
-                          })}
-                          slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
-                          sx={{ width: { xs: 70, sm: 100 } }}
-                        />
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={editingFinancials.buy_in.toString()}
+                            onValueChange={(value) => setEditingFinancials({
+                              ...editingFinancials,
+                              buy_in: value
+                            })}
+                          >
+                            <SelectTrigger className="w-24 h-8 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getBuyInOptions().map((amount) => (
+                                <SelectItem
+                                  key={amount}
+                                  value={amount.toString()}
+                                  className={getBuyInColorClass(amount)}
+                                >
+                                  {formatCurrency(amount)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       ) : (
-                        <Typography
-                          variant="body2"
-                          fontWeight={500}
-                          sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                        >
+                        <div className={`text-sm font-medium ${getBuyInColorClass(sessionPlayer.buy_in)}`}>
                           {formatCurrency(sessionPlayer.buy_in)}
-                        </Typography>
+                        </div>
                       )}
                     </TableCell>
 
-                    <TableCell align="right" sx={{ py: { xs: 0.5, sm: 1 } }}>
+                    <TableCell className="py-3 text-right">
                       {isEditing ? (
-                        <TextField
-                          size="small"
+                        <Input
                           type="number"
                           value={editingFinancials.cash_out}
                           onChange={(e) => setEditingFinancials({
                             ...editingFinancials,
                             cash_out: e.target.value
                           })}
-                          slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
-                          sx={{ width: { xs: 70, sm: 100 } }}
+                          min={0}
+                          step={0.01}
+                          placeholder="0.00"
+                          className="w-20 h-8 text-sm text-right"
+                          onClick={(e) => e.stopPropagation()}
                         />
                       ) : (
-                        <Typography
-                          variant="body2"
-                          fontWeight={500}
-                          sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                        >
-                          {formatCurrency(sessionPlayer.cash_out)}
-                        </Typography>
+                        <div className="text-sm font-medium">
+                          {sessionPlayer.cash_out > 0 ? formatCurrency(sessionPlayer.cash_out) : '—'}
+                        </div>
                       )}
                     </TableCell>
 
-                    <TableCell align="right" sx={{ py: { xs: 0.5, sm: 1 } }}>
-                      <Chip
-                        label={formatCurrency(Math.abs(netResult))}
-                        color={netResult >= 0 ? 'success' : 'error'}
-                        variant={netResult === 0 ? 'outlined' : 'filled'}
-                        size="small"
-                        sx={{ fontSize: { xs: '0.625rem', sm: '0.75rem' }, height: { xs: 20, sm: 24 } }}
-                      />
-                    </TableCell>
-                    
-                    <TableCell align="center" sx={{ py: { xs: 0.5, sm: 1 } }}>
-                      {isEditing ? (
-                        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-                          <IconButton
-                            size="small"
-                            color="success"
-                            onClick={handleSaveFinancials}
-                            disabled={updating}
-                            sx={{ p: { xs: 0.25, sm: 0.5 } }}
-                          >
-                            <Save sx={{ fontSize: { xs: 16, sm: 20 } }} />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={handleCancelEdit}
-                            disabled={updating}
-                            sx={{ p: { xs: 0.25, sm: 0.5 } }}
-                          >
-                            <Cancel sx={{ fontSize: { xs: 16, sm: 20 } }} />
-                          </IconButton>
-                        </Box>
-                      ) : (
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleEditFinancials(sessionPlayer)}
-                          sx={{ p: { xs: 0.25, sm: 0.5 } }}
+                    <TableCell className="py-3 text-right">
+                      {sessionPlayer.cash_out > 0 ? (
+                        <Badge
+                          variant={netResult === 0 ? 'outline' : 'default'}
+                          className={`text-xs ${
+                            netResult >= 0
+                              ? 'bg-green-100 text-green-800 border-green-300'
+                              : 'bg-red-100 text-red-800 border-red-300'
+                          }`}
                         >
-                          <Edit sx={{ fontSize: { xs: 16, sm: 20 } }} />
-                        </IconButton>
+                          {netResult >= 0 ? '+' : '-'}{formatCurrency(Math.abs(netResult))}
+                        </Badge>
+                      ) : (
+                        <div className="text-sm text-gray-400">—</div>
                       )}
                     </TableCell>
                   </TableRow>
@@ -467,71 +446,96 @@ function SessionPage(): React.JSX.Element {
               })}
             </TableBody>
           </Table>
-        </TableContainer>
+        </div>
+
+        {/* Edit Mode Controls */}
+        {editingFinancials && (
+          <div className="p-4 border-t border-gray-200 bg-gray-50">
+            <div className="flex gap-3 justify-center">
+              <Button
+                onClick={handleSaveFinancials}
+                disabled={updating}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save Changes
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleCancelEdit}
+                disabled={updating}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Add Player Button */}
-        <Box sx={{ p: { xs: 1, sm: 1.5 }, textAlign: 'center', borderTop: '1px solid', borderColor: 'divider' }}>
+        <div className="p-4 text-center border-t border-gray-200">
           <Button
-            variant="outlined"
-            startIcon={<Add sx={{ fontSize: { xs: 16, sm: 20 } }} />}
+            variant="outline"
             onClick={() => setAddPlayerModalOpen(true)}
             disabled={getAvailablePlayersToAdd().length === 0}
-            size="small"
-            sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+            size="sm"
           >
+            <Plus className="h-4 w-4 mr-2" />
             Add Player
           </Button>
-        </Box>
-      </Paper>
+        </div>
+      </Card>
 
       {/* Add Player Modal */}
-      <Dialog
-        open={addPlayerModalOpen}
-        onClose={() => setAddPlayerModalOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Add Player to Session</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Select a player to add or change their status to "In".
-          </Typography>
+      <Dialog open={addPlayerModalOpen} onOpenChange={setAddPlayerModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Player to Session</DialogTitle>
+          </DialogHeader>
 
-          <List>
-            {getAvailablePlayersToAdd().map((player) => (
-              <ListItem key={player.id} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                  <Person sx={{ mr: 1, color: 'text.secondary' }} />
-                  <ListItemText
-                    primary={player.name}
-                    secondary={player.email}
-                  />
-                </Box>
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={() => handleAddPlayer(player.id)}
-                  disabled={updating}
-                >
-                  Add
-                </Button>
-              </ListItem>
-            ))}
-          </List>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Select a player to add or change their status to "In".
+            </p>
 
-          {getAvailablePlayersToAdd().length === 0 && (
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-              All players are already marked as "In" for this session.
-            </Typography>
-          )}
+            <div className="space-y-2">
+              {getAvailablePlayersToAdd().map((player) => (
+                <div key={player.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                  <div className="flex items-center flex-1">
+                    <User className="h-4 w-4 text-gray-500 mr-2" />
+                    <div>
+                      <div className="font-medium text-gray-900">{player.name}</div>
+                      {player.email && (
+                        <div className="text-sm text-gray-600">{player.email}</div>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => handleAddPlayer(player.id)}
+                    disabled={updating}
+                    size="sm"
+                  >
+                    Add
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            {getAvailablePlayersToAdd().length === 0 && (
+              <p className="text-sm text-gray-600 text-center py-4">
+                All players are already marked as "In" for this session.
+              </p>
+            )}
+          </div>
+
+          <div className="flex justify-end pt-4">
+            <Button variant="outline" onClick={() => setAddPlayerModalOpen(false)}>
+              Close
+            </Button>
+          </div>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddPlayerModalOpen(false)}>
-            Close
-          </Button>
-        </DialogActions>
       </Dialog>
-    </Container>
+    </div>
   );
 }
 

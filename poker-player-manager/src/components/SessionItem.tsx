@@ -1,24 +1,17 @@
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
-  Card,
-  CardContent,
-  Typography,
-  IconButton,
-  Box,
-  Tooltip,
-  Avatar,
-  Chip
-} from '@mui/material';
-import {
-  Delete,
+  Trash2,
   Edit,
-  EventNote,
-  Groups,
-  CalendarToday,
-  Schedule,
+  Calendar,
+  Users,
+  CalendarDays,
+  Clock,
   Mail,
-  Launch
-} from '@mui/icons-material';
+  ExternalLink
+} from 'lucide-react';
 import { SessionItemProps } from '../types/index';
 import PlayerStatusBadge from './PlayerStatusBadge';
 
@@ -74,116 +67,74 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onView
   };
 
   return (
-    <Card
-      elevation={2}
-      sx={{
-        height: '100%',
-        minHeight: '200px',
-        maxWidth: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        border: '1px solid',
-        borderColor: 'divider',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          borderColor: 'primary.main',
-          elevation: 8,
-        },
-      }}
-    >
-      <CardContent
-        sx={{
-          p: 3,
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <Card className="h-full transition-all duration-200 hover:shadow-md">
+      <CardContent className="p-4 flex flex-col h-full">
+        <div className="flex flex-col h-full">
           {/* Session Header */}
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Avatar
-              sx={{
-                bgcolor: 'secondary.main',
-                mr: 2,
-                width: 48,
-                height: 48,
-                boxShadow: '0 4px 12px rgba(118, 75, 162, 0.3)',
-              }}
-            >
-              <EventNote sx={{ fontSize: 24 }} />
-            </Avatar>
-            <Typography
-              variant="h6"
-              component="div"
-              sx={{
-                fontWeight: 600,
-                color: 'text.primary',
-                lineHeight: 1.3,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                width: { xs: '120px', sm: '140px', md: '160px' },
-                fontSize: { xs: '1rem', sm: '1.25rem' },
-              }}
+          <div className="flex items-center mb-3">
+            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+              <Calendar className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <h3
+              className="font-semibold text-gray-900 leading-tight truncate"
               title={session.name || 'Poker Night'}
             >
               {session.name || 'Poker Night'}
-            </Typography>
-          </Box>
+            </h3>
+          </div>
 
           {/* Session Details */}
-          <Box sx={{ flex: 1, mb: 2 }}>
+          <div className="flex-1 mb-3">
             {/* Scheduled Date */}
             {session.scheduledDateTime && (
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Schedule sx={{ fontSize: 16, color: 'primary.main', mr: 1 }} />
-                <Typography variant="body2" color="primary.main" sx={{ fontWeight: 500 }}>
+              <div className="flex items-center mb-2">
+                <Clock className="h-4 w-4 text-primary mr-2" />
+                <span className="text-sm text-primary font-medium">
                   {formatScheduledDate(session.scheduledDateTime)}
-                </Typography>
-              </Box>
+                </span>
+              </div>
             )}
 
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <CalendarToday sx={{ fontSize: 16, color: 'text.secondary', mr: 1 }} />
-              <Typography variant="body2" color="text.secondary">
+            <div className="flex items-center mb-2">
+              <CalendarDays className="h-4 w-4 text-gray-500 mr-2" />
+              <span className="text-sm text-gray-600">
                 Created {formatDate(session.createdAt)}
-              </Typography>
-            </Box>
+              </span>
+            </div>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Groups sx={{ fontSize: 16, color: 'text.secondary', mr: 1 }} />
-              <Typography variant="body2" color="text.secondary">
+            <div className="flex items-center mb-3">
+              <Users className="h-4 w-4 text-gray-500 mr-2" />
+              <span className="text-sm text-gray-600">
                 {sessionPlayers.length} player{sessionPlayers.length !== 1 ? 's' : ''}
-              </Typography>
-            </Box>
+              </span>
+            </div>
 
             {/* Player chips */}
             {sessionPlayers.length > 0 && (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+              <div className="flex flex-wrap gap-1 mb-2">
                 {sessionPlayers.slice(0, 3).map(sessionPlayer => (
-                  <Chip
+                  <Badge
                     key={sessionPlayer.player_id}
-                    label={sessionPlayer.player.name}
-                    size="small"
-                    variant="outlined"
-                    sx={{ fontSize: '0.75rem' }}
-                  />
+                    variant="outline"
+                    className="text-xs"
+                  >
+                    {sessionPlayer.player.name}
+                  </Badge>
                 ))}
                 {sessionPlayers.length > 3 && (
-                  <Chip
-                    label={`+${sessionPlayers.length - 3} more`}
-                    size="small"
-                    variant="outlined"
-                    sx={{ fontSize: '0.75rem', color: 'text.secondary' }}
-                  />
+                  <Badge
+                    variant="outline"
+                    className="text-xs text-gray-500"
+                  >
+                    +{sessionPlayers.length - 3} more
+                  </Badge>
                 )}
-              </Box>
+              </div>
             )}
 
             {/* Status summary */}
             {sessionPlayers.length > 0 && (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              <div className="flex flex-wrap gap-1">
                 {Object.entries(statusCounts).map(([status, count]) => {
                   if (count === 0) return null;
                   return (
@@ -195,78 +146,50 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onView
                     />
                   );
                 })}
-              </Box>
+              </div>
             )}
-          </Box>
+          </div>
 
           {/* Actions */}
-          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-            <Tooltip title="View Session Page" arrow>
-              <IconButton
-                onClick={onViewSession}
-                color="secondary"
-                size="medium"
-                sx={{
-                  bgcolor: 'secondary.light',
-                  color: 'secondary.contrastText',
-                  '&:hover': {
-                    bgcolor: 'secondary.main',
-                  },
-                }}
-              >
-                <Launch />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Invite Status" arrow>
-              <IconButton
-                onClick={onViewDetails}
-                color="info"
-                size="medium"
-                sx={{
-                  bgcolor: 'info.light',
-                  color: 'info.contrastText',
-                  '&:hover': {
-                    bgcolor: 'info.main',
-                  },
-                }}
-              >
-                <Mail />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Edit session" arrow>
-              <IconButton
-                onClick={onEdit}
-                color="primary"
-                size="medium"
-                sx={{
-                  bgcolor: 'primary.light',
-                  color: 'primary.contrastText',
-                  '&:hover': {
-                    bgcolor: 'primary.main',
-                  },
-                }}
-              >
-                <Edit />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Remove session" arrow>
-              <IconButton
-                onClick={onRemove}
-                color="error"
-                size="medium"
-                sx={{
-                  bgcolor: 'error.light',
-                  color: 'error.contrastText',
-                  '&:hover': {
-                    bgcolor: 'error.main',
-                  },
-                }}
-              >
-                <Delete />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Box>
+          <div className="flex gap-1 justify-end">
+            <Button
+              onClick={onViewSession}
+              variant="ghost"
+              size="sm"
+              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+              title="View Session Page"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={onViewDetails}
+              variant="ghost"
+              size="sm"
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              title="Invite Status"
+            >
+              <Mail className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={onEdit}
+              variant="ghost"
+              size="sm"
+              className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              title="Edit session"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={onRemove}
+              variant="ghost"
+              size="sm"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              title="Remove session"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </CardContent>
     </Card>
   )

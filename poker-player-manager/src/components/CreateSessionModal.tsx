@@ -1,65 +1,64 @@
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  TextField,
-  Button,
-  Box,
-  Typography,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  IconButton,
-  Chip,
-  Paper,
-  Divider
-} from '@mui/material';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import {
-  Add,
-  Remove,
-  EventNote,
-  Groups,
-  Person,
-  Schedule,
-  GroupAdd
-} from '@mui/icons-material';
+  Plus,
+  Minus,
+  Calendar,
+  Users,
+  User,
+  Clock,
+  UserPlus
+} from 'lucide-react';
 import { CreateSessionModalProps } from '../types/index';
 
 // Helper function to get the nearest Saturday 3 weeks from today at 7pm
-const getDefaultSessionDate = (): Dayjs => {
-  const today = dayjs();
-  const threeWeeksFromToday = today.add(3, 'week');
+const getDefaultSessionDate = (): string => {
+  const today = new Date();
+  const threeWeeksFromToday = new Date(today.getTime() + (3 * 7 * 24 * 60 * 60 * 1000));
 
-  // Find the nearest Saturday (6 = Saturday in dayjs)
-  let nearestSaturday = threeWeeksFromToday;
-  const dayOfWeek = threeWeeksFromToday.day();
+  // Find the nearest Saturday (6 = Saturday)
+  let nearestSaturday = new Date(threeWeeksFromToday);
+  const dayOfWeek = threeWeeksFromToday.getDay();
 
   if (dayOfWeek === 6) {
     // Already Saturday
     nearestSaturday = threeWeeksFromToday;
   } else if (dayOfWeek < 6) {
     // Before Saturday this week
-    nearestSaturday = threeWeeksFromToday.day(6);
+    const daysToSaturday = 6 - dayOfWeek;
+    nearestSaturday = new Date(threeWeeksFromToday.getTime() + (daysToSaturday * 24 * 60 * 60 * 1000));
   } else {
     // After Saturday, go to next Saturday
-    nearestSaturday = threeWeeksFromToday.add(1, 'week').day(6);
+    const daysToNextSaturday = 7 - dayOfWeek + 6;
+    nearestSaturday = new Date(threeWeeksFromToday.getTime() + (daysToNextSaturday * 24 * 60 * 60 * 1000));
   }
 
   // Set time to 7:00 PM
-  return nearestSaturday.hour(19).minute(0).second(0);
+  nearestSaturday.setHours(19, 0, 0, 0);
+
+  // Return in datetime-local format (YYYY-MM-DDTHH:MM)
+  // Use local time instead of UTC to avoid timezone issues
+  const year = nearestSaturday.getFullYear();
+  const month = String(nearestSaturday.getMonth() + 1).padStart(2, '0');
+  const day = String(nearestSaturday.getDate()).padStart(2, '0');
+  const hours = String(nearestSaturday.getHours()).padStart(2, '0');
+  const minutes = String(nearestSaturday.getMinutes()).padStart(2, '0');
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
 function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateSessionModalProps): React.JSX.Element {
   const [sessionName, setSessionName] = useState<string>('Poker Night');
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<number[]>([]);
-  const [scheduledDateTime, setScheduledDateTime] = useState<Dayjs>(getDefaultSessionDate());
+  const [scheduledDateTime, setScheduledDateTime] = useState<string>(getDefaultSessionDate());
 
   const handleClose = (): void => {
     setSessionName('Poker Night');
@@ -73,7 +72,9 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
     if (scheduledDateTime) {
       // Use session name if provided, otherwise default to "Poker Night"
       const finalSessionName = sessionName.trim() || 'Poker Night';
-      onCreateSession(finalSessionName, selectedPlayerIds, scheduledDateTime.toISOString());
+      // Convert datetime-local to ISO string
+      const isoDateTime = new Date(scheduledDateTime).toISOString();
+      onCreateSession(finalSessionName, selectedPlayerIds, isoDateTime);
       handleClose();
     }
   };
@@ -103,202 +104,162 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
   )
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          maxHeight: '80vh'
-        }
-      }}
-    >
-      <DialogTitle
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.5,
-          pb: 1,
-          fontSize: '1.5rem',
-          fontWeight: 600
-        }}
-      >
-        <EventNote sx={{ color: 'primary.main' }} />
-        Create New Session
-      </DialogTitle>
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
+            <Calendar className="h-6 w-6 text-primary" />
+            Create New Session
+          </DialogTitle>
+        </DialogHeader>
 
-      <form onSubmit={handleSubmit}>
-        <DialogContent sx={{ pt: 2 }}>
-          <Box sx={{ mb: 3 }}>
-            <TextField
-              fullWidth
-              label="Session Name"
-              value={sessionName}
-              onChange={(e) => setSessionName(e.target.value)}
-              placeholder="Defaults to 'Poker Night'"
-              variant="outlined"
-              slotProps={{ htmlInput: { maxLength: 50 } }}
-              helperText="Customize the session name or leave as 'Poker Night'"
-              sx={{ mb: 3 }}
-            />
-
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DateTimePicker
-                label="Scheduled Date & Time *"
-                value={scheduledDateTime}
-                onChange={setScheduledDateTime}
-                views={['year', 'month', 'day', 'hours']}
-                format="MMM DD, YYYY [at] h A"
-                minDateTime={dayjs()}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    variant: 'outlined',
-                    required: true,
-                    helperText: 'When will this session occur? (defaults to Saturday 7pm, 3 weeks from today)',
-                    InputProps: {
-                      startAdornment: <Schedule sx={{ mr: 1, color: 'text.secondary' }} />
-                    }
-                  }
-                }}
-                sx={{ mb: 3 }}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="session-name" className="text-sm font-medium">
+                Session Name
+              </label>
+              <Input
+                id="session-name"
+                value={sessionName}
+                onChange={(e) => setSessionName(e.target.value)}
+                placeholder="Defaults to 'Poker Night'"
+                maxLength={50}
               />
-            </LocalizationProvider>
-          </Box>
+              <p className="text-xs text-muted-foreground">
+                Customize the session name or leave as 'Poker Night'
+              </p>
+            </div>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-            <Typography
-              variant="h6"
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                fontWeight: 600
-              }}
-            >
-              <Groups sx={{ color: 'primary.main' }} />
+            <div className="space-y-2">
+              <label htmlFor="scheduled-datetime" className="text-sm font-medium">
+                Scheduled Date & Time *
+              </label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="scheduled-datetime"
+                  type="datetime-local"
+                  value={scheduledDateTime}
+                  onChange={(e) => setScheduledDateTime(e.target.value)}
+                  required
+                  className="pl-10"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                When will this session occur? (defaults to Saturday 7pm, 3 weeks from today)
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
               Select Players
-            </Typography>
+            </h3>
 
             {availablePlayers.length > 0 && (
               <Button
-                variant="outlined"
-                size="small"
-                startIcon={<GroupAdd />}
+                type="button"
+                variant="outline"
+                size="sm"
                 onClick={handleInviteAll}
-                sx={{ ml: 2 }}
               >
+                <UserPlus className="h-4 w-4 mr-2" />
                 Invite All
               </Button>
             )}
-          </Box>
+          </div>
 
-          <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
+          <div className="flex flex-col md:flex-row gap-6">
             {/* Available Players */}
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
+            <div className="flex-1">
+              <h4 className="text-sm font-medium mb-2">
                 Available Players ({availablePlayers.length})
-              </Typography>
-              <Paper
-                variant="outlined"
-                sx={{
-                  maxHeight: 200,
-                  overflow: 'auto',
-                  bgcolor: 'grey.50'
-                }}
-              >
+              </h4>
+              <div className="border rounded-lg bg-gray-50 max-h-48 overflow-y-auto">
                 {availablePlayers.length === 0 ? (
-                  <Box sx={{ p: 3, textAlign: 'center' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      {players.length === 0 
+                  <div className="p-6 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      {players.length === 0
                         ? 'No players available. Add players first.'
                         : 'All players have been added to this session.'
                       }
-                    </Typography>
-                  </Box>
+                    </p>
+                  </div>
                 ) : (
-                  <List dense>
+                  <div className="p-2">
                     {availablePlayers.map(player => (
-                      <ListItem key={player.id}>
-                        <Person sx={{ mr: 1, color: 'text.secondary' }} />
-                        <ListItemText primary={player.name} />
-                        <ListItemSecondaryAction>
-                          <IconButton
-                            edge="end"
-                            onClick={() => handleAddPlayer(player.id)}
-                            color="primary"
-                            size="small"
-                          >
-                            <Add />
-                          </IconButton>
-                        </ListItemSecondaryAction>
-                      </ListItem>
+                      <div key={player.id} className="flex items-center justify-between p-2 hover:bg-gray-100 rounded">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{player.name}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleAddPlayer(player.id)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
                     ))}
-                  </List>
+                  </div>
                 )}
-              </Paper>
-            </Box>
+              </div>
+            </div>
 
             {/* Selected Players */}
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
+            <div className="flex-1">
+              <h4 className="text-sm font-medium mb-2">
                 Selected Players ({selectedPlayers.length})
-              </Typography>
-              <Paper
-                variant="outlined"
-                sx={{
-                  maxHeight: 200,
-                  overflow: 'auto',
-                  bgcolor: 'rgba(102, 126, 234, 0.05)'
-                }}
-              >
+              </h4>
+              <div className="border rounded-lg bg-blue-50 max-h-48 overflow-y-auto">
                 {selectedPlayers.length === 0 ? (
-                  <Box sx={{ p: 3, textAlign: 'center' }}>
-                    <Typography variant="body2" color="text.secondary">
+                  <div className="p-6 text-center">
+                    <p className="text-sm text-muted-foreground">
                       No players selected yet.
-                    </Typography>
-                  </Box>
+                    </p>
+                  </div>
                 ) : (
-                  <List dense>
+                  <div className="p-2">
                     {selectedPlayers.map(player => (
-                      <ListItem key={player.id}>
-                        <Person sx={{ mr: 1, color: 'primary.main' }} />
-                        <ListItemText primary={player.name} />
-                        <ListItemSecondaryAction>
-                          <IconButton
-                            edge="end"
-                            onClick={() => handleRemovePlayer(player.id)}
-                            color="error"
-                            size="small"
-                          >
-                            <Remove />
-                          </IconButton>
-                        </ListItemSecondaryAction>
-                      </ListItem>
+                      <div key={player.id} className="flex items-center justify-between p-2 hover:bg-blue-100 rounded">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-primary" />
+                          <span className="text-sm">{player.name}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemovePlayer(player.id)}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                      </div>
                     ))}
-                  </List>
+                  </div>
                 )}
-              </Paper>
-            </Box>
-          </Box>
-        </DialogContent>
+              </div>
+            </div>
+          </div>
 
-        <DialogActions sx={{ p: 3, pt: 2 }}>
-          <Button onClick={handleClose} color="inherit">
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={!scheduledDateTime}
-            startIcon={<EventNote />}
-          >
-            Create Session
-          </Button>
-        </DialogActions>
-      </form>
+          <DialogFooter className="flex gap-3">
+            <Button type="button" variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={!scheduledDateTime}
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Create Session
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
     </Dialog>
   )
 }
