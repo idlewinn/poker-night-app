@@ -149,7 +149,7 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 });
 
 // POST create new session
-router.post('/', authenticateToken, (req: any, res: Response): void => {
+router.post('/', authenticateToken, async (req: any, res: Response): Promise<void> => {
   const { name, scheduledDateTime, playerIds } = req.body;
   const userId = req.user?.id;
 
@@ -168,28 +168,24 @@ router.post('/', authenticateToken, (req: any, res: Response): void => {
 
   const sql = 'INSERT INTO sessions (name, scheduled_datetime, created_by) VALUES (?, ?, ?)';
 
-  db.run(sql, [sessionName, scheduledDateTime, userId], function(this: any, err: Error | null) {
-    if (err) {
-      console.error('Error creating session:', err.message);
-      res.status(500).json({ error: 'Failed to create session' });
-    } else {
-      const sessionId = this.lastID;
+  try {
+    const result = await db.run(sql, [sessionName, scheduledDateTime, userId]);
+    const sessionId = result.lastID;
 
-      // Add players to session if provided
-      if (playerIds && playerIds.length > 0) {
-        addPlayersToSession(sessionId, playerIds, (err: Error | null) => {
-          if (err) {
-            console.error('Error adding players to session:', err.message);
-            res.status(500).json({ error: 'Session created but failed to add players' });
-          } else {
-            fetchSessionById(sessionId, res);
-          }
-        });
-      } else {
-        fetchSessionById(sessionId, res);
-      }
+    if (!sessionId) {
+      throw new Error('Failed to get session ID');
     }
-  });
+
+    // Add players to session if provided
+    if (playerIds && playerIds.length > 0) {
+      await addPlayersToSession(sessionId, playerIds);
+    }
+
+    await fetchSessionById(sessionId, res);
+  } catch (err: any) {
+    console.error('Error creating session:', err.message);
+    res.status(500).json({ error: 'Failed to create session' });
+  }
 });
 
 // PUT update session (only by owner)
@@ -413,9 +409,9 @@ router.post('/:sessionId/players/:playerId', (req: TypedRequest<UpdatePlayerStat
 });
 
 // Helper function to add players to session with default "Invited" status
-function addPlayersToSession(sessionId: number, playerIds: number[], callback: (err: Error | null) => void): void {
+async function addPlayersToSession(sessionId: number, playerIds: number[]): Promise<void> {
   if (!playerIds || playerIds.length === 0) {
-    return callback(null);
+    return;
   }
 
   const placeholders = playerIds.map(() => '(?, ?, ?, ?, ?)').join(', ');
@@ -426,11 +422,11 @@ function addPlayersToSession(sessionId: number, playerIds: number[], callback: (
     params.push(sessionId, playerId, 'Invited', 0, 0);
   });
 
-  db.run(sql, params, callback);
+  await db.run(sql, params);
 }
 
 // Helper function to fetch session by ID and return response
-function fetchSessionById(sessionId: number, res: Response): void {
+async function fetchSessionById(sessionId: number, res: Response): Promise<void> {
   const sql = `
     SELECT
       s.*,
@@ -447,11 +443,9 @@ function fetchSessionById(sessionId: number, res: Response): void {
     GROUP BY s.id
   `;
 
-  db.get(sql, [sessionId], (err: Error | null, row: any) => {
-    if (err) {
-      console.error('Error fetching created/updated session:', err.message);
-      res.status(500).json({ error: 'Session saved but failed to fetch' });
-    } else if (row) {
+  try {
+    const row = await db.get(sql, [sessionId]);
+    if (row) {
       const session: SessionWithPlayers = {
         id: row.id,
         name: row.name,
@@ -478,7 +472,10 @@ function fetchSessionById(sessionId: number, res: Response): void {
     } else {
       res.status(500).json({ error: 'Session saved but not found' });
     }
-  });
+  } catch (err: any) {
+    console.error('Error fetching created/updated session:', err.message);
+    res.status(500).json({ error: 'Session saved but failed to fetch' });
+  }
 }
 
 export default router;
