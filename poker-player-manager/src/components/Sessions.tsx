@@ -54,6 +54,7 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
   };
 
   const handleOpenMetricsModal = (session: Session): void => {
+    console.log('Opening metrics modal for session:', session.id);
     setSessionForMetrics(session);
     setIsMetricsModalOpen(true);
   };

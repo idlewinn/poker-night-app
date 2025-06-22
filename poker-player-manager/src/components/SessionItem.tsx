@@ -209,7 +209,10 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onView
                   <Mail className="h-4 w-4 mr-2" />
                   Invite Status
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={onViewMetrics}>
+                <DropdownMenuItem onClick={() => {
+                  console.log('View Metrics clicked');
+                  onViewMetrics();
+                }}>
                   <BarChart3 className="h-4 w-4 mr-2" />
                   View Metrics
                 </DropdownMenuItem>
