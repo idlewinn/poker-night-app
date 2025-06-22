@@ -120,9 +120,6 @@ export interface HealthCheckResponse {
   status: string;
   message: string;
   timestamp?: string;
-  environment?: string;
-  port?: number;
-  uptime?: number;
 }
 
 // Database Query Result Types

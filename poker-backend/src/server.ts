@@ -29,11 +29,13 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Request logging middleware
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url} from ${req.ip}`);
-  next();
-});
+// Request logging middleware (only in development)
+if (process.env.NODE_ENV !== 'production') {
+  app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url} from ${req.ip}`);
+    next();
+  });
+}
 
 // Middleware
 const allowedOrigins = [
@@ -51,7 +53,9 @@ app.use(cors({
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      console.log(`CORS blocked origin: ${origin}`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`CORS blocked origin: ${origin}`);
+      }
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -88,28 +92,22 @@ app.use('/api/players', playersRouter);
 app.use('/api/sessions', sessionsRouter);
 app.use('/api/seating-charts', seatingChartsRouter);
 
-// Simple health check endpoint (Railway compatible)
+// Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
-  console.log('Simple health check requested');
   res.status(200).send('OK');
 });
 
-// Detailed health check endpoint
+// API health check endpoint
 app.get('/api/health', (req: Request, res: Response<HealthCheckResponse>) => {
-  console.log('API health check requested');
   res.status(200).json({
     status: 'OK',
     message: 'Poker Backend API is running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    port: PORT,
-    uptime: process.uptime()
+    timestamp: new Date().toISOString()
   });
 });
 
-// Add a simple root endpoint for testing
+// Root endpoint
 app.get('/', (req: Request, res: Response) => {
-  console.log('Root endpoint requested');
   res.status(200).json({
     message: 'Poker Night API',
     health: '/api/health',
@@ -129,38 +127,10 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// Try binding without specifying host for Railway
 const server = app.listen(PORT, () => {
   console.log(`🃏 Poker Backend API running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV}`);
-  console.log(`Binding to: 0.0.0.0:${PORT}`);
-  console.log(`Health check available at: http://0.0.0.0:${PORT}/api/health`);
-  console.log(`Root endpoint available at: http://0.0.0.0:${PORT}/`);
-  console.log(`Railway Public Domain: ${process.env.RAILWAY_PUBLIC_DOMAIN || 'not set'}`);
-  console.log(`Railway Static URL: ${process.env.RAILWAY_STATIC_URL || 'not set'}`);
   console.log('Server started successfully!');
-
-  // Test the health endpoint internally
-  setTimeout(() => {
-    console.log('Testing internal health check...');
-    const http = require('http');
-    const options = {
-      hostname: '127.0.0.1', // Use IPv4 instead of localhost
-      port: PORT,
-      path: '/api/health',
-      method: 'GET'
-    };
-
-    const req = http.request(options, (res: any) => {
-      console.log(`Internal health check status: ${res.statusCode}`);
-    });
-
-    req.on('error', (e: any) => {
-      console.error(`Internal health check error: ${e.message}`);
-    });
-
-    req.end();
-  }, 1000);
 });
 
 server.on('error', (error: any) => {
