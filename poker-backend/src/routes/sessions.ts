@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import db from '../database/db';
+import db from '../database/index';
 import { authenticateToken, requireSessionOwnership, requireAuth } from '../middleware/auth';
 import {
   SessionWithPlayers,

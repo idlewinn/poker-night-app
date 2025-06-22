@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import db from '../database/db';
+import db from '../database/index';
 import { authenticateToken } from '../middleware/auth';
 import {
   Player,
@@ -101,7 +101,7 @@ router.get('/:id', (req: Request, res: Response) => {
 });
 
 // POST create new player
-router.post('/', authenticateToken, (req: any, res: Response): void => {
+router.post('/', authenticateToken, async (req: any, res: Response): Promise<void> => {
   const { name, email } = req.body;
   const userId = req.user?.id;
 
@@ -115,62 +115,40 @@ router.post('/', authenticateToken, (req: any, res: Response): void => {
     return;
   }
 
-  // First, check if player already exists
-  db.get('SELECT * FROM players WHERE name = ?', [name.trim()], (err: Error | null, existingPlayer: Player | undefined) => {
-    if (err) {
-      console.error('Error checking existing player:', err.message);
-      res.status(500).json({ error: 'Failed to check existing player' });
-      return;
-    }
+  try {
+    // First, check if player already exists
+    const existingPlayer = await db.get('SELECT * FROM players WHERE name = ?', [name.trim()]);
 
     if (existingPlayer) {
       // Player exists, just add the relationship if it doesn't exist
-      db.run('INSERT OR IGNORE INTO user_players (user_id, player_id) VALUES (?, ?)',
-        [userId, existingPlayer.id],
-        function(this: any, err: Error | null) {
-          if (err) {
-            console.error('Error adding user-player relationship:', err.message);
-            res.status(500).json({ error: 'Failed to add player relationship' });
-          } else {
-            res.status(201).json(existingPlayer);
-          }
-        }
-      );
+      // Use INSERT ... ON CONFLICT for PostgreSQL compatibility
+      const insertSql = process.env.DATABASE_URL?.startsWith('postgresql')
+        ? 'INSERT INTO user_players (user_id, player_id) VALUES (?, ?) ON CONFLICT (user_id, player_id) DO NOTHING'
+        : 'INSERT OR IGNORE INTO user_players (user_id, player_id) VALUES (?, ?)';
+
+      await db.run(insertSql, [userId, existingPlayer.id]);
+      res.status(201).json(existingPlayer);
     } else {
       // Player doesn't exist, create new player
       const sql = 'INSERT INTO players (name, email) VALUES (?, ?)';
+      const result = await db.run(sql, [name.trim(), email?.trim() || null]);
+      const playerId = result.lastID;
 
-      db.run(sql, [name.trim(), email?.trim() || null], function(this: any, err: Error | null) {
-        if (err) {
-          console.error('Error creating player:', err.message);
-          res.status(500).json({ error: 'Failed to create player' });
-        } else {
-          const playerId = this.lastID;
+      if (!playerId) {
+        throw new Error('Failed to get player ID');
+      }
 
-          // Add the user-player relationship
-          db.run('INSERT INTO user_players (user_id, player_id) VALUES (?, ?)',
-            [userId, playerId],
-            function(this: any, err: Error | null) {
-              if (err) {
-                console.error('Error adding user-player relationship:', err.message);
-                res.status(500).json({ error: 'Player created but failed to add relationship' });
-              } else {
-                // Return the created player
-                db.get('SELECT * FROM players WHERE id = ?', [playerId], (err: Error | null, row: Player | undefined) => {
-                  if (err) {
-                    console.error('Error fetching created player:', err.message);
-                    res.status(500).json({ error: 'Player created but failed to fetch' });
-                  } else {
-                    res.status(201).json(row);
-                  }
-                });
-              }
-            }
-          );
-        }
-      });
+      // Add the user-player relationship
+      await db.run('INSERT INTO user_players (user_id, player_id) VALUES (?, ?)', [userId, playerId]);
+
+      // Return the created player
+      const player = await db.get('SELECT * FROM players WHERE id = ?', [playerId]);
+      res.status(201).json(player);
     }
-  });
+  } catch (err: any) {
+    console.error('Error creating player:', err.message);
+    res.status(500).json({ error: 'Failed to create player' });
+  }
 });
 
 // PUT update player (only if user has access to this player)

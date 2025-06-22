@@ -10,22 +10,14 @@ console.log(`Using database: ${usePostgres ? 'PostgreSQL' : 'SQLite'}`);
 if (usePostgres) {
   // Use PostgreSQL in production
   const { initializePostgresDatabase } = require('./postgres');
-  const pool = require('./postgres').default;
 
   // Initialize PostgreSQL
   initializePostgresDatabase().catch((error: any) => {
     console.error('Failed to initialize PostgreSQL:', error);
     console.log('Falling back to SQLite...');
-    const db = require('./db').default;
-    module.exports = db;
   });
-
-  module.exports = pool;
-} else {
-  // Use SQLite for development
-  const db = require('./db').default;
-  module.exports = db;
 }
 
-// Export the database instance
-export default module.exports;
+// Export the database adapter (provides consistent interface)
+import adapter from './adapter';
+export default adapter;

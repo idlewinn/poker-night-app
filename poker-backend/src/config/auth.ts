@@ -1,7 +1,7 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import jwt from 'jsonwebtoken';
-import db from '../database/db';
+import db from '../database/index';
 import { User, AuthUser, JWTPayload } from '../types/index';
 
 // Environment variables for Google OAuth
