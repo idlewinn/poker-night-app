@@ -93,6 +93,7 @@ export interface SessionItemProps {
   onEdit: () => void;
   onViewDetails: () => void;
   onViewSession: () => void;
+  onViewMetrics: () => void;
   isOwner?: boolean;
   isPast?: boolean;
   isActive?: boolean;
@@ -105,6 +106,7 @@ export interface SessionListProps {
   onEditSession: (session: Session) => void;
   onViewSessionDetails: (session: Session) => void;
   onViewSession: (session: Session) => void;
+  onViewMetrics: (session: Session) => void;
   hideHeader?: boolean;
   isSessionOwner?: (session: Session) => boolean;
   isPastSessions?: boolean;

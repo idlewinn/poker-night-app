@@ -7,6 +7,7 @@ import SessionList from './SessionList';
 import CreateSessionModal from './CreateSessionModal';
 import EditSessionModal from './EditSessionModal';
 import SessionDetailModal from './SessionDetailModal';
+import SessionMetricsModal from './SessionMetricsModal';
 import { SessionsProps, Session, PlayerStatus } from '../types/index';
 import { sessionsApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,8 +18,10 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
+  const [isMetricsModalOpen, setIsMetricsModalOpen] = useState<boolean>(false);
   const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null);
   const [sessionToView, setSessionToView] = useState<Session | null>(null);
+  const [sessionForMetrics, setSessionForMetrics] = useState<Session | null>(null);
   const [notification, setNotification] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
 
@@ -48,6 +51,16 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
   const handleCloseDetailModal = (): void => {
     setIsDetailModalOpen(false);
     setSessionToView(null);
+  };
+
+  const handleOpenMetricsModal = (session: Session): void => {
+    setSessionForMetrics(session);
+    setIsMetricsModalOpen(true);
+  };
+
+  const handleCloseMetricsModal = (): void => {
+    setIsMetricsModalOpen(false);
+    setSessionForMetrics(null);
   };
 
   const handleCreateSession = (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): void => {
@@ -178,6 +191,7 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
                 onEditSession={handleOpenEditModal}
                 onViewSessionDetails={handleOpenDetailModal}
                 onViewSession={handleViewSession}
+                onViewMetrics={handleOpenMetricsModal}
                 hideHeader={true}
                 isSessionOwner={isSessionOwner}
                 isPastSessions={false}
@@ -202,6 +216,7 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
                 onEditSession={handleOpenEditModal}
                 onViewSessionDetails={handleOpenDetailModal}
                 onViewSession={handleViewSession}
+                onViewMetrics={handleOpenMetricsModal}
                 hideHeader={true}
                 isSessionOwner={isSessionOwner}
                 isPastSessions={false}
@@ -227,6 +242,7 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
                   onEditSession={handleOpenEditModal}
                   onViewSessionDetails={handleOpenDetailModal}
                   onViewSession={handleViewSession}
+                  onViewMetrics={handleOpenMetricsModal}
                   hideHeader={true}
                   isSessionOwner={isSessionOwner}
                   isPastSessions={true}
@@ -260,6 +276,13 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
         session={sessionToView}
         players={players}
         onStatusChange={handleStatusChange}
+      />
+
+      {/* Session Metrics Modal */}
+      <SessionMetricsModal
+        open={isMetricsModalOpen}
+        onClose={handleCloseMetricsModal}
+        session={sessionForMetrics}
       />
 
       {/* Status Update Notifications */}

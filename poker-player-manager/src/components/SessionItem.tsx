@@ -3,6 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Trash2,
   Edit,
   Calendar,
@@ -10,12 +17,14 @@ import {
   CalendarDays,
   Clock,
   Mail,
-  ExternalLink
+  ExternalLink,
+  MoreVertical,
+  BarChart3
 } from 'lucide-react';
 import { SessionItemProps } from '../types/index';
 import PlayerStatusBadge from './PlayerStatusBadge';
 
-function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onViewSession, isOwner = false, isPast = false, isActive = false }: SessionItemProps): React.JSX.Element {
+function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onViewSession, onViewMetrics, isOwner = false, isPast = false, isActive = false }: SessionItemProps): React.JSX.Element {
   // Session players are now directly available in session.players
   const sessionPlayers = session.players;
 
@@ -179,48 +188,50 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onView
           </div>
 
           {/* Actions */}
-          <div className="flex gap-1 justify-end">
-            <Button
-              onClick={onViewSession}
-              variant="ghost"
-              size="sm"
-              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-              title="View Session Page"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </Button>
-            <Button
-              onClick={onViewDetails}
-              variant="ghost"
-              size="sm"
-              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-              title="Invite Status"
-            >
-              <Mail className="h-4 w-4" />
-            </Button>
-            {/* Only show edit/delete buttons for session owners */}
-            {isOwner && (
-              <>
+          <div className="flex justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
-                  onClick={onEdit}
                   variant="ghost"
                   size="sm"
-                  className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  title="Edit session"
+                  className="h-8 w-8 p-0"
+                  title="Session actions"
                 >
-                  <Edit className="h-4 w-4" />
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
-                <Button
-                  onClick={onRemove}
-                  variant="ghost"
-                  size="sm"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  title="Remove session"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </>
-            )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={onViewSession}>
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  View Session Page
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onViewDetails}>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Invite Status
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onViewMetrics}>
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  View Metrics
+                </DropdownMenuItem>
+                {/* Only show edit/delete options for session owners */}
+                {isOwner && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={onEdit}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Session
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={onRemove}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Session
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </CardContent>
