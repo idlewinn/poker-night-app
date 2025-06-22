@@ -9,6 +9,9 @@ dotenv.config();
 import passport from './config/auth';
 import { HealthCheckResponse, ApiError } from './types/index';
 
+// Initialize database (this will trigger PostgreSQL vs SQLite detection)
+import './database/index';
+
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
 
