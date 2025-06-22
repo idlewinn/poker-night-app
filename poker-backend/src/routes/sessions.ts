@@ -11,6 +11,7 @@ import {
   TypedRequest,
   PlayerStatus
 } from '../types/index';
+import MetricsService from '../services/metricsService';
 
 const router = express.Router();
 
@@ -181,6 +182,9 @@ router.post('/', authenticateToken, async (req: any, res: Response): Promise<voi
       await addPlayersToSession(sessionId, playerIds);
     }
 
+    // Track session creation
+    MetricsService.trackSessionCreated(userId, sessionId);
+
     await fetchSessionById(sessionId, res);
   } catch (err: any) {
     console.error('Error creating session:', err.message);
@@ -276,6 +280,16 @@ router.put('/:sessionId/players/:playerId/status', async (req: TypedRequest<Upda
     if (result.changes === 0) {
       res.status(404).json({ error: 'Player not found in session' });
     } else {
+      // Track status response - get player email for tracking
+      try {
+        const playerResult = await db.get('SELECT email FROM players WHERE id = ?', [playerIdNum]);
+        if (playerResult?.email) {
+          MetricsService.trackStatusResponse(sessionIdNum, playerResult.email, status);
+        }
+      } catch (trackingError) {
+        console.error('Error tracking status response:', trackingError);
+      }
+
       res.json({ message: 'Player status updated successfully', status });
     }
   } catch (err: any) {
@@ -461,5 +475,30 @@ async function fetchSessionById(sessionId: number, res: Response): Promise<void>
     res.status(500).json({ error: 'Session saved but failed to fetch' });
   }
 }
+
+// Public route to track invite page views (no auth required)
+router.post('/:sessionId/invite-view', async (req: Request, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    const { playerEmail } = req.body;
+
+    if (!sessionId || !playerEmail) {
+      return res.status(400).json({ error: 'Session ID and player email are required' });
+    }
+
+    // Track invite page view
+    await MetricsService.trackInvitePageView(
+      parseInt(sessionId),
+      playerEmail,
+      req.ip,
+      req.get('User-Agent')
+    );
+
+    res.json({ message: 'Invite view tracked successfully' });
+  } catch (error: any) {
+    console.error('Error tracking invite view:', error);
+    res.status(500).json({ error: 'Failed to track invite view' });
+  }
+});
 
 export default router;

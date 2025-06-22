@@ -194,6 +194,46 @@ function initializeDatabase(): void {
       console.log('User_players table ready');
     }
   });
+
+  // Create user_metrics table for tracking user activity and engagement
+  db.run(`
+    CREATE TABLE IF NOT EXISTS user_metrics (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      player_email TEXT,
+      session_id INTEGER,
+      event_type TEXT NOT NULL,
+      event_data TEXT,
+      ip_address TEXT,
+      user_agent TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL,
+      FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
+    )
+  `, (err: Error | null) => {
+    if (err) {
+      console.error('Error creating user_metrics table:', err.message);
+    } else {
+      console.log('User_metrics table ready');
+    }
+  });
+
+  // Create indexes for user_metrics table
+  const metricsIndexes = [
+    'CREATE INDEX IF NOT EXISTS idx_user_metrics_user_id ON user_metrics(user_id)',
+    'CREATE INDEX IF NOT EXISTS idx_user_metrics_session_id ON user_metrics(session_id)',
+    'CREATE INDEX IF NOT EXISTS idx_user_metrics_event_type ON user_metrics(event_type)',
+    'CREATE INDEX IF NOT EXISTS idx_user_metrics_created_at ON user_metrics(created_at)',
+    'CREATE INDEX IF NOT EXISTS idx_user_metrics_player_email ON user_metrics(player_email)'
+  ];
+
+  metricsIndexes.forEach((indexQuery, index) => {
+    db.run(indexQuery, (err: Error | null) => {
+      if (err) {
+        console.error(`Error creating metrics index ${index + 1}:`, err.message);
+      }
+    });
+  });
 }
 
 // Graceful shutdown

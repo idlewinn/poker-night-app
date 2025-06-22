@@ -120,6 +120,34 @@ export async function initializePostgresDatabase(): Promise<void> {
     `);
     console.log('User_players table ready');
 
+    // Create user_metrics table for tracking user activity and engagement
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_metrics (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        player_email VARCHAR(255),
+        session_id INTEGER,
+        event_type VARCHAR(50) NOT NULL,
+        event_data JSONB,
+        ip_address INET,
+        user_agent TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL,
+        FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
+      )
+    `);
+    console.log('User_metrics table ready');
+
+    // Create indexes for better query performance
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_user_metrics_user_id ON user_metrics(user_id);
+      CREATE INDEX IF NOT EXISTS idx_user_metrics_session_id ON user_metrics(session_id);
+      CREATE INDEX IF NOT EXISTS idx_user_metrics_event_type ON user_metrics(event_type);
+      CREATE INDEX IF NOT EXISTS idx_user_metrics_created_at ON user_metrics(created_at);
+      CREATE INDEX IF NOT EXISTS idx_user_metrics_player_email ON user_metrics(player_email);
+    `);
+    console.log('User_metrics indexes ready');
+
   } catch (error) {
     console.error('Error initializing PostgreSQL database:', error);
     throw error;

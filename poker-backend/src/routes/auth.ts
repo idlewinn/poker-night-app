@@ -3,6 +3,7 @@ import passport from '../config/auth';
 import { generateJWT, userToAuthUser } from '../config/auth';
 import { authenticateToken } from '../middleware/auth';
 import { User } from '../types/index';
+import MetricsService from '../services/metricsService';
 
 // Extend Request interface to include user
 interface AuthenticatedRequest extends Request {
@@ -37,6 +38,9 @@ router.get('/google/callback',
         // Generate JWT token
         const token = generateJWT(user);
         console.log('JWT token generated successfully');
+
+        // Track user login
+        MetricsService.trackUserLogin(user.id, req.ip, req.get('User-Agent'));
 
         // Redirect to frontend with token
         res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}?token=${token}`);

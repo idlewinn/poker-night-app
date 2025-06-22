@@ -85,12 +85,14 @@ import authRouter from './routes/auth';
 import playersRouter from './routes/players';
 import sessionsRouter from './routes/sessions';
 import seatingChartsRouter from './routes/seatingCharts';
+import metricsRouter from './routes/metrics';
 
 // Use routes
 app.use('/api/auth', authRouter);
 app.use('/api/players', playersRouter);
 app.use('/api/sessions', sessionsRouter);
 app.use('/api/seating-charts', seatingChartsRouter);
+app.use('/api/metrics', metricsRouter);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
