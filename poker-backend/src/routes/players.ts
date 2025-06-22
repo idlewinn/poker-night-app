@@ -11,7 +11,7 @@ import {
 const router = express.Router();
 
 // GET players that the authenticated user has added or knows from shared sessions
-router.get('/', authenticateToken, (req: any, res: Response) => {
+router.get('/', authenticateToken, async (req: any, res: Response) => {
   const userId = req.user?.id;
   const userEmail = req.user?.email;
 
@@ -66,38 +66,38 @@ router.get('/', authenticateToken, (req: any, res: Response) => {
     ORDER BY p.created_at DESC
   `;
 
-  db.all(sql, [userId, userId, userEmail], (err: Error | null, rows: any[]) => {
-    if (err) {
-      console.error('Error fetching players:', err.message);
-      res.status(500).json({ error: 'Failed to fetch players' });
-    } else {
-      // Transform the results to standard Player format
-      const players = rows.map(row => ({
-        id: row.id,
-        name: row.name,
-        email: row.email, // Will be null for players from other users' sessions
-        created_at: row.created_at
-      }));
-      res.json(players);
-    }
-  });
+  try {
+    const rows = await db.all(sql, [userId, userId, userEmail]);
+    // Transform the results to standard Player format
+    const players = rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      email: row.email, // Will be null for players from other users' sessions
+      created_at: row.created_at
+    }));
+    res.json(players);
+  } catch (err: any) {
+    console.error('Error fetching players:', err.message);
+    res.status(500).json({ error: 'Failed to fetch players' });
+  }
 });
 
 // GET player by ID
-router.get('/:id', (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const sql = 'SELECT * FROM players WHERE id = ?';
-  
-  db.get(sql, [id], (err: Error | null, row: Player | undefined) => {
-    if (err) {
-      console.error('Error fetching player:', err.message);
-      res.status(500).json({ error: 'Failed to fetch player' });
-    } else if (!row) {
+
+  try {
+    const row = await db.get(sql, [id]);
+    if (!row) {
       res.status(404).json({ error: 'Player not found' });
     } else {
       res.json(row);
     }
-  });
+  } catch (err: any) {
+    console.error('Error fetching player:', err.message);
+    res.status(500).json({ error: 'Failed to fetch player' });
+  }
 });
 
 // POST create new player
@@ -152,7 +152,7 @@ router.post('/', authenticateToken, async (req: any, res: Response): Promise<voi
 });
 
 // PUT update player (only if user has access to this player)
-router.put('/:id', authenticateToken, (req: any, res: Response): void => {
+router.put('/:id', authenticateToken, async (req: any, res: Response): Promise<void> => {
   const { id } = req.params;
   const { name, email } = req.body;
 
@@ -168,45 +168,43 @@ router.put('/:id', authenticateToken, (req: any, res: Response): void => {
 
   const sql = 'UPDATE players SET name = ?, email = ? WHERE id = ?';
 
-  db.run(sql, [name.trim(), emailValue, id], function(this: any, err: Error | null) {
-    if (err) {
-      if (err.message.includes('UNIQUE constraint failed')) {
-        res.status(409).json({ error: 'Player name already exists' });
-      } else {
-        console.error('Error updating player:', err.message);
-        res.status(500).json({ error: 'Failed to update player' });
-      }
-    } else if (this.changes === 0) {
+  try {
+    const result = await db.run(sql, [name.trim(), emailValue, id]);
+
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Player not found' });
     } else {
       // Return the updated player
-      db.get('SELECT * FROM players WHERE id = ?', [id], (err: Error | null, row: Player | undefined) => {
-        if (err) {
-          console.error('Error fetching updated player:', err.message);
-          res.status(500).json({ error: 'Player updated but failed to fetch' });
-        } else {
-          res.json(row);
-        }
-      });
+      const player = await db.get('SELECT * FROM players WHERE id = ?', [id]);
+      res.json(player);
     }
-  });
+  } catch (err: any) {
+    if (err.message.includes('UNIQUE constraint failed') || err.message.includes('duplicate key')) {
+      res.status(409).json({ error: 'Player name already exists' });
+    } else {
+      console.error('Error updating player:', err.message);
+      res.status(500).json({ error: 'Failed to update player' });
+    }
+  }
 });
 
 // DELETE player (only if user has access to this player)
-router.delete('/:id', authenticateToken, (req: any, res: Response) => {
+router.delete('/:id', authenticateToken, async (req: any, res: Response) => {
   const { id } = req.params;
   const sql = 'DELETE FROM players WHERE id = ?';
-  
-  db.run(sql, [id], function(this: any, err: Error | null) {
-    if (err) {
-      console.error('Error deleting player:', err.message);
-      res.status(500).json({ error: 'Failed to delete player' });
-    } else if (this.changes === 0) {
+
+  try {
+    const result = await db.run(sql, [id]);
+
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Player not found' });
     } else {
       res.json({ message: 'Player deleted successfully' });
     }
-  });
+  } catch (err: any) {
+    console.error('Error deleting player:', err.message);
+    res.status(500).json({ error: 'Failed to delete player' });
+  }
 });
 
 export default router;
