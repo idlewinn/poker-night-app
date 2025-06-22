@@ -149,7 +149,7 @@ router.get('/:id', (req: Request, res: Response): void => {
 });
 
 // POST create new seating chart
-router.post('/', (req: TypedRequest<CreateSeatingChartRequest>, res: Response): void => {
+router.post('/', async (req: TypedRequest<CreateSeatingChartRequest>, res: Response): Promise<void> => {
   const { sessionId, name, numberOfTables, playerIds } = req.body;
 
   if (!sessionId || !name || !numberOfTables || !playerIds || playerIds.length === 0) {
@@ -165,52 +165,38 @@ router.post('/', (req: TypedRequest<CreateSeatingChartRequest>, res: Response): 
   // Create the seating chart
   const insertChartSql = 'INSERT INTO seating_charts (session_id, name, number_of_tables) VALUES (?, ?, ?)';
 
-  db.run(insertChartSql, [sessionId, name, numberOfTables], function(this: any, err: Error | null) {
-    if (err) {
-      console.error('Error creating seating chart:', err.message);
-      res.status(500).json({ error: 'Failed to create seating chart' });
-    } else {
-      const chartId = this.lastID;
+  try {
+    const result = await db.run(insertChartSql, [sessionId, name, numberOfTables]);
+    const chartId = result.lastID;
 
-      // Distribute players to tables
-      const tables = distributePlayersToTables(playerIds, numberOfTables);
-
-      // Insert seating assignments
-      const insertAssignmentSql = 'INSERT INTO seating_assignments (seating_chart_id, player_id, table_number, seat_position) VALUES (?, ?, ?, ?)';
-      let assignmentsCompleted = 0;
-      let totalAssignments = 0;
-
-      tables.forEach((tablePlayerIds, tableIndex) => {
-        tablePlayerIds.forEach((playerId, seatIndex) => {
-          totalAssignments++;
-        });
-      });
-
-      if (totalAssignments === 0) {
-        fetchSeatingChartById(chartId, res);
-        return;
-      }
-
-      tables.forEach((tablePlayerIds, tableIndex) => {
-        tablePlayerIds.forEach((playerId, seatIndex) => {
-          db.run(insertAssignmentSql, [chartId, playerId, tableIndex + 1, seatIndex + 1], (assignErr: Error | null) => {
-            if (assignErr) {
-              console.error('Error creating seating assignment:', assignErr.message);
-            }
-
-            assignmentsCompleted++;
-            if (assignmentsCompleted === totalAssignments) {
-              fetchSeatingChartById(chartId, res);
-            }
-          });
-        });
-      });
+    if (!chartId) {
+      throw new Error('Failed to get chart ID');
     }
-  });
+
+    // Distribute players to tables
+    const tables = distributePlayersToTables(playerIds, numberOfTables);
+
+    // Insert seating assignments
+    const insertAssignmentSql = 'INSERT INTO seating_assignments (seating_chart_id, player_id, table_number, seat_position) VALUES (?, ?, ?, ?)';
+
+    // Create all assignments
+    for (let tableIndex = 0; tableIndex < tables.length; tableIndex++) {
+      const tablePlayerIds = tables[tableIndex];
+      for (let seatIndex = 0; seatIndex < tablePlayerIds.length; seatIndex++) {
+        const playerId = tablePlayerIds[seatIndex];
+        await db.run(insertAssignmentSql, [chartId, playerId, tableIndex + 1, seatIndex + 1]);
+      }
+    }
+
+    await fetchSeatingChartById(chartId, res);
+  } catch (err: any) {
+    console.error('Error creating seating chart:', err.message);
+    res.status(500).json({ error: 'Failed to create seating chart' });
+  }
 });
 
 // PUT update seating chart
-router.put('/:id', (req: TypedRequest<UpdateSeatingChartRequest>, res: Response): void => {
+router.put('/:id', async (req: TypedRequest<UpdateSeatingChartRequest>, res: Response): Promise<void> => {
   const { id } = req.params;
   const { name } = req.body;
 
@@ -226,34 +212,38 @@ router.put('/:id', (req: TypedRequest<UpdateSeatingChartRequest>, res: Response)
 
   const sql = 'UPDATE seating_charts SET name = ? WHERE id = ?';
 
-  db.run(sql, [name, id], function(this: any, err: Error | null) {
-    if (err) {
-      console.error('Error updating seating chart:', err.message);
-      res.status(500).json({ error: 'Failed to update seating chart' });
-    } else if (this.changes === 0) {
+  try {
+    const result = await db.run(sql, [name, id]);
+
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Seating chart not found' });
     } else {
-      fetchSeatingChartById(parseInt(id), res);
+      await fetchSeatingChartById(parseInt(id), res);
     }
-  });
+  } catch (err: any) {
+    console.error('Error updating seating chart:', err.message);
+    res.status(500).json({ error: 'Failed to update seating chart' });
+  }
 });
 
 // DELETE seating chart
-router.delete('/:id', (req: Request, res: Response): void => {
+router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
 
   const sql = 'DELETE FROM seating_charts WHERE id = ?';
 
-  db.run(sql, [id], function(this: any, err: Error | null) {
-    if (err) {
-      console.error('Error deleting seating chart:', err.message);
-      res.status(500).json({ error: 'Failed to delete seating chart' });
-    } else if (this.changes === 0) {
+  try {
+    const result = await db.run(sql, [id]);
+
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Seating chart not found' });
     } else {
       res.json({ message: 'Seating chart deleted successfully' });
     }
-  });
+  } catch (err: any) {
+    console.error('Error deleting seating chart:', err.message);
+    res.status(500).json({ error: 'Failed to delete seating chart' });
+  }
 });
 
 export default router;
