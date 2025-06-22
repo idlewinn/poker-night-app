@@ -64,41 +64,91 @@ class PostgreSQLAdapter implements DatabaseAdapter {
   private pool: any;
 
   constructor() {
-    this.pool = require('./postgres').default;
+    try {
+      this.pool = require('./postgres').default;
+      console.log('PostgreSQL adapter initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize PostgreSQL adapter:', error);
+      throw error;
+    }
   }
 
   async query(sql: string, params: any[] = []): Promise<any> {
-    const result = await this.pool.query(sql, params);
-    return result.rows;
+    try {
+      const result = await this.pool.query(sql, params);
+      return result.rows;
+    } catch (error) {
+      console.error('PostgreSQL query error:', error);
+      console.error('SQL:', sql);
+      console.error('Params:', params);
+      throw error;
+    }
   }
 
   async run(sql: string, params: any[] = []): Promise<{ lastID?: number; changes?: number }> {
-    // For INSERT statements, add RETURNING id if not present
-    let modifiedSql = sql;
-    if (sql.trim().toUpperCase().startsWith('INSERT') && !sql.toUpperCase().includes('RETURNING')) {
-      modifiedSql = sql + ' RETURNING id';
-    }
+    try {
+      // For INSERT statements, add RETURNING id if not present
+      let modifiedSql = sql;
+      if (sql.trim().toUpperCase().startsWith('INSERT') && !sql.toUpperCase().includes('RETURNING')) {
+        modifiedSql = sql + ' RETURNING id';
+      }
 
-    const result = await this.pool.query(modifiedSql, params);
-    
-    return {
-      lastID: result.rows[0]?.id,
-      changes: result.rowCount
-    };
+      const result = await this.pool.query(modifiedSql, params);
+
+      return {
+        lastID: result.rows[0]?.id,
+        changes: result.rowCount
+      };
+    } catch (error) {
+      console.error('PostgreSQL run error:', error);
+      console.error('SQL:', sql);
+      console.error('Params:', params);
+      throw error;
+    }
   }
 
   async get(sql: string, params: any[] = []): Promise<any> {
-    const result = await this.pool.query(sql, params);
-    return result.rows[0];
+    try {
+      const result = await this.pool.query(sql, params);
+      return result.rows[0];
+    } catch (error) {
+      console.error('PostgreSQL get error:', error);
+      console.error('SQL:', sql);
+      console.error('Params:', params);
+      throw error;
+    }
   }
 
   async all(sql: string, params: any[] = []): Promise<any[]> {
-    const result = await this.pool.query(sql, params);
-    return result.rows;
+    try {
+      const result = await this.pool.query(sql, params);
+      return result.rows;
+    } catch (error) {
+      console.error('PostgreSQL all error:', error);
+      console.error('SQL:', sql);
+      console.error('Params:', params);
+      throw error;
+    }
   }
 }
 
 // Export the appropriate adapter
-const adapter: DatabaseAdapter = usePostgres ? new PostgreSQLAdapter() : new SQLiteAdapter();
+let adapter: DatabaseAdapter;
+
+try {
+  if (usePostgres) {
+    console.log('Initializing PostgreSQL adapter...');
+    adapter = new PostgreSQLAdapter();
+    console.log('PostgreSQL adapter ready');
+  } else {
+    console.log('Initializing SQLite adapter...');
+    adapter = new SQLiteAdapter();
+    console.log('SQLite adapter ready');
+  }
+} catch (error) {
+  console.error('Failed to initialize database adapter:', error);
+  console.log('Falling back to SQLite adapter...');
+  adapter = new SQLiteAdapter();
+}
 
 export default adapter;

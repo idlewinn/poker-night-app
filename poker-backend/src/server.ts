@@ -106,6 +106,31 @@ app.get('/api/health', (req: Request, res: Response<HealthCheckResponse>) => {
   });
 });
 
+// Database connectivity test endpoint
+app.get('/api/test-db', async (req: Request, res: Response) => {
+  try {
+    const db = require('./database/index').default;
+
+    // Test basic query
+    const result = await db.get('SELECT 1 as test');
+
+    res.json({
+      status: 'Database connection successful',
+      database: process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite',
+      testResult: result,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('Database test failed:', error);
+    res.status(500).json({
+      status: 'Database connection failed',
+      error: error.message,
+      database: process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {
   res.status(200).json({

@@ -91,53 +91,78 @@ passport.deserializeUser(async (id: number, done) => {
 
 // Database helper functions
 async function findUserByGoogleId(googleId: string): Promise<User | null> {
-  const sql = 'SELECT * FROM users WHERE google_id = ?';
-  const row = await db.get(sql, [googleId]);
-  return row || null;
+  try {
+    const sql = 'SELECT * FROM users WHERE google_id = ?';
+    const row = await db.get(sql, [googleId]);
+    return row || null;
+  } catch (error) {
+    console.error('Error finding user by Google ID:', error);
+    throw error;
+  }
 }
 
 async function findUserById(id: number): Promise<User | null> {
-  const sql = 'SELECT * FROM users WHERE id = ?';
-  const row = await db.get(sql, [id]);
-  return row || null;
+  try {
+    const sql = 'SELECT * FROM users WHERE id = ?';
+    const row = await db.get(sql, [id]);
+    return row || null;
+  } catch (error) {
+    console.error('Error finding user by ID:', error);
+    throw error;
+  }
 }
 
 async function findUserByEmail(email: string): Promise<User | null> {
-  const sql = 'SELECT * FROM users WHERE email = ?';
-  const row = await db.get(sql, [email]);
-  return row || null;
+  try {
+    const sql = 'SELECT * FROM users WHERE email = ?';
+    const row = await db.get(sql, [email]);
+    return row || null;
+  } catch (error) {
+    console.error('Error finding user by email:', error);
+    throw error;
+  }
 }
 
 async function createUser(userData: Omit<User, 'id' | 'created_at' | 'last_login'>): Promise<User> {
-  const sql = `
-    INSERT INTO users (google_id, email, name, avatar_url)
-    VALUES (?, ?, ?, ?)
-  `;
+  try {
+    const sql = `
+      INSERT INTO users (google_id, email, name, avatar_url)
+      VALUES (?, ?, ?, ?)
+    `;
 
-  const result = await db.run(sql, [
-    userData.google_id,
-    userData.email,
-    userData.name,
-    userData.avatar_url || null
-  ]);
+    const result = await db.run(sql, [
+      userData.google_id,
+      userData.email,
+      userData.name,
+      userData.avatar_url || null
+    ]);
 
-  const userId = result.lastID;
-  if (!userId) {
-    throw new Error('Failed to get user ID');
+    const userId = result.lastID;
+    if (!userId) {
+      throw new Error('Failed to get user ID');
+    }
+
+    // Fetch the created user
+    const user = await findUserById(userId);
+    if (!user) {
+      throw new Error('Failed to fetch created user');
+    }
+
+    return user;
+  } catch (error) {
+    console.error('Error creating user:', error);
+    throw error;
   }
-
-  // Fetch the created user
-  const user = await findUserById(userId);
-  if (!user) {
-    throw new Error('Failed to fetch created user');
-  }
-
-  return user;
 }
 
 async function updateUserLastLogin(userId: number): Promise<void> {
-  const sql = 'UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?';
-  await db.run(sql, [userId]);
+  try {
+    const sql = 'UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?';
+    await db.run(sql, [userId]);
+  } catch (error) {
+    console.error('Error updating user last login:', error);
+    throw error;
+  }
 }
 
 // JWT helper functions
