@@ -189,7 +189,7 @@ router.post('/', authenticateToken, async (req: any, res: Response): Promise<voi
 });
 
 // PUT update session (only by owner)
-router.put('/:id', authenticateToken, requireSessionOwnership, (req: any, res: Response): void => {
+router.put('/:id', authenticateToken, requireSessionOwnership, async (req: any, res: Response): Promise<void> => {
   const { id } = req.params;
   const { name, scheduledDateTime, playerIds } = req.body;
 
@@ -203,56 +203,49 @@ router.put('/:id', authenticateToken, requireSessionOwnership, (req: any, res: R
   
   const sql = 'UPDATE sessions SET name = ?, scheduled_datetime = ? WHERE id = ?';
 
-  db.run(sql, [sessionName, scheduledDateTime, id], function(this: any, err: Error | null) {
-    if (err) {
-      console.error('Error updating session:', err.message);
-      res.status(500).json({ error: 'Failed to update session' });
-    } else if (this.changes === 0) {
+  try {
+    const result = await db.run(sql, [sessionName, scheduledDateTime, id]);
+
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Session not found' });
-    } else {
-      // Remove existing players and add new ones
-      db.run('DELETE FROM session_players WHERE session_id = ?', [id], (err: Error | null) => {
-        if (err) {
-          console.error('Error removing session players:', err.message);
-          res.status(500).json({ error: 'Failed to update session players' });
-        } else {
-          if (playerIds && playerIds.length > 0) {
-            addPlayersToSession(parseInt(id as string), playerIds, (err: Error | null) => {
-              if (err) {
-                console.error('Error adding players to session:', err.message);
-                res.status(500).json({ error: 'Session updated but failed to update players' });
-              } else {
-                fetchSessionById(parseInt(id as string), res);
-              }
-            });
-          } else {
-            fetchSessionById(parseInt(id as string), res);
-          }
-        }
-      });
+      return;
     }
-  });
+
+    // Remove existing players and add new ones
+    await db.run('DELETE FROM session_players WHERE session_id = ?', [id]);
+
+    if (playerIds && playerIds.length > 0) {
+      await addPlayersToSession(parseInt(id as string), playerIds);
+    }
+
+    await fetchSessionById(parseInt(id as string), res);
+  } catch (err: any) {
+    console.error('Error updating session:', err.message);
+    res.status(500).json({ error: 'Failed to update session' });
+  }
 });
 
 // DELETE session (only by owner)
-router.delete('/:id', authenticateToken, requireSessionOwnership, (req: any, res: Response) => {
+router.delete('/:id', authenticateToken, requireSessionOwnership, async (req: any, res: Response) => {
   const { id } = req.params;
   const sql = 'DELETE FROM sessions WHERE id = ?';
-  
-  db.run(sql, [id], function(this: any, err: Error | null) {
-    if (err) {
-      console.error('Error deleting session:', err.message);
-      res.status(500).json({ error: 'Failed to delete session' });
-    } else if (this.changes === 0) {
+
+  try {
+    const result = await db.run(sql, [id]);
+
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Session not found' });
     } else {
       res.json({ message: 'Session deleted successfully' });
     }
-  });
+  } catch (err: any) {
+    console.error('Error deleting session:', err.message);
+    res.status(500).json({ error: 'Failed to delete session' });
+  }
 });
 
 // PUT update player status in session
-router.put('/:sessionId/players/:playerId/status', (req: TypedRequest<UpdatePlayerStatusRequest>, res: Response): void => {
+router.put('/:sessionId/players/:playerId/status', async (req: TypedRequest<UpdatePlayerStatusRequest>, res: Response): Promise<void> => {
   const { sessionId, playerId } = req.params;
   const { status } = req.body;
 
@@ -277,20 +270,22 @@ router.put('/:sessionId/players/:playerId/status', (req: TypedRequest<UpdatePlay
 
   const sql = 'UPDATE session_players SET status = ? WHERE session_id = ? AND player_id = ?';
 
-  db.run(sql, [status, sessionIdNum, playerIdNum], function(this: any, err: Error | null) {
-    if (err) {
-      console.error('Error updating player status:', err.message);
-      res.status(500).json({ error: 'Failed to update player status' });
-    } else if (this.changes === 0) {
+  try {
+    const result = await db.run(sql, [status, sessionIdNum, playerIdNum]);
+
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Player not found in session' });
     } else {
       res.json({ message: 'Player status updated successfully', status });
     }
-  });
+  } catch (err: any) {
+    console.error('Error updating player status:', err.message);
+    res.status(500).json({ error: 'Failed to update player status' });
+  }
 });
 
 // PUT update player financials in session
-router.put('/:sessionId/players/:playerId/financials', (req: TypedRequest<UpdatePlayerFinancialsRequest>, res: Response): void => {
+router.put('/:sessionId/players/:playerId/financials', async (req: TypedRequest<UpdatePlayerFinancialsRequest>, res: Response): Promise<void> => {
   const { sessionId, playerId } = req.params;
   const { buy_in, cash_out } = req.body;
 
@@ -332,11 +327,10 @@ router.put('/:sessionId/players/:playerId/financials', (req: TypedRequest<Update
 
   const sql = `UPDATE session_players SET ${updates.join(', ')} WHERE session_id = ? AND player_id = ?`;
 
-  db.run(sql, params, function(this: any, err: Error | null) {
-    if (err) {
-      console.error('Error updating player financials:', err.message);
-      res.status(500).json({ error: 'Failed to update player financials' });
-    } else if (this.changes === 0) {
+  try {
+    const result = await db.run(sql, params);
+
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Player not found in session' });
     } else {
       res.json({
@@ -345,11 +339,14 @@ router.put('/:sessionId/players/:playerId/financials', (req: TypedRequest<Update
         cash_out: cash_out || null
       });
     }
-  });
+  } catch (err: any) {
+    console.error('Error updating player financials:', err.message);
+    res.status(500).json({ error: 'Failed to update player financials' });
+  }
 });
 
 // POST add player to session (or update existing player status)
-router.post('/:sessionId/players/:playerId', (req: TypedRequest<UpdatePlayerStatusRequest>, res: Response): void => {
+router.post('/:sessionId/players/:playerId', async (req: TypedRequest<UpdatePlayerStatusRequest>, res: Response): Promise<void> => {
   const { sessionId, playerId } = req.params;
   const { status } = req.body;
 
@@ -375,37 +372,24 @@ router.post('/:sessionId/players/:playerId', (req: TypedRequest<UpdatePlayerStat
   // First check if player already exists in session
   const checkSql = 'SELECT id FROM session_players WHERE session_id = ? AND player_id = ?';
 
-  db.get(checkSql, [sessionIdNum, playerIdNum], (err: Error | null, row: any) => {
-    if (err) {
-      console.error('Error checking player existence:', err.message);
-      res.status(500).json({ error: 'Failed to check player status' });
-      return;
-    }
+  try {
+    const row = await db.get(checkSql, [sessionIdNum, playerIdNum]);
 
     if (row) {
       // Player exists, update their status
       const updateSql = 'UPDATE session_players SET status = ? WHERE session_id = ? AND player_id = ?';
-      db.run(updateSql, [status, sessionIdNum, playerIdNum], function(this: any, err: Error | null) {
-        if (err) {
-          console.error('Error updating player status:', err.message);
-          res.status(500).json({ error: 'Failed to update player status' });
-        } else {
-          res.json({ message: 'Player status updated successfully', status, action: 'updated' });
-        }
-      });
+      await db.run(updateSql, [status, sessionIdNum, playerIdNum]);
+      res.json({ message: 'Player status updated successfully', status, action: 'updated' });
     } else {
       // Player doesn't exist, add them with the specified status
       const insertSql = 'INSERT INTO session_players (session_id, player_id, status, buy_in, cash_out) VALUES (?, ?, ?, 0, 0)';
-      db.run(insertSql, [sessionIdNum, playerIdNum, status], function(this: any, err: Error | null) {
-        if (err) {
-          console.error('Error adding player to session:', err.message);
-          res.status(500).json({ error: 'Failed to add player to session' });
-        } else {
-          res.json({ message: 'Player added to session successfully', status, action: 'added' });
-        }
-      });
+      await db.run(insertSql, [sessionIdNum, playerIdNum, status]);
+      res.json({ message: 'Player added to session successfully', status, action: 'added' });
     }
-  });
+  } catch (err: any) {
+    console.error('Error managing player in session:', err.message);
+    res.status(500).json({ error: 'Failed to manage player in session' });
+  }
 });
 
 // Helper function to add players to session with default "Invited" status

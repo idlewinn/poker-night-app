@@ -40,9 +40,9 @@ function distributePlayersToTables(playerIds: number[], numberOfTables: number):
 }
 
 // Helper function to fetch seating chart with assignments
-function fetchSeatingChartById(chartId: number, res: Response): void {
+async function fetchSeatingChartById(chartId: number, res: Response): Promise<void> {
   const sql = `
-    SELECT 
+    SELECT
       sc.*,
       GROUP_CONCAT(sa.id) as assignment_ids,
       GROUP_CONCAT(sa.player_id) as player_ids,
@@ -56,11 +56,9 @@ function fetchSeatingChartById(chartId: number, res: Response): void {
     GROUP BY sc.id
   `;
 
-  db.get(sql, [chartId], (err: Error | null, row: any) => {
-    if (err) {
-      console.error('Error fetching seating chart:', err.message);
-      res.status(500).json({ error: 'Failed to fetch seating chart' });
-    } else if (row) {
+  try {
+    const row = await db.get(sql, [chartId]);
+    if (row) {
       const seatingChart: SeatingChart = {
         id: row.id,
         session_id: row.session_id,
@@ -85,11 +83,14 @@ function fetchSeatingChartById(chartId: number, res: Response): void {
     } else {
       res.status(404).json({ error: 'Seating chart not found' });
     }
-  });
+  } catch (err: any) {
+    console.error('Error fetching seating chart:', err.message);
+    res.status(500).json({ error: 'Failed to fetch seating chart' });
+  }
 }
 
 // GET all seating charts for a session
-router.get('/session/:sessionId', (req: Request, res: Response): void => {
+router.get('/session/:sessionId', async (req: Request, res: Response): Promise<void> => {
   const { sessionId } = req.params;
 
   const sql = `
@@ -108,34 +109,33 @@ router.get('/session/:sessionId', (req: Request, res: Response): void => {
     ORDER BY sc.created_at DESC
   `;
 
-  db.all(sql, [sessionId], (err: Error | null, rows: any[]) => {
-    if (err) {
-      console.error('Error fetching seating charts:', err.message);
-      res.status(500).json({ error: 'Failed to fetch seating charts' });
-    } else {
-      const seatingCharts: SeatingChart[] = rows.map(row => ({
-        id: row.id,
-        session_id: row.session_id,
-        name: row.name,
-        number_of_tables: row.number_of_tables,
+  try {
+    const rows = await db.all(sql, [sessionId]);
+    const seatingCharts: SeatingChart[] = rows.map(row => ({
+      id: row.id,
+      session_id: row.session_id,
+      name: row.name,
+      number_of_tables: row.number_of_tables,
+      created_at: row.created_at,
+      assignments: row.assignment_ids ? row.assignment_ids.split(',').map((id: string, index: number) => ({
+        id: parseInt(id),
+        seating_chart_id: row.id,
+        player_id: parseInt(row.player_ids.split(',')[index]),
+        table_number: parseInt(row.table_numbers.split(',')[index]),
+        seat_position: parseInt(row.seat_positions.split(',')[index]),
         created_at: row.created_at,
-        assignments: row.assignment_ids ? row.assignment_ids.split(',').map((id: string, index: number) => ({
-          id: parseInt(id),
-          seating_chart_id: row.id,
-          player_id: parseInt(row.player_ids.split(',')[index]),
-          table_number: parseInt(row.table_numbers.split(',')[index]),
-          seat_position: parseInt(row.seat_positions.split(',')[index]),
-          created_at: row.created_at,
-          player: {
-            id: parseInt(row.player_ids.split(',')[index]),
-            name: row.player_names.split(',')[index],
-            created_at: row.created_at
-          }
-        })) : []
-      }));
-      res.json(seatingCharts);
-    }
-  });
+        player: {
+          id: parseInt(row.player_ids.split(',')[index]),
+          name: row.player_names.split(',')[index],
+          created_at: row.created_at
+        }
+      })) : []
+    }));
+    res.json(seatingCharts);
+  } catch (err: any) {
+    console.error('Error fetching seating charts:', err.message);
+    res.status(500).json({ error: 'Failed to fetch seating charts' });
+  }
 });
 
 // GET seating chart by ID
