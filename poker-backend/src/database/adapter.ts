@@ -94,13 +94,13 @@ class PostgreSQLAdapter implements DatabaseAdapter {
   }
 
   async run(sql: string, params: any[] = []): Promise<{ lastID?: number; changes?: number }> {
-    try {
-      // For INSERT statements, add RETURNING id if not present
-      let modifiedSql = sql;
-      if (sql.trim().toUpperCase().startsWith('INSERT') && !sql.toUpperCase().includes('RETURNING')) {
-        modifiedSql = sql + ' RETURNING id';
-      }
+    // For INSERT statements, add RETURNING id if not present
+    let modifiedSql = sql;
+    if (sql.trim().toUpperCase().startsWith('INSERT') && !sql.toUpperCase().includes('RETURNING')) {
+      modifiedSql = sql + ' RETURNING id';
+    }
 
+    try {
       const convertedSql = this.convertSqlPlaceholders(modifiedSql);
       const result = await this.pool.query(convertedSql, params);
 
