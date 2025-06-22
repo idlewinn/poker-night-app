@@ -12,6 +12,20 @@ import { HealthCheckResponse, ApiError } from './types/index';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy (required for Railway/Heroku/etc)
+app.set('trust proxy', 1);
+
+// Force HTTPS in production
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.header('x-forwarded-proto') !== 'https') {
+      res.redirect(`https://${req.header('host')}${req.url}`);
+    } else {
+      next();
+    }
+  });
+}
+
 // Middleware
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',

@@ -18,10 +18,22 @@ console.log('Auth config loaded:', {
 
 // Configure Google OAuth Strategy (only if we have real credentials)
 if (!GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID_HERE') && !GOOGLE_CLIENT_SECRET.includes('YOUR_GOOGLE_CLIENT_SECRET_HERE')) {
+  // Determine the callback URL based on environment
+  const getCallbackURL = () => {
+    if (process.env.NODE_ENV === 'production') {
+      // In production, construct the full HTTPS URL
+      const baseUrl = process.env.RAILWAY_PUBLIC_DOMAIN
+        ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+        : 'https://poker-night-app-production.up.railway.app'; // fallback to your actual domain
+      return `${baseUrl}/api/auth/google/callback`;
+    }
+    return "/api/auth/google/callback"; // relative URL for development
+  };
+
   passport.use(new GoogleStrategy({
     clientID: GOOGLE_CLIENT_ID,
     clientSecret: GOOGLE_CLIENT_SECRET,
-    callbackURL: "/api/auth/google/callback"
+    callbackURL: getCallbackURL()
   }, async (accessToken, refreshToken, profile, done) => {
   try {
     const googleId = profile.id;
