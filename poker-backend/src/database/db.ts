@@ -1,8 +1,23 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
+import fs from 'fs';
 
-// Create database directory if it doesn't exist
-const dbPath = path.join(__dirname, '../../database/poker.db');
+// Database file path - use /tmp for Railway production
+const getDatabasePath = () => {
+  if (process.env.NODE_ENV === 'production') {
+    // Railway: use /tmp directory which is writable
+    return '/tmp/poker.db';
+  } else {
+    // Development: use local database directory
+    const dbDir = path.join(__dirname, '../../database');
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
+    return path.join(dbDir, 'poker.db');
+  }
+};
+
+const dbPath = getDatabasePath();
 
 // Create database connection
 const db = new sqlite3.Database(dbPath, (err: Error | null) => {

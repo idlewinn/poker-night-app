@@ -24,7 +24,7 @@ if (!GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID_HERE') && !GOOGLE_CLIENT_S
       // In production, construct the full HTTPS URL
       const baseUrl = process.env.RAILWAY_PUBLIC_DOMAIN
         ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
-        : 'https://poker-night-app-production.up.railway.app'; // fallback to your actual domain
+        : 'https://poker-night-app-production.up.railway.app'; // Replace with your actual Railway domain
       return `${baseUrl}/api/auth/google/callback`;
     }
     return "/api/auth/google/callback"; // relative URL for development
