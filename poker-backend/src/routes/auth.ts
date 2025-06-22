@@ -17,26 +17,34 @@ router.get('/google', passport.authenticate('google', {
 }));
 
 // Google OAuth callback
-router.get('/google/callback', 
-  passport.authenticate('google', { session: false }),
-  (req: Request, res: Response) => {
-    try {
-      const user = req.user as User;
-      
-      if (!user) {
-        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}?error=auth_failed`);
-        return;
+router.get('/google/callback',
+  (req: Request, res: Response, next: any) => {
+    console.log('OAuth callback received');
+    passport.authenticate('google', { session: false }, (err: any, user: User | false, info: any) => {
+      console.log('OAuth authenticate result:', { err, user: user ? 'User found' : 'No user', info });
+
+      if (err) {
+        console.error('OAuth authentication error:', err);
+        return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}?error=auth_failed`);
       }
 
-      // Generate JWT token
-      const token = generateJWT(user);
-      
-      // Redirect to frontend with token
-      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}?token=${token}`);
-    } catch (error) {
-      console.error('OAuth callback error:', error);
-      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}?error=auth_failed`);
-    }
+      if (!user) {
+        console.error('OAuth authentication failed: No user returned');
+        return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}?error=auth_failed`);
+      }
+
+      try {
+        // Generate JWT token
+        const token = generateJWT(user);
+        console.log('JWT token generated successfully');
+
+        // Redirect to frontend with token
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}?token=${token}`);
+      } catch (error) {
+        console.error('OAuth callback error:', error);
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}?error=auth_failed`);
+      }
+    })(req, res, next);
   }
 );
 

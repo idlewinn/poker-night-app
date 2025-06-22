@@ -36,24 +36,32 @@ if (!GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID_HERE') && !GOOGLE_CLIENT_S
     callbackURL: getCallbackURL()
   }, async (accessToken, refreshToken, profile, done) => {
   try {
+    console.log('Google OAuth strategy called');
+    console.log('Profile received:', { id: profile.id, email: profile.emails?.[0]?.value, name: profile.displayName });
+
     const googleId = profile.id;
     const email = profile.emails?.[0]?.value;
     const name = profile.displayName;
     const avatarUrl = profile.photos?.[0]?.value;
 
     if (!email) {
+      console.error('No email found in Google profile');
       return done(new Error('No email found in Google profile'), undefined);
     }
 
+    console.log('Looking for existing user with Google ID:', googleId);
     // Check if user already exists
     const existingUser = await findUserByGoogleId(googleId);
-    
+
     if (existingUser) {
+      console.log('Existing user found:', existingUser.id);
       // Update last login
       await updateUserLastLogin(existingUser.id);
+      console.log('Last login updated');
       return done(null, existingUser);
     }
 
+    console.log('Creating new user');
     // Create new user with default 'player' role
     const newUser = await createUser({
       google_id: googleId,
@@ -62,6 +70,7 @@ if (!GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID_HERE') && !GOOGLE_CLIENT_S
       avatar_url: avatarUrl || null
     });
 
+    console.log('New user created:', newUser.id);
     return done(null, newUser);
   } catch (error) {
     console.error('Error in Google OAuth strategy:', error);
