@@ -79,15 +79,22 @@ class PostgreSQLAdapter implements DatabaseAdapter {
     return sql.replace(/\?/g, () => `$${paramIndex++}`);
   }
 
+  // Convert SQLite functions to PostgreSQL equivalents
+  private convertSqlFunctions(sql: string): string {
+    // Convert GROUP_CONCAT to STRING_AGG for PostgreSQL
+    return sql.replace(/GROUP_CONCAT\(([^)]+)\)/g, 'STRING_AGG($1, \',\')');
+  }
+
   async query(sql: string, params: any[] = []): Promise<any> {
     try {
-      const convertedSql = this.convertSqlPlaceholders(sql);
+      let convertedSql = this.convertSqlFunctions(sql);
+      convertedSql = this.convertSqlPlaceholders(convertedSql);
       const result = await this.pool.query(convertedSql, params);
       return result.rows;
     } catch (error) {
       console.error('PostgreSQL query error:', error);
       console.error('Original SQL:', sql);
-      console.error('Converted SQL:', this.convertSqlPlaceholders(sql));
+      console.error('Converted SQL:', this.convertSqlPlaceholders(this.convertSqlFunctions(sql)));
       console.error('Params:', params);
       throw error;
     }
@@ -101,7 +108,8 @@ class PostgreSQLAdapter implements DatabaseAdapter {
     }
 
     try {
-      const convertedSql = this.convertSqlPlaceholders(modifiedSql);
+      let convertedSql = this.convertSqlFunctions(modifiedSql);
+      convertedSql = this.convertSqlPlaceholders(convertedSql);
       const result = await this.pool.query(convertedSql, params);
 
       return {
@@ -120,13 +128,14 @@ class PostgreSQLAdapter implements DatabaseAdapter {
 
   async get(sql: string, params: any[] = []): Promise<any> {
     try {
-      const convertedSql = this.convertSqlPlaceholders(sql);
+      let convertedSql = this.convertSqlFunctions(sql);
+      convertedSql = this.convertSqlPlaceholders(convertedSql);
       const result = await this.pool.query(convertedSql, params);
       return result.rows[0];
     } catch (error) {
       console.error('PostgreSQL get error:', error);
       console.error('Original SQL:', sql);
-      console.error('Converted SQL:', this.convertSqlPlaceholders(sql));
+      console.error('Converted SQL:', this.convertSqlPlaceholders(this.convertSqlFunctions(sql)));
       console.error('Params:', params);
       throw error;
     }
@@ -134,13 +143,14 @@ class PostgreSQLAdapter implements DatabaseAdapter {
 
   async all(sql: string, params: any[] = []): Promise<any[]> {
     try {
-      const convertedSql = this.convertSqlPlaceholders(sql);
+      let convertedSql = this.convertSqlFunctions(sql);
+      convertedSql = this.convertSqlPlaceholders(convertedSql);
       const result = await this.pool.query(convertedSql, params);
       return result.rows;
     } catch (error) {
       console.error('PostgreSQL all error:', error);
       console.error('Original SQL:', sql);
-      console.error('Converted SQL:', this.convertSqlPlaceholders(sql));
+      console.error('Converted SQL:', this.convertSqlPlaceholders(this.convertSqlFunctions(sql)));
       console.error('Params:', params);
       throw error;
     }
