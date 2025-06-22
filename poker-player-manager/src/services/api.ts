@@ -152,5 +152,33 @@ export const seatingChartsApi = {
     }),
 };
 
+// General API for custom requests
+export const api = {
+  get: <T>(endpoint: string): Promise<T> => apiRequest<T>(endpoint),
+  post: <T>(endpoint: string, data?: any): Promise<T> => {
+    const options: RequestInit = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    };
+    if (data) {
+      options.body = JSON.stringify(data);
+    }
+    return apiRequest<T>(endpoint, options);
+  },
+  put: <T>(endpoint: string, data?: any): Promise<T> => {
+    const options: RequestInit = {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+    };
+    if (data) {
+      options.body = JSON.stringify(data);
+    }
+    return apiRequest<T>(endpoint, options);
+  },
+  delete: <T>(endpoint: string): Promise<T> => apiRequest<T>(endpoint, {
+    method: 'DELETE',
+  }),
+};
+
 // Health check
 export const healthCheck = (): Promise<HealthCheckResponse> => apiRequest<HealthCheckResponse>('/health');
