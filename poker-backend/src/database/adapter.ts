@@ -81,8 +81,24 @@ class PostgreSQLAdapter implements DatabaseAdapter {
 
   // Convert SQLite functions to PostgreSQL equivalents
   private convertSqlFunctions(sql: string): string {
-    // Convert GROUP_CONCAT to STRING_AGG for PostgreSQL
-    return sql.replace(/GROUP_CONCAT\(([^)]+)\)/g, 'STRING_AGG($1, \',\')');
+    let convertedSql = sql;
+
+    // Convert GROUP_CONCAT to STRING_AGG for PostgreSQL with type casting
+    convertedSql = convertedSql.replace(/GROUP_CONCAT\(([^)]+)\)/g, (_match, field) => {
+      // Cast to text for PostgreSQL compatibility
+      return `STRING_AGG(${field}::text, ',')`;
+    });
+
+    // Convert INSERT OR IGNORE to INSERT ... ON CONFLICT DO NOTHING for PostgreSQL
+    convertedSql = convertedSql.replace(/INSERT\s+OR\s+IGNORE\s+INTO/gi, 'INSERT INTO');
+
+    // Add ON CONFLICT DO NOTHING if it's an INSERT OR IGNORE that was converted
+    if (sql.match(/INSERT\s+OR\s+IGNORE\s+INTO/gi) && !convertedSql.includes('ON CONFLICT')) {
+      // Find the VALUES clause and add ON CONFLICT after it
+      convertedSql = convertedSql.replace(/(\)\s*VALUES\s*\([^)]+\))/gi, '$1 ON CONFLICT DO NOTHING');
+    }
+
+    return convertedSql;
   }
 
   async query(sql: string, params: any[] = []): Promise<any> {
