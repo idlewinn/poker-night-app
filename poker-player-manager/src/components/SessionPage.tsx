@@ -25,20 +25,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Calendar,
   TrendingDown,
-  Save,
-  X,
+  TrendingUp,
   Plus,
   User,
   ArrowLeft,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Users
 } from 'lucide-react';
-import { Session, Player, SessionPlayer } from '../types/index';
-import { sessionsApi, playersApi } from '../services/api';
-import PlayerStatusBadge from './PlayerStatusBadge';
+import { Session, Player, SessionPlayer, SeatingChart, CreateSeatingChartRequest } from '../types/index';
+import { sessionsApi, playersApi, seatingChartsApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { getStatusPriority } from '../utils/playerSorting';
+import SeatingChartModal from './SeatingChartModal';
+import SeatingChartList from './SeatingChartList';
+import UserMenu from './UserMenu';
 
 interface SessionPageParams extends Record<string, string | undefined> {
   sessionId: string;
@@ -53,6 +58,7 @@ interface EditingFinancials {
 function SessionPage(): React.JSX.Element {
   const { sessionId } = useParams<SessionPageParams>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [session, setSession] = useState<Session | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -60,6 +66,24 @@ function SessionPage(): React.JSX.Element {
   const [editingFinancials, setEditingFinancials] = useState<EditingFinancials | null>(null);
   const [updating, setUpdating] = useState<boolean>(false);
   const [addPlayerModalOpen, setAddPlayerModalOpen] = useState<boolean>(false);
+  const [seatingCharts, setSeatingCharts] = useState<SeatingChart[]>([]);
+  const [seatingChartModalOpen, setSeatingChartModalOpen] = useState<boolean>(false);
+  const [generatingChart, setGeneratingChart] = useState<boolean>(false);
+  const [deletingChart, setDeletingChart] = useState<boolean>(false);
+
+  // Check if current user is the session owner
+  const isSessionOwner = (): boolean => {
+    return user?.id === session?.createdBy;
+  };
+
+  // Check if session is currently active (within last 8 hours)
+  const isSessionActive = (): boolean => {
+    if (!session?.scheduledDateTime) return false;
+    const sessionDate = new Date(session.scheduledDateTime);
+    const now = new Date();
+    const eightHoursAgo = new Date(now.getTime() - 8 * 60 * 60 * 1000);
+    return sessionDate >= eightHoursAgo && sessionDate <= now;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -71,13 +95,15 @@ function SessionPage(): React.JSX.Element {
 
       try {
         setLoading(true);
-        const [sessionData, playersData] = await Promise.all([
+        const [sessionData, playersData, seatingChartsData] = await Promise.all([
           sessionsApi.getById(parseInt(sessionId)),
-          playersApi.getAll()
+          playersApi.getAll(),
+          seatingChartsApi.getBySessionId(parseInt(sessionId))
         ]);
-        
+
         setSession(sessionData);
         setPlayers(playersData);
+        setSeatingCharts(seatingChartsData);
       } catch (err) {
         console.error('Failed to fetch session data:', err);
         setError('Failed to load session data');
@@ -102,21 +128,22 @@ function SessionPage(): React.JSX.Element {
     });
   };
 
-  const handleSaveFinancials = async () => {
-    if (!editingFinancials || !session) return;
+  const handleSaveFinancials = async (overrideFinancials?: EditingFinancials) => {
+    const financialsToSave = overrideFinancials || editingFinancials;
+    if (!financialsToSave || !session) return;
 
     try {
       setUpdating(true);
-      const buy_in = parseFloat(editingFinancials.buy_in) || 0;
-      const cash_out = editingFinancials.cash_out === '' ? 0 : parseFloat(editingFinancials.cash_out) || 0;
+      const buy_in = parseFloat(financialsToSave.buy_in) || 0;
+      const cash_out = financialsToSave.cash_out === '' ? 0 : parseFloat(financialsToSave.cash_out) || 0;
 
       // Update via API
-      await sessionsApi.updatePlayerFinancials(session.id, editingFinancials.playerId, { buy_in, cash_out });
+      await sessionsApi.updatePlayerFinancials(session.id, financialsToSave.playerId, { buy_in, cash_out });
 
       // Update local state
       if (session.players) {
         const updatedPlayers = session.players.map(sp =>
-          sp.player_id === editingFinancials.playerId
+          sp.player_id === financialsToSave.playerId
             ? { ...sp, buy_in, cash_out }
             : sp
         );
@@ -132,9 +159,12 @@ function SessionPage(): React.JSX.Element {
     }
   };
 
-  const handleCancelEdit = () => {
-    setEditingFinancials(null);
+  const handleFinancialInputBlur = async () => {
+    // Auto-save when user taps away from input
+    await handleSaveFinancials();
   };
+
+
 
   const handleAddPlayer = async (playerId: number): Promise<void> => {
     if (!session) return;
@@ -151,6 +181,33 @@ function SessionPage(): React.JSX.Element {
       console.error('Failed to add player:', err);
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleGenerateSeatingChart = async (request: CreateSeatingChartRequest): Promise<void> => {
+    try {
+      setGeneratingChart(true);
+      const newChart = await seatingChartsApi.create(request);
+      setSeatingCharts(prev => [newChart, ...prev]);
+      setSeatingChartModalOpen(false);
+    } catch (err) {
+      console.error('Failed to generate seating chart:', err);
+      setError('Failed to generate seating chart');
+    } finally {
+      setGeneratingChart(false);
+    }
+  };
+
+  const handleDeleteSeatingChart = async (chartId: number): Promise<void> => {
+    try {
+      setDeletingChart(true);
+      await seatingChartsApi.delete(chartId);
+      setSeatingCharts(prev => prev.filter(chart => chart.id !== chartId));
+    } catch (err) {
+      console.error('Failed to delete seating chart:', err);
+      setError('Failed to delete seating chart');
+    } finally {
+      setDeletingChart(false);
     }
   };
 
@@ -197,10 +254,14 @@ function SessionPage(): React.JSX.Element {
 
 
 
+
+
   const getSessionPlayers = (): SessionPlayer[] => {
     if (!session?.players) return [];
-    // Only show players with "In" status
-    return session.players.filter(player => player.status === 'In');
+    // Only show players with "In" status, sorted by status priority
+    return session.players
+      .filter(player => player.status === 'In')
+      .sort((a, b) => getStatusPriority(a.status) - getStatusPriority(b.status));
   };
 
   const getAvailablePlayersToAdd = (): Player[] => {
@@ -254,19 +315,34 @@ function SessionPage(): React.JSX.Element {
       {/* Session Header */}
       <Card className="mb-6">
         <div className="p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/sessions')}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <Calendar className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-gray-900">
-              {session.name || 'Poker Night'}
-            </h1>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/sessions')}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <Calendar className="h-6 w-6 text-primary" />
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {session.name || 'Poker Night'}
+                </h1>
+                {isSessionActive() && (
+                  <Badge className="text-xs bg-green-600 text-white animate-pulse">
+                    Active Session
+                  </Badge>
+                )}
+                {!isSessionOwner() && (
+                  <Badge variant="secondary" className="text-xs">
+                    Read-Only
+                  </Badge>
+                )}
+              </div>
+            </div>
+            <UserMenu />
           </div>
 
           {session.scheduledDateTime && (
@@ -274,111 +350,112 @@ function SessionPage(): React.JSX.Element {
               {formatScheduledDate(session.scheduledDateTime)}
             </h2>
           )}
-
-          <p className="text-sm text-gray-500 ml-14">
-            Session ID: {session.id} • Created {new Date(session.createdAt).toLocaleDateString()}
-          </p>
         </div>
       </Card>
 
-      {/* Financial Summary */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <Card>
-          <CardContent className="text-center py-6">
-            <TrendingDown className="h-8 w-8 text-red-600 mx-auto mb-3" />
-            <div className="text-2xl font-bold text-red-600">
-              {formatCurrency(totalBuyIn)}
-            </div>
-            <div className="text-sm text-gray-600">
-              Total Buy-In
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="text-center py-6">
-            <User className="h-8 w-8 text-primary mx-auto mb-3" />
-            <div className="text-2xl font-bold text-primary">
-              {sessionPlayers.length}
-            </div>
-            <div className="text-sm text-gray-600">
-              Players
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Player Financial Details */}
-      <Card className="overflow-hidden">
-        <div className="p-4 bg-primary text-primary-foreground">
-          <h3 className="text-lg font-bold">
+      {/* Tabs */}
+      <Tabs defaultValue="winnings" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="winnings" className="flex items-center gap-2">
+            <TrendingDown className="h-4 w-4" />
             Winnings
-          </h3>
-        </div>
+          </TabsTrigger>
+          <TabsTrigger value="seating" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Seating
+          </TabsTrigger>
+        </TabsList>
 
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="py-3 text-sm font-semibold">
-                  Player
-                </TableHead>
-                <TableHead className="py-3 text-sm font-semibold hidden sm:table-cell">
-                  Status
-                </TableHead>
-                <TableHead className="py-3 text-sm font-semibold text-right">
-                  Buy-In
-                </TableHead>
-                <TableHead className="py-3 text-sm font-semibold text-right">
-                  Cash-Out
-                </TableHead>
-                <TableHead className="py-3 text-sm font-semibold text-right">
-                  Net
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sessionPlayers.map((sessionPlayer) => {
-                const player = sessionPlayer.player;
-                const netResult = sessionPlayer.cash_out - sessionPlayer.buy_in;
-                const isEditing = editingFinancials?.playerId === sessionPlayer.player_id;
+        <TabsContent value="winnings" className="mt-0">
+          {/* Financial Summary */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <Card>
+              <CardContent className="text-center py-6">
+                <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-3" />
+                <div className="text-2xl font-bold text-green-600">
+                  {formatCurrency(totalBuyIn)}
+                </div>
+                <div className="text-sm text-gray-600">
+                  Total Buy-In
+                </div>
+              </CardContent>
+            </Card>
 
-                return (
-                  <TableRow
-                    key={sessionPlayer.player_id}
-                    className={`
-                      ${!editingFinancials ? 'cursor-pointer hover:bg-gray-50' : ''}
-                      ${editingFinancials?.playerId === sessionPlayer.player_id ? 'bg-blue-50 border-l-4 border-blue-500' : ''}
-                      ${editingFinancials && editingFinancials.playerId !== sessionPlayer.player_id ? 'opacity-50' : ''}
-                    `}
-                    onClick={() => !editingFinancials && handleEditFinancials(sessionPlayer)}
-                  >
-                    <TableCell className="py-3">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {player?.name || 'Unknown Player'}
-                        </div>
-                        {player?.email && (
-                          <div className="text-xs text-gray-600 hidden sm:block">
-                            {player.email}
+            <Card>
+              <CardContent className="text-center py-6">
+                <User className="h-8 w-8 text-primary mx-auto mb-3" />
+                <div className="text-2xl font-bold text-primary">
+                  {sessionPlayers.length}
+                </div>
+                <div className="text-sm text-gray-600">
+                  Players
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Player Financial Details */}
+          <Card className="overflow-hidden">
+            <div className="p-4 bg-primary text-primary-foreground">
+              <h3 className="text-lg font-bold">
+                Winnings
+              </h3>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="py-3 text-sm font-semibold">
+                      Player
+                    </TableHead>
+                    <TableHead className="py-3 text-sm font-semibold text-right">
+                      Buy-In
+                    </TableHead>
+                    <TableHead className="py-3 text-sm font-semibold text-right">
+                      Cash-Out
+                    </TableHead>
+                    <TableHead className="py-3 text-sm font-semibold text-right">
+                      Net
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sessionPlayers.map((sessionPlayer) => {
+                    const player = sessionPlayer.player;
+                    const netResult = sessionPlayer.cash_out - sessionPlayer.buy_in;
+                    const isEditing = editingFinancials?.playerId === sessionPlayer.player_id;
+
+                    return (
+                      <TableRow
+                        key={sessionPlayer.player_id}
+                        className={`
+                          ${!editingFinancials && isSessionOwner() ? 'cursor-pointer hover:bg-gray-50' : ''}
+                          ${editingFinancials?.playerId === sessionPlayer.player_id ? 'bg-blue-50 border-l-4 border-blue-500' : ''}
+                          ${editingFinancials && editingFinancials.playerId !== sessionPlayer.player_id ? 'opacity-50' : ''}
+                        `}
+                        onClick={() => !editingFinancials && isSessionOwner() && handleEditFinancials(sessionPlayer)}
+                      >
+                        <TableCell className="py-3">
+                          <div className="text-sm font-medium text-gray-900">
+                            {player?.name || 'Unknown Player'}
                           </div>
-                        )}
-                      </div>
-                    </TableCell>
+                        </TableCell>
 
-                    <TableCell className="py-3 hidden sm:table-cell">
-                      <PlayerStatusBadge status={sessionPlayer.status} />
-                    </TableCell>
-
-                    <TableCell className="py-3 text-right">
+                        <TableCell className="py-3 text-right">
                       {isEditing ? (
                         <div onClick={(e) => e.stopPropagation()}>
                           <Select
                             value={editingFinancials.buy_in.toString()}
-                            onValueChange={(value) => setEditingFinancials({
-                              ...editingFinancials,
-                              buy_in: value
-                            })}
+                            onValueChange={async (value) => {
+                              const updatedFinancials = {
+                                ...editingFinancials,
+                                buy_in: value
+                              };
+                              setEditingFinancials(updatedFinancials);
+                              // Auto-save with the updated values immediately
+                              await handleSaveFinancials(updatedFinancials);
+                            }}
                           >
                             <SelectTrigger className="w-24 h-8 text-sm">
                               <SelectValue />
@@ -412,6 +489,7 @@ function SessionPage(): React.JSX.Element {
                             ...editingFinancials,
                             cash_out: e.target.value
                           })}
+                          onBlur={handleFinancialInputBlur}
                           min={0}
                           step={0.01}
                           placeholder="0.00"
@@ -448,93 +526,99 @@ function SessionPage(): React.JSX.Element {
           </Table>
         </div>
 
-        {/* Edit Mode Controls */}
-        {editingFinancials && (
-          <div className="p-4 border-t border-gray-200 bg-gray-50">
-            <div className="flex gap-3 justify-center">
-              <Button
-                onClick={handleSaveFinancials}
-                disabled={updating}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleCancelEdit}
-                disabled={updating}
-              >
-                <X className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
-            </div>
+
+
+        {/* Add Player Button - Only for session owners */}
+        {isSessionOwner() && (
+          <div className="p-4 text-center border-t border-gray-200">
+            <Button
+              variant="outline"
+              onClick={() => setAddPlayerModalOpen(true)}
+              disabled={getAvailablePlayersToAdd().length === 0}
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Player
+            </Button>
           </div>
         )}
-
-        {/* Add Player Button */}
-        <div className="p-4 text-center border-t border-gray-200">
-          <Button
-            variant="outline"
-            onClick={() => setAddPlayerModalOpen(true)}
-            disabled={getAvailablePlayersToAdd().length === 0}
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Player
-          </Button>
-        </div>
       </Card>
 
       {/* Add Player Modal */}
       <Dialog open={addPlayerModalOpen} onOpenChange={setAddPlayerModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Player to Session</DialogTitle>
+        <DialogContent className="max-w-md w-[95vw] sm:w-full max-h-[85vh] overflow-hidden flex flex-col p-4 sm:p-6">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-base sm:text-lg">Add Player to Session</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
+          <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 min-h-0">
+            <p className="text-xs sm:text-sm text-gray-600">
               Select a player to add or change their status to "In".
             </p>
 
-            <div className="space-y-2">
+            <div className="space-y-2 pr-1"> {/* Small right padding for scrollbar */}
               {getAvailablePlayersToAdd().map((player) => (
-                <div key={player.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                  <div className="flex items-center flex-1">
-                    <User className="h-4 w-4 text-gray-500 mr-2" />
-                    <div>
-                      <div className="font-medium text-gray-900">{player.name}</div>
-                      {player.email && (
-                        <div className="text-sm text-gray-600">{player.email}</div>
-                      )}
+                <div key={player.id} className="flex items-center justify-between p-2 sm:p-3 border border-gray-200 rounded-lg">
+                  <div className="flex items-center flex-1 min-w-0 mr-2">
+                    <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 mr-1 sm:mr-2 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-gray-900 text-sm sm:text-base truncate">{player.name}</div>
                     </div>
                   </div>
                   <Button
                     onClick={() => handleAddPlayer(player.id)}
                     disabled={updating}
                     size="sm"
+                    className="flex-shrink-0"
                   >
-                    Add
+                    {updating ? (
+                      <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                    ) : (
+                      'Add'
+                    )}
                   </Button>
                 </div>
               ))}
             </div>
 
             {getAvailablePlayersToAdd().length === 0 && (
-              <p className="text-sm text-gray-600 text-center py-4">
+              <p className="text-xs sm:text-sm text-gray-600 text-center py-4">
                 All players are already marked as "In" for this session.
               </p>
             )}
           </div>
 
-          <div className="flex justify-end pt-4">
-            <Button variant="outline" onClick={() => setAddPlayerModalOpen(false)}>
+          <div className="flex justify-end pt-3 sm:pt-4 flex-shrink-0 border-t border-gray-100 mt-3 sm:mt-4">
+            <Button variant="outline" onClick={() => setAddPlayerModalOpen(false)} size="sm">
               Close
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+        </TabsContent>
+
+        <TabsContent value="seating" className="mt-0">
+          <SeatingChartList
+            seatingCharts={seatingCharts}
+            onGenerateNew={() => setSeatingChartModalOpen(true)}
+            onDelete={handleDeleteSeatingChart}
+            deleting={deletingChart}
+            isOwner={isSessionOwner()}
+          />
+        </TabsContent>
+      </Tabs>
+
+      {/* Seating Chart Modal - Only for session owners */}
+      {isSessionOwner() && (
+        <SeatingChartModal
+          open={seatingChartModalOpen}
+          onClose={() => setSeatingChartModalOpen(false)}
+          sessionId={session.id}
+          sessionPlayers={getSessionPlayers()}
+          onGenerate={handleGenerateSeatingChart}
+          generating={generatingChart}
+        />
+      )}
     </div>
   );
 }

@@ -3,17 +3,21 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Calendar, Loader2, AlertCircle, X } from 'lucide-react';
+import { Users, Calendar, Loader2, AlertCircle, X, Plus } from 'lucide-react';
 import PlayerList from './PlayerList';
-import AddPlayerForm from './AddPlayerForm';
+import AddPlayerModal from './AddPlayerModal';
 import Sessions from './Sessions';
 import PlayerDetailModal from './PlayerDetailModal';
+import UserMenu from './UserMenu';
+import { useAuth } from '../contexts/AuthContext';
 import { playersApi, sessionsApi } from '../services/api';
 import { Player, Session, TabValue, CreateSessionRequest, UpdateSessionRequest, CreatePlayerRequest } from '../types/index';
 
 function MainApp(): React.JSX.Element {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+
   const [players, setPlayers] = useState<Player[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeTab, setActiveTab] = useState<string>('players');
@@ -21,6 +25,8 @@ function MainApp(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [playerDetailModalOpen, setPlayerDetailModalOpen] = useState<boolean>(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [addPlayerModalOpen, setAddPlayerModalOpen] = useState<boolean>(false);
+  const [addingPlayer, setAddingPlayer] = useState<boolean>(false);
 
   // Determine active tab based on current URL
   const getTabFromPath = (pathname: string): string => {
@@ -33,9 +39,14 @@ function MainApp(): React.JSX.Element {
     setActiveTab(getTabFromPath(location.pathname));
   }, [location.pathname]);
 
-  // Load initial data
+  // Load initial data only when authenticated
   useEffect(() => {
     const loadData = async (): Promise<void> => {
+      if (!isAuthenticated || authLoading) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         const [playersData, sessionsData] = await Promise.all([
@@ -53,16 +64,17 @@ function MainApp(): React.JSX.Element {
     };
 
     loadData();
-  }, []);
+  }, [isAuthenticated, authLoading]);
 
-  const addPlayer = async (name: string, email?: string): Promise<void> => {
+  const addPlayer = async (playerData: { name: string; email: string }): Promise<void> => {
     try {
+      setAddingPlayer(true);
       const requestData: CreatePlayerRequest = {
-        name: name.trim()
+        name: playerData.name.trim()
       };
 
-      if (email?.trim()) {
-        requestData.email = email.trim();
+      if (playerData.email?.trim()) {
+        requestData.email = playerData.email.trim();
       }
 
       const newPlayer = await playersApi.create(requestData);
@@ -70,6 +82,9 @@ function MainApp(): React.JSX.Element {
     } catch (err) {
       console.error('Failed to add player:', err);
       setError('Failed to add player: ' + (err as Error).message);
+      throw err; // Re-throw to let modal handle the error
+    } finally {
+      setAddingPlayer(false);
     }
   };
 
@@ -129,6 +144,11 @@ function MainApp(): React.JSX.Element {
     setError(null);
   };
 
+  // Helper function to check if user owns a session
+  const isSessionOwner = (session: Session): boolean => {
+    return user?.id === session.createdBy;
+  };
+
   const addSession = async (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): Promise<void> => {
     try {
       const requestData: CreateSessionRequest = {
@@ -179,8 +199,8 @@ function MainApp(): React.JSX.Element {
     }
   };
 
-  // Show loading spinner while data is loading
-  if (loading) {
+  // Show loading spinner while auth or data is loading
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center text-foreground">
@@ -195,10 +215,15 @@ function MainApp(): React.JSX.Element {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto max-w-6xl p-4 sm:p-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-4 drop-shadow-lg">
-            🃏 Poker Night
-          </h1>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex-1 text-center">
+            <h1 className="text-4xl font-bold text-foreground drop-shadow-lg">
+              🃏 Poker Night
+            </h1>
+          </div>
+          <div className="flex-shrink-0">
+            <UserMenu />
+          </div>
         </div>
 
         {/* Main Content Card */}
@@ -241,7 +266,18 @@ function MainApp(): React.JSX.Element {
             <div className="p-6">
               <TabsContent value="players" className="mt-0">
                 <div className="space-y-6">
-                  <AddPlayerForm onAddPlayer={addPlayer} />
+                  {/* Add Player Button */}
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-semibold text-foreground">Players</h2>
+                    <Button
+                      onClick={() => setAddPlayerModalOpen(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Player
+                    </Button>
+                  </div>
+
                   <PlayerList
                     players={players}
                     onRemovePlayer={removePlayer}
@@ -263,6 +299,14 @@ function MainApp(): React.JSX.Element {
             </div>
           </Tabs>
         </Card>
+
+        {/* Add Player Modal */}
+        <AddPlayerModal
+          open={addPlayerModalOpen}
+          onClose={() => setAddPlayerModalOpen(false)}
+          onSubmit={addPlayer}
+          loading={addingPlayer}
+        />
 
         {/* Player Detail Modal */}
         <PlayerDetailModal

@@ -2,16 +2,18 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Calendar } from 'lucide-react';
+import { Plus, Calendar, Clock, History, Play } from 'lucide-react';
 import SessionList from './SessionList';
 import CreateSessionModal from './CreateSessionModal';
 import EditSessionModal from './EditSessionModal';
 import SessionDetailModal from './SessionDetailModal';
 import { SessionsProps, Session, PlayerStatus } from '../types/index';
 import { sessionsApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemoveSession }: SessionsProps): React.JSX.Element {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
@@ -101,6 +103,36 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
     navigate(`/session/${session.id}`);
   };
 
+  // Helper function to check if user owns a session
+  const isSessionOwner = (session: Session): boolean => {
+    return user?.id === session.createdBy;
+  };
+
+  // Helper function to check if a session is currently active (within last 8 hours)
+  const isSessionActive = (session: Session): boolean => {
+    if (!session.scheduledDateTime) return false;
+    const sessionDate = new Date(session.scheduledDateTime);
+    const now = new Date();
+    const eightHoursAgo = new Date(now.getTime() - 8 * 60 * 60 * 1000);
+    return sessionDate >= eightHoursAgo && sessionDate <= now;
+  };
+
+  // Helper function to check if a session is in the past (but not active)
+  const isSessionPast = (session: Session): boolean => {
+    if (!session.scheduledDateTime) return false;
+    const sessionDate = new Date(session.scheduledDateTime);
+    const now = new Date();
+    const eightHoursAgo = new Date(now.getTime() - 8 * 60 * 60 * 1000);
+    return sessionDate < eightHoursAgo;
+  };
+
+  // Group sessions into active, upcoming, and past
+  const groupedSessions = {
+    active: sessions.filter(session => isSessionActive(session)),
+    upcoming: sessions.filter(session => !isSessionPast(session) && !isSessionActive(session)),
+    past: sessions.filter(session => isSessionPast(session))
+  };
+
   return (
     <div>
       {/* Sessions Header with Create Button */}
@@ -119,15 +151,92 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
       </div>
 
       {/* Sessions List */}
-      <SessionList
-        sessions={sessions}
-        players={players}
-        onRemoveSession={onRemoveSession}
-        onEditSession={handleOpenEditModal}
-        onViewSessionDetails={handleOpenDetailModal}
-        onViewSession={handleViewSession}
-        hideHeader={true}
-      />
+      {sessions.length === 0 ? (
+        <Card className="border-2 border-dashed border-gray-300">
+          <CardContent className="p-12 text-center">
+            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">
+              No sessions yet. Create your first session or get invited to one!
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-8">
+          {/* Active Sessions */}
+          {groupedSessions.active.length > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <Play className="h-5 w-5 text-green-600" />
+                <h3 className="text-lg font-semibold text-green-700">
+                  Active Sessions ({groupedSessions.active.length})
+                </h3>
+              </div>
+              <SessionList
+                sessions={groupedSessions.active}
+                players={players}
+                onRemoveSession={onRemoveSession}
+                onEditSession={handleOpenEditModal}
+                onViewSessionDetails={handleOpenDetailModal}
+                onViewSession={handleViewSession}
+                hideHeader={true}
+                isSessionOwner={isSessionOwner}
+                isPastSessions={false}
+                isActiveSessions={true}
+              />
+            </div>
+          )}
+
+          {/* Upcoming Sessions */}
+          {groupedSessions.upcoming.length > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <Clock className="h-5 w-5 text-blue-600" />
+                <h3 className="text-lg font-semibold text-foreground">
+                  Upcoming Sessions ({groupedSessions.upcoming.length})
+                </h3>
+              </div>
+              <SessionList
+                sessions={groupedSessions.upcoming}
+                players={players}
+                onRemoveSession={onRemoveSession}
+                onEditSession={handleOpenEditModal}
+                onViewSessionDetails={handleOpenDetailModal}
+                onViewSession={handleViewSession}
+                hideHeader={true}
+                isSessionOwner={isSessionOwner}
+                isPastSessions={false}
+                isActiveSessions={false}
+              />
+            </div>
+          )}
+
+          {/* Past Sessions */}
+          {groupedSessions.past.length > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <History className="h-5 w-5 text-gray-500" />
+                <h3 className="text-lg font-semibold text-gray-600">
+                  Past Sessions ({groupedSessions.past.length})
+                </h3>
+              </div>
+              <div className="opacity-75">
+                <SessionList
+                  sessions={groupedSessions.past}
+                  players={players}
+                  onRemoveSession={onRemoveSession}
+                  onEditSession={handleOpenEditModal}
+                  onViewSessionDetails={handleOpenDetailModal}
+                  onViewSession={handleViewSession}
+                  hideHeader={true}
+                  isSessionOwner={isSessionOwner}
+                  isPastSessions={true}
+                  isActiveSessions={false}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Create Session Modal */}
       <CreateSessionModal

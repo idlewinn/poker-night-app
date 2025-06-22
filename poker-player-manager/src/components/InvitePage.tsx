@@ -14,10 +14,13 @@ import {
   Users,
   ArrowLeft,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { sessionsApi } from '../services/api';
 import { Session, SessionPlayer } from '../types/index';
+import { getStatusPriority } from '../utils/playerSorting';
 
 interface InvitePageParams {
   sessionId: string;
@@ -31,11 +34,13 @@ function InvitePage(): React.JSX.Element {
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [playerEmail, setPlayerEmail] = useState<string>('');
+  const [playerName, setPlayerName] = useState<string>('');
   const [currentStatus, setCurrentStatus] = useState<PlayerStatus>('In');
   const [loading, setLoading] = useState<boolean>(true);
   const [updating, setUpdating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
+  const [showOtherPlayers, setShowOtherPlayers] = useState<boolean>(false);
 
   // Decode email from base64
   useEffect(() => {
@@ -62,12 +67,13 @@ function InvitePage(): React.JSX.Element {
         const sessionData = await sessionsApi.getById(parseInt(sessionId));
         setSession(sessionData);
 
-        // Find current player's status
+        // Find current player's status and name
         const playerSession = sessionData.players?.find(
           sp => sp.player?.email === playerEmail
         );
         if (playerSession) {
           setCurrentStatus(playerSession.status as PlayerStatus);
+          setPlayerName(playerSession.player?.name || '');
         }
       } catch (err) {
         console.error('Failed to load session:', err);
@@ -149,10 +155,10 @@ function InvitePage(): React.JSX.Element {
 
       // Update player status via API
       await sessionsApi.updatePlayerStatus(session.id, playerSession.player_id, newStatus);
-      
+
       setCurrentStatus(newStatus);
       setSuccess(true);
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -162,6 +168,8 @@ function InvitePage(): React.JSX.Element {
       setUpdating(false);
     }
   };
+
+
 
   if (loading) {
     return (
@@ -206,6 +214,11 @@ function InvitePage(): React.JSX.Element {
           <h1 className="text-3xl font-bold text-foreground mb-2">
             🃏 Poker Night Invite
           </h1>
+          {playerName && (
+            <p className="text-xl font-semibold text-primary mb-2">
+              Welcome, {playerName}!
+            </p>
+          )}
           <p className="text-muted-foreground">
             You're invited to join the game!
           </p>
@@ -260,6 +273,8 @@ function InvitePage(): React.JSX.Element {
           </CardContent>
         </Card>
 
+
+
         {/* Status Update Options */}
         <Card className="mb-6">
           <CardHeader>
@@ -286,6 +301,60 @@ function InvitePage(): React.JSX.Element {
             </div>
           </CardContent>
         </Card>
+
+        {/* Other Invited Players - Collapsible */}
+        {session.players && session.players.length > 1 && (
+          <Card className="mb-6">
+            <CardHeader
+              className="cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={() => setShowOtherPlayers(!showOtherPlayers)}
+            >
+              <CardTitle className="text-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  <span>Other Players</span>
+                  <Badge variant="secondary" className="ml-2">
+                    {session.players.length - 1}
+                  </Badge>
+                </div>
+                {showOtherPlayers ? (
+                  <ChevronDown className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <ChevronRight className="h-5 w-5 text-gray-500" />
+                )}
+              </CardTitle>
+            </CardHeader>
+            {showOtherPlayers && (
+              <CardContent>
+                <div className="space-y-3">
+                  {session.players
+                    .filter(sp => sp.player?.email !== playerEmail)
+                    .sort((a, b) => getStatusPriority(a.status as PlayerStatus) - getStatusPriority(b.status as PlayerStatus))
+                    .map((sessionPlayer) => (
+                      <div key={sessionPlayer.player_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                            <User className="h-4 w-4 text-primary-foreground" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {sessionPlayer.player?.name || 'Unknown Player'}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(sessionPlayer.status as PlayerStatus)}
+                          <Badge className={getStatusColor(sessionPlayer.status as PlayerStatus)}>
+                            {sessionPlayer.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        )}
 
         {/* Success Message */}
         {success && (

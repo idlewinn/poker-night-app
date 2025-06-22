@@ -47,7 +47,7 @@ function SessionDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
             <Calendar className="h-6 w-6 text-primary" />
@@ -55,26 +55,30 @@ function SessionDetailModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 overflow-hidden">
           {/* Session Info */}
-          <div className="border-b pb-4">
+          <div className="border-b pb-3 sm:pb-4">
             {session.scheduledDateTime && (
-              <p className="text-base mb-2">
+              <p className="text-sm sm:text-base mb-2 break-words">
                 <strong>Scheduled:</strong> {formatScheduledDate(session.scheduledDateTime)}
               </p>
             )}
           </div>
 
           {/* Status Summary and Player List */}
-          <div className="space-y-4">
-            <SessionStatusSummary session={session} />
+          <div className="space-y-3 sm:space-y-4 overflow-hidden">
+            <div className="overflow-hidden">
+              <SessionStatusSummary session={session} />
+            </div>
 
-            <SessionPlayerList
-              session={session}
-              players={players}
-              onStatusChange={onStatusChange}
-              readonly={!onStatusChange}
-            />
+            <div className="overflow-hidden">
+              <SessionPlayerList
+                session={session}
+                players={players}
+                onStatusChange={onStatusChange}
+                readonly={!onStatusChange}
+              />
+            </div>
           </div>
         </div>
 

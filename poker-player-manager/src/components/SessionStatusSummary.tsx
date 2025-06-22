@@ -109,62 +109,62 @@ function SessionStatusSummary({ session }: SessionStatusSummaryProps): React.JSX
   }
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
-          Session Status Summary
+    <Card className="mb-4 sm:mb-6 overflow-hidden">
+      <CardHeader className="pb-3 sm:pb-6">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+          <span className="truncate">Session Status</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {/* Key Metrics */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
           <div className="text-center">
-            <div className="text-3xl font-bold text-primary">
+            <div className="text-xl sm:text-3xl font-bold text-primary">
               {totalPlayers}
             </div>
-            <div className="text-sm text-muted-foreground">
-              Total Invited
+            <div className="text-xs sm:text-sm text-muted-foreground">
+              Total
             </div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-green-600">
+            <div className="text-xl sm:text-3xl font-bold text-green-600">
               {confirmedPlayers}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               Playing
             </div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-blue-600">
+            <div className="text-xl sm:text-3xl font-bold text-blue-600">
               {attendingPlayers}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               Attending
             </div>
           </div>
         </div>
 
         {/* Status Breakdown */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {statusSummary.map((item) => (
-            <div key={item.status} className="space-y-2">
+            <div key={item.status} className="space-y-1 sm:space-y-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span style={{ color: item.color }} className="flex items-center">
-                    {item.icon}
+                <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
+                  <span style={{ color: item.color }} className="flex items-center flex-shrink-0">
+                    <span className="h-3 w-3 sm:h-4 sm:w-4">{item.icon}</span>
                   </span>
-                  <span className="text-sm font-medium">
+                  <span className="text-xs sm:text-sm font-medium truncate">
                     {item.label}
                   </span>
                 </div>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs sm:text-sm text-muted-foreground flex-shrink-0 ml-2">
                   {item.count} ({Math.round(item.percentage)}%)
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
                 <div
-                  className="h-2 rounded-full transition-all duration-300"
+                  className="h-1.5 sm:h-2 rounded-full transition-all duration-300"
                   style={{
                     width: `${item.percentage}%`,
                     backgroundColor: item.color,

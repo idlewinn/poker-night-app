@@ -17,6 +17,9 @@ function PlayerItem({ player, onRemove, onRename, onViewDetails }: PlayerItemPro
   const [editName, setEditName] = useState<string>(player.name);
   const [editEmail, setEditEmail] = useState<string>(player.email || '');
 
+  // Determine if this player can be edited (has email = user has full access)
+  const canEdit = player.email !== null;
+
   const handleSave = (): void => {
     if (editName.trim()) {
       // Check if either name or email has changed
@@ -77,20 +80,22 @@ function PlayerItem({ player, onRemove, onRename, onViewDetails }: PlayerItemPro
                 className="text-sm"
               />
             </div>
-            <div className="space-y-1">
-              <label htmlFor="player-email" className="text-xs font-medium text-gray-700">
-                Email
-              </label>
-              <Input
-                id="player-email"
-                type="email"
-                value={editEmail}
-                onChange={(e) => setEditEmail(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder="Enter email (optional)..."
-                className="text-sm"
-              />
-            </div>
+            {canEdit && (
+              <div className="space-y-1">
+                <label htmlFor="player-email" className="text-xs font-medium text-gray-700">
+                  Email
+                </label>
+                <Input
+                  id="player-email"
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  placeholder="Enter email (optional)..."
+                  className="text-sm"
+                />
+              </div>
+            )}
             <div className="flex gap-2 justify-end pt-2">
               <Button
                 onClick={handleSave}
@@ -124,9 +129,9 @@ function PlayerItem({ player, onRemove, onRename, onViewDetails }: PlayerItemPro
                 </h3>
                 <p
                   className={`text-sm text-gray-600 truncate ${!player.email ? 'italic' : ''}`}
-                  title={player.email || 'No email address'}
+                  title={player.email || 'Known from shared sessions'}
                 >
-                  {player.email || 'No email address'}
+                  {player.email || 'Known from shared sessions'}
                 </p>
               </div>
             </div>
@@ -142,24 +147,29 @@ function PlayerItem({ player, onRemove, onRename, onViewDetails }: PlayerItemPro
                   <Eye className="h-4 w-4" />
                 </Button>
               )}
-              <Button
-                onClick={() => setIsEditing(true)}
-                variant="ghost"
-                size="sm"
-                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                title="Edit player"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={onRemove}
-                variant="ghost"
-                size="sm"
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                title="Remove player"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              {/* Only show edit/delete for players you have full access to */}
+              {canEdit && (
+                <>
+                  <Button
+                    onClick={() => setIsEditing(true)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    title="Edit player"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    onClick={onRemove}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    title="Remove player"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         )}

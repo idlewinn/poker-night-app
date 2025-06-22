@@ -5,6 +5,7 @@ import { User, Users, Link, Check } from 'lucide-react';
 import { Session, Player, PlayerStatus } from '../types/index';
 import PlayerStatusBadge from './PlayerStatusBadge';
 import PlayerStatusSelector from './PlayerStatusSelector';
+import { getStatusPriority } from '../utils/playerSorting';
 
 interface SessionPlayerListProps {
   session: Session;
@@ -33,6 +34,15 @@ function SessionPlayerList({
     }
     return 'Invited';
   };
+
+
+
+  // Sort session players by status priority
+  const sortedSessionPlayers = sessionPlayers.sort((a, b) => {
+    const statusA = getPlayerStatus(a.id);
+    const statusB = getPlayerStatus(b.id);
+    return getStatusPriority(statusA) - getStatusPriority(statusB);
+  });
 
   const handleStatusChange = (playerId: number, newStatus: PlayerStatus) => {
     if (onStatusChange) {
@@ -89,39 +99,34 @@ function SessionPlayerList({
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="bg-primary text-primary-foreground">
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
+      <CardHeader className="bg-primary text-primary-foreground py-3 sm:py-6">
+        <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+          <Users className="h-4 w-4 sm:h-5 sm:w-5" />
           Players ({sessionPlayers.length})
         </CardTitle>
       </CardHeader>
 
       <CardContent className="p-0">
         <div className="divide-y">
-          {sessionPlayers.map((player) => {
+          {sortedSessionPlayers.map((player) => {
             const playerStatus = getPlayerStatus(player.id);
 
             return (
               <div
                 key={player.id}
-                className="flex items-center p-6 hover:bg-gray-50 transition-colors"
+                className="flex items-center p-3 sm:p-6 hover:bg-gray-50 transition-colors"
               >
-                <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-4">
-                  <User className="h-5 w-5 text-primary-foreground" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-full flex items-center justify-center mr-2 sm:mr-4 flex-shrink-0">
+                  <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
                 </div>
 
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-base font-medium text-gray-900">
+                <div className="flex-1 min-w-0 mr-2">
+                  <h4 className="text-sm sm:text-base font-medium text-gray-900 truncate">
                     {player.name}
                   </h4>
-                  {player.email && (
-                    <p className="text-sm text-muted-foreground">
-                      {player.email}
-                    </p>
-                  )}
                 </div>
 
-                <div className="flex items-center gap-3 ml-4">
+                <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
                   <div>
                     {readonly ? (
                       <PlayerStatusBadge status={playerStatus} />
@@ -139,7 +144,7 @@ function SessionPlayerList({
                     variant="ghost"
                     size="sm"
                     disabled={!player.email}
-                    className={`h-8 w-8 p-0 ${
+                    className={`h-7 w-7 sm:h-8 sm:w-8 p-0 ${
                       copiedPlayerId === player.id
                         ? 'text-green-600 hover:text-green-700'
                         : 'text-blue-600 hover:text-blue-700'
@@ -153,9 +158,9 @@ function SessionPlayerList({
                     }
                   >
                     {copiedPlayerId === player.id ? (
-                      <Check className="h-4 w-4" />
+                      <Check className="h-3 w-3 sm:h-4 sm:w-4" />
                     ) : (
-                      <Link className="h-4 w-4" />
+                      <Link className="h-3 w-3 sm:h-4 sm:w-4" />
                     )}
                   </Button>
                 </div>

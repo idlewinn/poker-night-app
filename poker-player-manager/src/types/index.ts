@@ -6,11 +6,26 @@ export interface Player {
   created_at: string;
 }
 
+// Authentication Types
+export interface User {
+  id: number;
+  email: string;
+  name: string;
+  avatar_url?: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+}
+
 // Session Types
 export type PlayerStatus = 'Invited' | 'In' | 'Out' | 'Maybe' | 'Attending but not playing';
 
 export interface SessionPlayer {
-  id: number;
+  id: string | number; // Can be string (session-player combo) or number for backwards compatibility
   session_id: number;
   player_id: number;
   status: PlayerStatus;
@@ -24,8 +39,34 @@ export interface Session {
   id: number;
   name: string;
   scheduledDateTime: string | null;
+  createdBy: number;
   createdAt: string;
   players: SessionPlayer[]; // Always populated player data with status
+}
+
+// Seating Chart Types
+export interface SeatingChart {
+  id: number;
+  session_id: number;
+  name: string;
+  number_of_tables: number;
+  created_at: string;
+  assignments?: SeatingAssignment[]; // Optional populated assignments
+}
+
+export interface SeatingAssignment {
+  id: number;
+  seating_chart_id: number;
+  player_id: number;
+  table_number: number;
+  seat_position: number;
+  created_at: string;
+  player?: Player; // Optional populated player data
+}
+
+export interface SeatingTable {
+  tableNumber: number;
+  players: SeatingAssignment[];
 }
 
 // Component Props Types
@@ -43,9 +84,7 @@ export interface PlayerListProps {
   onViewPlayerDetails?: (player: Player) => void;
 }
 
-export interface AddPlayerFormProps {
-  onAddPlayer: (name: string, email?: string) => void;
-}
+
 
 export interface SessionItemProps {
   session: Session;
@@ -54,6 +93,9 @@ export interface SessionItemProps {
   onEdit: () => void;
   onViewDetails: () => void;
   onViewSession: () => void;
+  isOwner?: boolean;
+  isPast?: boolean;
+  isActive?: boolean;
 }
 
 export interface SessionListProps {
@@ -64,6 +106,9 @@ export interface SessionListProps {
   onViewSessionDetails: (session: Session) => void;
   onViewSession: (session: Session) => void;
   hideHeader?: boolean;
+  isSessionOwner?: (session: Session) => boolean;
+  isPastSessions?: boolean;
+  isActiveSessions?: boolean;
 }
 
 export interface CreateSessionModalProps {
@@ -125,6 +170,17 @@ export interface UpdatePlayerStatusRequest {
 export interface UpdatePlayerFinancialsRequest {
   buy_in?: number;
   cash_out?: number;
+}
+
+export interface CreateSeatingChartRequest {
+  sessionId: number;
+  name: string;
+  numberOfTables: number;
+  playerIds: number[];
+}
+
+export interface UpdateSeatingChartRequest {
+  name: string;
 }
 
 export interface HealthCheckResponse {

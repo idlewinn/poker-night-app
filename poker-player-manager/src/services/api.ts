@@ -7,8 +7,12 @@ import {
   UpdateSessionRequest,
   UpdatePlayerFinancialsRequest,
   PlayerStatus,
-  HealthCheckResponse
+  HealthCheckResponse,
+  SeatingChart,
+  CreateSeatingChartRequest,
+  UpdateSeatingChartRequest
 } from '../types/index';
+import { getAuthHeaders } from '../contexts/AuthContext';
 
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -16,9 +20,14 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 // Generic API request function
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
+
+  // Get auth headers at request time (not at function definition time)
+  const authHeaders = getAuthHeaders();
+
   const config: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
       ...options.headers,
     },
     ...options,
@@ -109,6 +118,37 @@ export const sessionsApi = {
     apiRequest<{ message: string; buy_in?: number; cash_out?: number }>(`/sessions/${sessionId}/players/${playerId}/financials`, {
       method: 'PUT',
       body: JSON.stringify(financials),
+    }),
+};
+
+// Seating Charts API
+export const seatingChartsApi = {
+  // Get all seating charts for a session
+  getBySessionId: (sessionId: number): Promise<SeatingChart[]> =>
+    apiRequest<SeatingChart[]>(`/seating-charts/session/${sessionId}`),
+
+  // Get seating chart by ID
+  getById: (id: number): Promise<SeatingChart> =>
+    apiRequest<SeatingChart>(`/seating-charts/${id}`),
+
+  // Create new seating chart
+  create: (chartData: CreateSeatingChartRequest): Promise<SeatingChart> =>
+    apiRequest<SeatingChart>('/seating-charts', {
+      method: 'POST',
+      body: JSON.stringify(chartData),
+    }),
+
+  // Update seating chart
+  update: (id: number, chartData: UpdateSeatingChartRequest): Promise<SeatingChart> =>
+    apiRequest<SeatingChart>(`/seating-charts/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(chartData),
+    }),
+
+  // Delete seating chart
+  delete: (id: number): Promise<{ message: string }> =>
+    apiRequest<{ message: string }>(`/seating-charts/${id}`, {
+      method: 'DELETE',
     }),
 };
 

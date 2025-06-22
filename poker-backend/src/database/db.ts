@@ -46,13 +46,22 @@ function initializeDatabase(): void {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       scheduled_datetime TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_by INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE CASCADE
     )
   `, (err: Error | null) => {
     if (err) {
       console.error('Error creating sessions table:', err.message);
     } else {
       console.log('Sessions table ready');
+
+      // Add created_by column if it doesn't exist (for existing databases)
+      db.run(`ALTER TABLE sessions ADD COLUMN created_by INTEGER`, (alterErr: Error | null) => {
+        if (alterErr && !alterErr.message.includes('duplicate column name')) {
+          console.error('Error adding created_by column:', alterErr.message);
+        }
+      });
     }
   });
 
@@ -92,6 +101,82 @@ function initializeDatabase(): void {
           }
         });
       });
+    }
+  });
+
+  // Create seating_charts table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS seating_charts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      number_of_tables INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
+    )
+  `, (err: Error | null) => {
+    if (err) {
+      console.error('Error creating seating_charts table:', err.message);
+    } else {
+      console.log('Seating_charts table ready');
+    }
+  });
+
+  // Create seating_assignments table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS seating_assignments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      seating_chart_id INTEGER NOT NULL,
+      player_id INTEGER NOT NULL,
+      table_number INTEGER NOT NULL,
+      seat_position INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (seating_chart_id) REFERENCES seating_charts (id) ON DELETE CASCADE,
+      FOREIGN KEY (player_id) REFERENCES players (id) ON DELETE CASCADE
+    )
+  `, (err: Error | null) => {
+    if (err) {
+      console.error('Error creating seating_assignments table:', err.message);
+    } else {
+      console.log('Seating_assignments table ready');
+    }
+  });
+
+  // Create users table for authentication
+  db.run(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      google_id TEXT UNIQUE NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      name TEXT NOT NULL,
+      avatar_url TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      last_login DATETIME
+    )
+  `, (err: Error | null) => {
+    if (err) {
+      console.error('Error creating users table:', err.message);
+    } else {
+      console.log('Users table ready');
+    }
+  });
+
+  // Create user_players junction table to track which users have added which players
+  db.run(`
+    CREATE TABLE IF NOT EXISTS user_players (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      player_id INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+      FOREIGN KEY (player_id) REFERENCES players (id) ON DELETE CASCADE,
+      UNIQUE(user_id, player_id)
+    )
+  `, (err: Error | null) => {
+    if (err) {
+      console.error('Error creating user_players table:', err.message);
+    } else {
+      console.log('User_players table ready');
     }
   });
 }

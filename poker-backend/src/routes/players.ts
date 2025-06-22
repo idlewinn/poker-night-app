@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import db from '../database/db';
+import { authenticateToken } from '../middleware/auth';
 import {
   Player,
   CreatePlayerRequest,
@@ -9,16 +10,75 @@ import {
 
 const router = express.Router();
 
-// GET all players
-router.get('/', (req: Request, res: Response) => {
-  const sql = 'SELECT * FROM players ORDER BY created_at DESC';
-  
-  db.all(sql, [], (err: Error | null, rows: Player[]) => {
+// GET players that the authenticated user has added or knows from shared sessions
+router.get('/', authenticateToken, (req: any, res: Response) => {
+  const userId = req.user?.id;
+  const userEmail = req.user?.email;
+
+  if (!userId || !userEmail) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
+
+  // Get players that the user has encountered through:
+  // 1. Players they've explicitly added (via user_players table) - with email
+  // 2. Sessions they created (all players in those sessions) - with email
+  // 3. Sessions they participated in (all players in those sessions) - without email
+  const sql = `
+    WITH user_accessible_players AS (
+      -- Players the user has explicitly added
+      SELECT up.player_id, 1 as user_added, 0 as from_owned_session
+      FROM user_players up
+      WHERE up.user_id = ?
+
+      UNION
+
+      -- Players from sessions the user created
+      SELECT DISTINCT sp2.player_id, 0 as user_added, 1 as from_owned_session
+      FROM sessions s2
+      JOIN session_players sp2 ON s2.id = sp2.session_id
+      WHERE s2.created_by = ?
+
+      UNION
+
+      -- Players from sessions the user participated in
+      SELECT DISTINCT sp3.player_id, 0 as user_added, 0 as from_owned_session
+      FROM sessions s3
+      JOIN session_players sp3 ON s3.id = sp3.session_id
+      WHERE s3.id IN (
+        SELECT DISTINCT sp4.session_id
+        FROM session_players sp4
+        JOIN players p4 ON sp4.player_id = p4.id
+        WHERE p4.email = ?
+      )
+    )
+    SELECT DISTINCT
+      p.id,
+      p.name,
+      CASE
+        WHEN (MAX(uap.user_added) = 1 OR MAX(uap.from_owned_session) = 1) THEN p.email
+        ELSE NULL
+      END as email,
+      p.created_at
+    FROM players p
+    JOIN user_accessible_players uap ON p.id = uap.player_id
+    GROUP BY p.id, p.name, p.created_at
+    ORDER BY p.created_at DESC
+  `;
+
+  db.all(sql, [userId, userId, userEmail], (err: Error | null, rows: any[]) => {
     if (err) {
       console.error('Error fetching players:', err.message);
       res.status(500).json({ error: 'Failed to fetch players' });
     } else {
-      res.json(rows);
+      // Transform the results to standard Player format
+      const players = rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        email: row.email, // Will be null for players from other users' sessions
+        created_at: row.created_at
+      }));
+      res.json(players);
     }
   });
 });
@@ -41,40 +101,80 @@ router.get('/:id', (req: Request, res: Response) => {
 });
 
 // POST create new player
-router.post('/', (req: TypedRequest<CreatePlayerRequest>, res: Response): void => {
+router.post('/', authenticateToken, (req: any, res: Response): void => {
   const { name, email } = req.body;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
 
   if (!name || !name.trim()) {
     res.status(400).json({ error: 'Player name is required' });
     return;
   }
 
-  const sql = 'INSERT INTO players (name, email) VALUES (?, ?)';
-
-  db.run(sql, [name.trim(), email?.trim() || null], function(this: any, err: Error | null) {
+  // First, check if player already exists
+  db.get('SELECT * FROM players WHERE name = ?', [name.trim()], (err: Error | null, existingPlayer: Player | undefined) => {
     if (err) {
-      if (err.message.includes('UNIQUE constraint failed')) {
-        res.status(409).json({ error: 'Player name already exists' });
-      } else {
-        console.error('Error creating player:', err.message);
-        res.status(500).json({ error: 'Failed to create player' });
-      }
+      console.error('Error checking existing player:', err.message);
+      res.status(500).json({ error: 'Failed to check existing player' });
+      return;
+    }
+
+    if (existingPlayer) {
+      // Player exists, just add the relationship if it doesn't exist
+      db.run('INSERT OR IGNORE INTO user_players (user_id, player_id) VALUES (?, ?)',
+        [userId, existingPlayer.id],
+        function(this: any, err: Error | null) {
+          if (err) {
+            console.error('Error adding user-player relationship:', err.message);
+            res.status(500).json({ error: 'Failed to add player relationship' });
+          } else {
+            res.status(201).json(existingPlayer);
+          }
+        }
+      );
     } else {
-      // Return the created player
-      db.get('SELECT * FROM players WHERE id = ?', [this.lastID], (err: Error | null, row: Player | undefined) => {
+      // Player doesn't exist, create new player
+      const sql = 'INSERT INTO players (name, email) VALUES (?, ?)';
+
+      db.run(sql, [name.trim(), email?.trim() || null], function(this: any, err: Error | null) {
         if (err) {
-          console.error('Error fetching created player:', err.message);
-          res.status(500).json({ error: 'Player created but failed to fetch' });
+          console.error('Error creating player:', err.message);
+          res.status(500).json({ error: 'Failed to create player' });
         } else {
-          res.status(201).json(row);
+          const playerId = this.lastID;
+
+          // Add the user-player relationship
+          db.run('INSERT INTO user_players (user_id, player_id) VALUES (?, ?)',
+            [userId, playerId],
+            function(this: any, err: Error | null) {
+              if (err) {
+                console.error('Error adding user-player relationship:', err.message);
+                res.status(500).json({ error: 'Player created but failed to add relationship' });
+              } else {
+                // Return the created player
+                db.get('SELECT * FROM players WHERE id = ?', [playerId], (err: Error | null, row: Player | undefined) => {
+                  if (err) {
+                    console.error('Error fetching created player:', err.message);
+                    res.status(500).json({ error: 'Player created but failed to fetch' });
+                  } else {
+                    res.status(201).json(row);
+                  }
+                });
+              }
+            }
+          );
         }
       });
     }
   });
 });
 
-// PUT update player
-router.put('/:id', (req: TypedRequest<UpdatePlayerRequest>, res: Response): void => {
+// PUT update player (only if user has access to this player)
+router.put('/:id', authenticateToken, (req: any, res: Response): void => {
   const { id } = req.params;
   const { name, email } = req.body;
 
@@ -114,8 +214,8 @@ router.put('/:id', (req: TypedRequest<UpdatePlayerRequest>, res: Response): void
   });
 });
 
-// DELETE player
-router.delete('/:id', (req: Request, res: Response) => {
+// DELETE player (only if user has access to this player)
+router.delete('/:id', authenticateToken, (req: any, res: Response) => {
   const { id } = req.params;
   const sql = 'DELETE FROM players WHERE id = ?';
   

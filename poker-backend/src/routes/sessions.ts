@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import db from '../database/db';
+import { authenticateToken, requireSessionOwnership, requireAuth } from '../middleware/auth';
 import {
   SessionWithPlayers,
   CreateSessionRequest,
@@ -26,10 +27,20 @@ function generateSessionNameFromDateTime(dateTimeString: string): string {
   return date.toLocaleDateString('en-US', options);
 }
 
-// GET all sessions with their players
-router.get('/', (req: Request, res: Response) => {
+// GET all sessions where user is creator OR participant
+router.get('/', authenticateToken, (req: any, res: Response) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
+
+  // First, find the user's email to match with players table
+  const userEmail = req.user?.email;
+
   const sql = `
-    SELECT
+    SELECT DISTINCT
       s.*,
       GROUP_CONCAT(p.id) as player_ids,
       GROUP_CONCAT(p.name) as player_names,
@@ -39,11 +50,18 @@ router.get('/', (req: Request, res: Response) => {
     FROM sessions s
     LEFT JOIN session_players sp ON s.id = sp.session_id
     LEFT JOIN players p ON sp.player_id = p.id
+    WHERE s.created_by = ?
+       OR s.id IN (
+         SELECT DISTINCT sp2.session_id
+         FROM session_players sp2
+         JOIN players p2 ON sp2.player_id = p2.id
+         WHERE p2.email = ?
+       )
     GROUP BY s.id
     ORDER BY s.created_at DESC
   `;
-  
-  db.all(sql, [], (err: Error | null, rows: any[]) => {
+
+  db.all(sql, [userId, userEmail], (err: Error | null, rows: any[]) => {
     if (err) {
       console.error('Error fetching sessions:', err.message);
       res.status(500).json({ error: 'Failed to fetch sessions' });
@@ -53,9 +71,10 @@ router.get('/', (req: Request, res: Response) => {
         id: row.id,
         name: row.name,
         scheduledDateTime: row.scheduled_datetime,
+        createdBy: row.created_by,
         createdAt: row.created_at,
         players: row.player_ids ? row.player_ids.split(',').map((id: string, index: number) => ({
-          id: index + 1, // session_player id (not critical for frontend)
+          id: `${row.id}-${parseInt(id)}`, // Unique session_player id using session-player combination
           session_id: row.id,
           player_id: parseInt(id),
           status: row.player_statuses ? row.player_statuses.split(',')[index] as PlayerStatus : 'Invited' as PlayerStatus,
@@ -84,6 +103,7 @@ router.get('/:id', (req: Request, res: Response): void => {
       s.*,
       GROUP_CONCAT(p.id) as player_ids,
       GROUP_CONCAT(p.name) as player_names,
+      GROUP_CONCAT(p.email) as player_emails,
       GROUP_CONCAT(sp.status) as player_statuses,
       GROUP_CONCAT(sp.buy_in) as player_buy_ins,
       GROUP_CONCAT(sp.cash_out) as player_cash_outs
@@ -105,9 +125,10 @@ router.get('/:id', (req: Request, res: Response): void => {
         id: row.id,
         name: row.name,
         scheduledDateTime: row.scheduled_datetime,
+        createdBy: row.created_by,
         createdAt: row.created_at,
         players: row.player_ids ? row.player_ids.split(',').map((id: string, index: number) => ({
-          id: index + 1, // session_player id (not critical for frontend)
+          id: `${row.id}-${parseInt(id)}`, // Unique session_player id using session-player combination
           session_id: row.id,
           player_id: parseInt(id),
           status: row.player_statuses ? row.player_statuses.split(',')[index] as PlayerStatus : 'Invited' as PlayerStatus,
@@ -117,6 +138,7 @@ router.get('/:id', (req: Request, res: Response): void => {
           player: {
             id: parseInt(id),
             name: row.player_names.split(',')[index],
+            email: row.player_emails ? row.player_emails.split(',')[index] : null,
             created_at: row.created_at
           }
         })) : []
@@ -127,8 +149,14 @@ router.get('/:id', (req: Request, res: Response): void => {
 });
 
 // POST create new session
-router.post('/', (req: TypedRequest<CreateSessionRequest>, res: Response): void => {
+router.post('/', authenticateToken, (req: any, res: Response): void => {
   const { name, scheduledDateTime, playerIds } = req.body;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
 
   if (!scheduledDateTime) {
     res.status(400).json({ error: 'Scheduled date and time is required' });
@@ -137,16 +165,16 @@ router.post('/', (req: TypedRequest<CreateSessionRequest>, res: Response): void 
 
   // Generate session name from date/time if not provided
   const sessionName = name?.trim() || generateSessionNameFromDateTime(scheduledDateTime);
-  
-  const sql = 'INSERT INTO sessions (name, scheduled_datetime) VALUES (?, ?)';
 
-  db.run(sql, [sessionName, scheduledDateTime], function(this: any, err: Error | null) {
+  const sql = 'INSERT INTO sessions (name, scheduled_datetime, created_by) VALUES (?, ?, ?)';
+
+  db.run(sql, [sessionName, scheduledDateTime, userId], function(this: any, err: Error | null) {
     if (err) {
       console.error('Error creating session:', err.message);
       res.status(500).json({ error: 'Failed to create session' });
     } else {
       const sessionId = this.lastID;
-      
+
       // Add players to session if provided
       if (playerIds && playerIds.length > 0) {
         addPlayersToSession(sessionId, playerIds, (err: Error | null) => {
@@ -164,8 +192,8 @@ router.post('/', (req: TypedRequest<CreateSessionRequest>, res: Response): void 
   });
 });
 
-// PUT update session
-router.put('/:id', (req: TypedRequest<UpdateSessionRequest>, res: Response): void => {
+// PUT update session (only by owner)
+router.put('/:id', authenticateToken, requireSessionOwnership, (req: any, res: Response): void => {
   const { id } = req.params;
   const { name, scheduledDateTime, playerIds } = req.body;
 
@@ -210,8 +238,8 @@ router.put('/:id', (req: TypedRequest<UpdateSessionRequest>, res: Response): voi
   });
 });
 
-// DELETE session
-router.delete('/:id', (req: Request, res: Response) => {
+// DELETE session (only by owner)
+router.delete('/:id', authenticateToken, requireSessionOwnership, (req: any, res: Response) => {
   const { id } = req.params;
   const sql = 'DELETE FROM sessions WHERE id = ?';
   
@@ -408,6 +436,7 @@ function fetchSessionById(sessionId: number, res: Response): void {
       s.*,
       GROUP_CONCAT(p.id) as player_ids,
       GROUP_CONCAT(p.name) as player_names,
+      GROUP_CONCAT(p.email) as player_emails,
       GROUP_CONCAT(sp.status) as player_statuses,
       GROUP_CONCAT(sp.buy_in) as player_buy_ins,
       GROUP_CONCAT(sp.cash_out) as player_cash_outs
@@ -427,9 +456,10 @@ function fetchSessionById(sessionId: number, res: Response): void {
         id: row.id,
         name: row.name,
         scheduledDateTime: row.scheduled_datetime,
+        createdBy: row.created_by,
         createdAt: row.created_at,
         players: row.player_ids ? row.player_ids.split(',').map((id: string, index: number) => ({
-          id: index + 1, // session_player id (not critical for frontend)
+          id: `${row.id}-${parseInt(id)}`, // Unique session_player id using session-player combination
           session_id: row.id,
           player_id: parseInt(id),
           status: row.player_statuses ? row.player_statuses.split(',')[index] as PlayerStatus : 'Invited' as PlayerStatus,
@@ -439,6 +469,7 @@ function fetchSessionById(sessionId: number, res: Response): void {
           player: {
             id: parseInt(id),
             name: row.player_names.split(',')[index],
+            email: row.player_emails ? row.player_emails.split(',')[index] : null,
             created_at: row.created_at
           }
         })) : []

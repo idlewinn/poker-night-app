@@ -15,7 +15,7 @@ import {
 import { SessionItemProps } from '../types/index';
 import PlayerStatusBadge from './PlayerStatusBadge';
 
-function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onViewSession }: SessionItemProps): React.JSX.Element {
+function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onViewSession, isOwner = false, isPast = false, isActive = false }: SessionItemProps): React.JSX.Element {
   // Session players are now directly available in session.players
   const sessionPlayers = session.players;
 
@@ -67,7 +67,10 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onView
   };
 
   return (
-    <Card className="h-full transition-all duration-200 hover:shadow-md">
+    <Card className={`h-full transition-all duration-200 hover:shadow-md ${
+      isActive ? 'bg-green-50 border-green-300 ring-2 ring-green-200' :
+      isPast ? 'bg-gray-50 border-gray-200' : ''
+    }`}>
       <CardContent className="p-4 flex flex-col h-full">
         <div className="flex flex-col h-full">
           {/* Session Header */}
@@ -75,12 +78,31 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onView
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3 flex-shrink-0">
               <Calendar className="h-5 w-5 text-primary-foreground" />
             </div>
-            <h3
-              className="font-semibold text-gray-900 leading-tight truncate"
-              title={session.name || 'Poker Night'}
-            >
-              {session.name || 'Poker Night'}
-            </h3>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h3
+                  className="font-semibold text-gray-900 leading-tight truncate"
+                  title={session.name || 'Poker Night'}
+                >
+                  {session.name || 'Poker Night'}
+                </h3>
+                {isOwner && (
+                  <Badge variant="secondary" className="text-xs">
+                    Owner
+                  </Badge>
+                )}
+                {isActive && (
+                  <Badge className="text-xs bg-green-600 text-white animate-pulse">
+                    Active
+                  </Badge>
+                )}
+                {isPast && !isActive && (
+                  <Badge variant="outline" className="text-xs text-gray-500 border-gray-300">
+                    Past
+                  </Badge>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Session Details */}
@@ -88,8 +110,14 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onView
             {/* Scheduled Date */}
             {session.scheduledDateTime && (
               <div className="flex items-center mb-2">
-                <Clock className="h-4 w-4 text-primary mr-2" />
-                <span className="text-sm text-primary font-medium">
+                <Clock className={`h-4 w-4 mr-2 ${
+                  isActive ? 'text-green-600' :
+                  isPast ? 'text-gray-500' : 'text-primary'
+                }`} />
+                <span className={`text-sm font-medium ${
+                  isActive ? 'text-green-700' :
+                  isPast ? 'text-gray-600' : 'text-primary'
+                }`}>
                   {formatScheduledDate(session.scheduledDateTime)}
                 </span>
               </div>
@@ -170,24 +198,29 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onView
             >
               <Mail className="h-4 w-4" />
             </Button>
-            <Button
-              onClick={onEdit}
-              variant="ghost"
-              size="sm"
-              className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-              title="Edit session"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              onClick={onRemove}
-              variant="ghost"
-              size="sm"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              title="Remove session"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {/* Only show edit/delete buttons for session owners */}
+            {isOwner && (
+              <>
+                <Button
+                  onClick={onEdit}
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  title="Edit session"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  onClick={onRemove}
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  title="Remove session"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </CardContent>
