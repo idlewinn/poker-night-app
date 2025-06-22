@@ -477,13 +477,14 @@ async function fetchSessionById(sessionId: number, res: Response): Promise<void>
 }
 
 // Public route to track invite page views (no auth required)
-router.post('/:sessionId/invite-view', async (req: Request, res: Response) => {
+router.post('/:sessionId/invite-view', async (req: Request, res: Response): Promise<void> => {
   try {
     const { sessionId } = req.params;
     const { playerEmail } = req.body;
 
     if (!sessionId || !playerEmail) {
-      return res.status(400).json({ error: 'Session ID and player email are required' });
+      res.status(400).json({ error: 'Session ID and player email are required' });
+      return;
     }
 
     // Track invite page view

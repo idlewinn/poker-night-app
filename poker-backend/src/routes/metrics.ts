@@ -29,13 +29,14 @@ router.get('/sessions/:sessionId', authenticateToken, async (req: any, res: Resp
 });
 
 // POST track custom event
-router.post('/track', authenticateToken, async (req: any, res: Response) => {
+router.post('/track', authenticateToken, async (req: any, res: Response): Promise<void> => {
   try {
     const userId = req.user.id;
     const { eventType, eventData, sessionId, playerEmail } = req.body;
-    
+
     if (!eventType) {
-      return res.status(400).json({ error: 'Event type is required' });
+      res.status(400).json({ error: 'Event type is required' });
+      return;
     }
 
     await MetricsService.trackEvent({
@@ -56,7 +57,7 @@ router.post('/track', authenticateToken, async (req: any, res: Response) => {
 });
 
 // GET metrics for all sessions (admin view)
-router.get('/admin/all', authenticateToken, async (req: any, res: Response) => {
+router.get('/admin/all', authenticateToken, async (req: any, res: Response): Promise<void> => {
   try {
     // Get overall metrics without user filter (admin view)
     const summary = await MetricsService.getMetricsSummary();

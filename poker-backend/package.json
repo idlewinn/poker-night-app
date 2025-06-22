@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "npm run clean && tsc",
+    "build": "npm run clean && npm run type-check && tsc",
     "start": "node dist/server.js",
     "dev": "ts-node src/server.ts",
     "dev:watch": "nodemon --exec ts-node src/server.ts",
@@ -12,7 +12,8 @@
     "create-admin": "ts-node src/scripts/createAdmin.ts",
     "clean": "rm -rf dist",
     "postbuild": "cp -r database dist/ || mkdir -p dist/database",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "type-check": "tsc --noEmit",
+    "test": "npm run type-check && echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
