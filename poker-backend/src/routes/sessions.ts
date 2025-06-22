@@ -28,7 +28,7 @@ function generateSessionNameFromDateTime(dateTimeString: string): string {
 }
 
 // GET all sessions where user is creator OR participant
-router.get('/', authenticateToken, (req: any, res: Response) => {
+router.get('/', authenticateToken, async (req: any, res: Response) => {
   const userId = req.user?.id;
 
   if (!userId) {
@@ -61,41 +61,40 @@ router.get('/', authenticateToken, (req: any, res: Response) => {
     ORDER BY s.created_at DESC
   `;
 
-  db.all(sql, [userId, userEmail], (err: Error | null, rows: any[]) => {
-    if (err) {
-      console.error('Error fetching sessions:', err.message);
-      res.status(500).json({ error: 'Failed to fetch sessions' });
-    } else {
-      // Transform the data to match frontend format
-      const sessions: SessionWithPlayers[] = rows.map(row => ({
-        id: row.id,
-        name: row.name,
-        scheduledDateTime: row.scheduled_datetime,
-        createdBy: row.created_by,
-        createdAt: row.created_at,
-        players: row.player_ids ? row.player_ids.split(',').map((id: string, index: number) => ({
-          id: `${row.id}-${parseInt(id)}`, // Unique session_player id using session-player combination
-          session_id: row.id,
-          player_id: parseInt(id),
-          status: row.player_statuses ? row.player_statuses.split(',')[index] as PlayerStatus : 'Invited' as PlayerStatus,
-          buy_in: row.player_buy_ins ? parseFloat(row.player_buy_ins.split(',')[index]) || 0 : 0,
-          cash_out: row.player_cash_outs ? parseFloat(row.player_cash_outs.split(',')[index]) || 0 : 0,
-          created_at: row.created_at,
-          player: {
-            id: parseInt(id),
-            name: row.player_names.split(',')[index],
-            created_at: row.created_at
-          }
-        })) : []
-      }));
-      res.json(sessions);
-    }
-  });
+  try {
+    const rows = await db.all(sql, [userId, userEmail]);
+    // Transform the data to match frontend format
+    const sessions: SessionWithPlayers[] = rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      scheduledDateTime: row.scheduled_datetime,
+      createdBy: row.created_by,
+      createdAt: row.created_at,
+      players: row.player_ids ? row.player_ids.split(',').map((id: string, index: number) => ({
+        id: `${row.id}-${parseInt(id)}`, // Unique session_player id using session-player combination
+        session_id: row.id,
+        player_id: parseInt(id),
+        status: row.player_statuses ? row.player_statuses.split(',')[index] as PlayerStatus : 'Invited' as PlayerStatus,
+        buy_in: row.player_buy_ins ? parseFloat(row.player_buy_ins.split(',')[index]) || 0 : 0,
+        cash_out: row.player_cash_outs ? parseFloat(row.player_cash_outs.split(',')[index]) || 0 : 0,
+        created_at: row.created_at,
+        player: {
+          id: parseInt(id),
+          name: row.player_names.split(',')[index],
+          created_at: row.created_at
+        }
+      })) : []
+    }));
+    res.json(sessions);
+  } catch (err: any) {
+    console.error('Error fetching sessions:', err.message);
+    res.status(500).json({ error: 'Failed to fetch sessions' });
+  }
 });
 
 
 // GET session by ID
-router.get('/:id', (req: Request, res: Response): void => {
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
 
   const sql = `
@@ -114,11 +113,9 @@ router.get('/:id', (req: Request, res: Response): void => {
     GROUP BY s.id
   `;
 
-  db.get(sql, [id], (err: Error | null, row: any) => {
-    if (err) {
-      console.error('Error fetching session:', err.message);
-      res.status(500).json({ error: 'Failed to fetch session' });
-    } else if (!row) {
+  try {
+    const row = await db.get(sql, [id]);
+    if (!row) {
       res.status(404).json({ error: 'Session not found' });
     } else {
       const session: SessionWithPlayers = {
@@ -145,7 +142,10 @@ router.get('/:id', (req: Request, res: Response): void => {
       };
       res.json(session);
     }
-  });
+  } catch (err: any) {
+    console.error('Error fetching session:', err.message);
+    res.status(500).json({ error: 'Failed to fetch session' });
+  }
 });
 
 // POST create new session
