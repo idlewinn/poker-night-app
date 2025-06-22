@@ -1,9 +1,9 @@
-import db from '../database/db';
+import db from '../database/index';
 
 // Script to create an admin user for testing
 // This would normally be done through Google OAuth, but for testing we'll create one manually
 
-const createAdminUser = () => {
+const createAdminUser = async () => {
   const adminData = {
     google_id: 'admin-test-123',
     email: 'admin@pokernight.com',
@@ -13,40 +13,36 @@ const createAdminUser = () => {
   };
 
   const sql = `
-    INSERT OR REPLACE INTO users (google_id, email, name, avatar_url, role)
+    INSERT INTO users (google_id, email, name, avatar_url, role)
     VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT (google_id) DO UPDATE SET
+      email = EXCLUDED.email,
+      name = EXCLUDED.name,
+      avatar_url = EXCLUDED.avatar_url,
+      role = EXCLUDED.role
   `;
 
-  db.run(sql, [
-    adminData.google_id,
-    adminData.email,
-    adminData.name,
-    adminData.avatar_url,
-    adminData.role
-  ], function(err) {
-    if (err) {
-      console.error('Error creating admin user:', err.message);
-    } else {
-      console.log('✅ Admin user created successfully!');
-      console.log('Email:', adminData.email);
-      console.log('Role:', adminData.role);
-      console.log('Google ID:', adminData.google_id);
-    }
-    
-    // Close database connection
-    db.close((closeErr) => {
-      if (closeErr) {
-        console.error('Error closing database:', closeErr.message);
-      } else {
-        console.log('Database connection closed');
-      }
-      process.exit(0);
-    });
-  });
+  try {
+    await db.run(sql, [
+      adminData.google_id,
+      adminData.email,
+      adminData.name,
+      adminData.avatar_url,
+      adminData.role
+    ]);
+
+    console.log('✅ Admin user created successfully!');
+    console.log('Email:', adminData.email);
+    console.log('Role:', adminData.role);
+    console.log('Google ID:', adminData.google_id);
+  } catch (err: any) {
+    console.error('Error creating admin user:', err.message);
+    throw err;
+  }
 };
 
 // Create a test player user as well
-const createPlayerUser = () => {
+const createPlayerUser = async () => {
   const playerData = {
     google_id: 'player-test-456',
     email: 'player@pokernight.com',
@@ -56,30 +52,45 @@ const createPlayerUser = () => {
   };
 
   const sql = `
-    INSERT OR REPLACE INTO users (google_id, email, name, avatar_url, role)
+    INSERT INTO users (google_id, email, name, avatar_url, role)
     VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT (google_id) DO UPDATE SET
+      email = EXCLUDED.email,
+      name = EXCLUDED.name,
+      avatar_url = EXCLUDED.avatar_url,
+      role = EXCLUDED.role
   `;
 
-  db.run(sql, [
-    playerData.google_id,
-    playerData.email,
-    playerData.name,
-    playerData.avatar_url,
-    playerData.role
-  ], function(err) {
-    if (err) {
-      console.error('Error creating player user:', err.message);
-    } else {
-      console.log('✅ Player user created successfully!');
-      console.log('Email:', playerData.email);
-      console.log('Role:', playerData.role);
-      console.log('Google ID:', playerData.google_id);
-    }
-    
-    // Now create admin user
-    createAdminUser();
-  });
+  try {
+    await db.run(sql, [
+      playerData.google_id,
+      playerData.email,
+      playerData.name,
+      playerData.avatar_url,
+      playerData.role
+    ]);
+
+    console.log('✅ Player user created successfully!');
+    console.log('Email:', playerData.email);
+    console.log('Role:', playerData.role);
+    console.log('Google ID:', playerData.google_id);
+  } catch (err: any) {
+    console.error('Error creating player user:', err.message);
+    throw err;
+  }
 };
 
-console.log('🔧 Creating test users...');
-createPlayerUser();
+const main = async () => {
+  try {
+    console.log('🔧 Creating test users...');
+    await createPlayerUser();
+    await createAdminUser();
+    console.log('✅ All test users created successfully!');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Failed to create test users:', error);
+    process.exit(1);
+  }
+};
+
+main();

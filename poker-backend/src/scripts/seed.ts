@@ -1,4 +1,4 @@
-import db from '../database/db';
+import db from '../database/index';
 
 // Sample data for seeding
 interface SamplePlayer {
@@ -39,89 +39,54 @@ const sampleSessions: SampleSession[] = [
 
 async function seedDatabase(): Promise<void> {
   console.log('🌱 Starting database seeding...');
-  
+
   try {
     // Clear existing data
-    await new Promise<void>((resolve, reject) => {
-      db.run('DELETE FROM session_players', (err: Error | null) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-    
-    await new Promise<void>((resolve, reject) => {
-      db.run('DELETE FROM sessions', (err: Error | null) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-    
-    await new Promise<void>((resolve, reject) => {
-      db.run('DELETE FROM players', (err: Error | null) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-    
+    await db.run('DELETE FROM session_players');
+    await db.run('DELETE FROM sessions');
+    await db.run('DELETE FROM players');
+
     console.log('✅ Cleared existing data');
     
     // Insert sample players
     const playerIds: number[] = [];
     for (const player of samplePlayers) {
-      const playerId = await new Promise<number>((resolve, reject) => {
-        db.run('INSERT INTO players (name) VALUES (?)', [player.name], function(this: any, err: Error | null) {
-          if (err) reject(err);
-          else resolve(this.lastID);
-        });
-      });
+      const result = await db.run('INSERT INTO players (name) VALUES (?)', [player.name]);
+      const playerId = result.lastID!;
       playerIds.push(playerId);
       console.log(`✅ Created player: ${player.name} (ID: ${playerId})`);
     }
     
-    // Insert sample sessions
+    // Insert sample sessions (need a default user ID for created_by)
+    const defaultUserId = 1; // Assuming we have a user with ID 1
+
     for (const session of sampleSessions) {
-      const sessionId = await new Promise<number>((resolve, reject) => {
-        db.run('INSERT INTO sessions (name, scheduled_datetime) VALUES (?, ?)', 
-          [session.name, session.scheduled_datetime], function(this: any, err: Error | null) {
-          if (err) reject(err);
-          else resolve(this.lastID);
-        });
-      });
-      
+      const result = await db.run('INSERT INTO sessions (name, scheduled_datetime, created_by) VALUES (?, ?, ?)',
+        [session.name, session.scheduled_datetime, defaultUserId]);
+      const sessionId = result.lastID!;
+
       console.log(`✅ Created session: ${session.name} (ID: ${sessionId})`);
-      
+
       // Add players to session
       for (const playerIndex of session.playerIds) {
         if (playerIds[playerIndex - 1]) {
-          await new Promise<void>((resolve, reject) => {
-            db.run('INSERT INTO session_players (session_id, player_id) VALUES (?, ?)', 
-              [sessionId, playerIds[playerIndex - 1]], (err: Error | null) => {
-              if (err) reject(err);
-              else resolve();
-            });
-          });
+          await db.run('INSERT INTO session_players (session_id, player_id, status, buy_in, cash_out) VALUES (?, ?, ?, ?, ?)',
+            [sessionId, playerIds[playerIndex - 1], 'Invited', 0, 0]);
         }
       }
-      
+
       console.log(`✅ Added ${session.playerIds.length} players to session: ${session.name}`);
     }
     
     console.log('🎉 Database seeding completed successfully!');
     console.log(`📊 Created ${playerIds.length} players and ${sampleSessions.length} sessions`);
-    
+
   } catch (error) {
     console.error('❌ Error seeding database:', error);
-  } finally {
-    // Close database connection
-    db.close((err: Error | null) => {
-      if (err) {
-        console.error('Error closing database:', err);
-      } else {
-        console.log('Database connection closed');
-      }
-      process.exit(0);
-    });
+    process.exit(1);
   }
+
+  process.exit(0);
 }
 
 // Run seeding if this script is executed directly

@@ -85,13 +85,8 @@ export async function requireSessionOwnership(req: any, res: any, next: any): Pr
     }
 
     // Check if user owns this session
-    const db = require('../database/db').default;
-    const session = await new Promise((resolve, reject) => {
-      db.get('SELECT * FROM sessions WHERE id = ?', [sessionId], (err: any, row: any) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
+    const db = require('../database/index').default;
+    const session = await db.get('SELECT * FROM sessions WHERE id = ?', [sessionId]);
 
     if (!session) {
       res.status(404).json({ error: 'Session not found' });
