@@ -26,6 +26,12 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url} from ${req.ip}`);
+  next();
+});
+
 // Middleware
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -97,11 +103,15 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-const server = app.listen(PORT, '0.0.0.0', () => {
+// Try binding without specifying host for Railway
+const server = app.listen(PORT, () => {
   console.log(`🃏 Poker Backend API running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV}`);
+  console.log(`Binding to: 0.0.0.0:${PORT}`);
   console.log(`Health check available at: http://0.0.0.0:${PORT}/api/health`);
   console.log(`Root endpoint available at: http://0.0.0.0:${PORT}/`);
+  console.log(`Railway Public Domain: ${process.env.RAILWAY_PUBLIC_DOMAIN || 'not set'}`);
+  console.log(`Railway Static URL: ${process.env.RAILWAY_STATIC_URL || 'not set'}`);
   console.log('Server started successfully!');
 
   // Test the health endpoint internally
@@ -109,7 +119,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.log('Testing internal health check...');
     const http = require('http');
     const options = {
-      hostname: 'localhost',
+      hostname: '127.0.0.1', // Use IPv4 instead of localhost
       port: PORT,
       path: '/api/health',
       method: 'GET'
