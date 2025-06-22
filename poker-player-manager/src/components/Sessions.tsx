@@ -230,7 +230,6 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
                   hideHeader={true}
                   isSessionOwner={isSessionOwner}
                   isPastSessions={true}
-                  isActiveSessions={false}
                 />
               </div>
             </div>
