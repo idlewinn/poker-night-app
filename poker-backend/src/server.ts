@@ -64,7 +64,25 @@ app.use('/api/seating-charts', seatingChartsRouter);
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response<HealthCheckResponse>) => {
-  res.json({ status: 'OK', message: 'Poker Backend API is running' });
+  console.log('Health check requested');
+  res.json({
+    status: 'OK',
+    message: 'Poker Backend API is running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    port: PORT,
+    uptime: process.uptime()
+  });
+});
+
+// Add a simple root endpoint for testing
+app.get('/', (req: Request, res: Response) => {
+  console.log('Root endpoint requested');
+  res.json({
+    message: 'Poker Night API',
+    health: '/api/health',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Error handling middleware
@@ -83,6 +101,30 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🃏 Poker Backend API running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV}`);
   console.log(`Health check available at: http://0.0.0.0:${PORT}/api/health`);
+  console.log(`Root endpoint available at: http://0.0.0.0:${PORT}/`);
+  console.log('Server started successfully!');
+
+  // Test the health endpoint internally
+  setTimeout(() => {
+    console.log('Testing internal health check...');
+    const http = require('http');
+    const options = {
+      hostname: 'localhost',
+      port: PORT,
+      path: '/api/health',
+      method: 'GET'
+    };
+
+    const req = http.request(options, (res: any) => {
+      console.log(`Internal health check status: ${res.statusCode}`);
+    });
+
+    req.on('error', (e: any) => {
+      console.error(`Internal health check error: ${e.message}`);
+    });
+
+    req.end();
+  }, 1000);
 });
 
 server.on('error', (error: any) => {
