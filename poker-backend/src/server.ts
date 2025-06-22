@@ -10,7 +10,7 @@ import passport from './config/auth';
 import { HealthCheckResponse, ApiError } from './types/index';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = parseInt(process.env.PORT || '3001', 10);
 
 // Trust proxy (required for Railway/Heroku/etc)
 app.set('trust proxy', 1);
