@@ -68,10 +68,16 @@ app.use('/api/players', playersRouter);
 app.use('/api/sessions', sessionsRouter);
 app.use('/api/seating-charts', seatingChartsRouter);
 
-// Health check endpoint
+// Simple health check endpoint (Railway compatible)
+app.get('/health', (req: Request, res: Response) => {
+  console.log('Simple health check requested');
+  res.status(200).send('OK');
+});
+
+// Detailed health check endpoint
 app.get('/api/health', (req: Request, res: Response<HealthCheckResponse>) => {
-  console.log('Health check requested');
-  res.json({
+  console.log('API health check requested');
+  res.status(200).json({
     status: 'OK',
     message: 'Poker Backend API is running',
     timestamp: new Date().toISOString(),
@@ -84,7 +90,7 @@ app.get('/api/health', (req: Request, res: Response<HealthCheckResponse>) => {
 // Add a simple root endpoint for testing
 app.get('/', (req: Request, res: Response) => {
   console.log('Root endpoint requested');
-  res.json({
+  res.status(200).json({
     message: 'Poker Night API',
     health: '/api/health',
     timestamp: new Date().toISOString()
