@@ -111,6 +111,7 @@ class PostgreSQLAdapter implements DatabaseAdapter {
     } catch (error) {
       console.error('PostgreSQL run error:', error);
       console.error('Original SQL:', sql);
+      console.error('Modified SQL:', modifiedSql);
       console.error('Converted SQL:', this.convertSqlPlaceholders(modifiedSql));
       console.error('Params:', params);
       throw error;
