@@ -133,10 +133,10 @@ router.post('/', authenticateToken, async (req: any, res: Response): Promise<voi
       // Player exists, just add the relationship if it doesn't exist
       // Use INSERT ... ON CONFLICT for PostgreSQL compatibility
       const insertSql = process.env.DATABASE_URL?.startsWith('postgresql')
-        ? 'INSERT INTO user_players (user_id, player_id) VALUES (?, ?) ON CONFLICT (user_id, player_id) DO NOTHING'
-        : 'INSERT OR IGNORE INTO user_players (user_id, player_id) VALUES (?, ?)';
+        ? 'INSERT INTO user_players (user_id, player_id, default_invite) VALUES (?, ?, ?) ON CONFLICT (user_id, player_id) DO NOTHING'
+        : 'INSERT OR IGNORE INTO user_players (user_id, player_id, default_invite) VALUES (?, ?, ?)';
 
-      await db.run(insertSql, [userId, existingPlayer.id]);
+      await db.run(insertSql, [userId, existingPlayer.id, 1]);
       res.status(201).json(existingPlayer);
     } else {
       // Player doesn't exist, create new player
@@ -148,8 +148,8 @@ router.post('/', authenticateToken, async (req: any, res: Response): Promise<voi
         throw new Error('Failed to get player ID');
       }
 
-      // Add the user-player relationship
-      await db.run('INSERT INTO user_players (user_id, player_id) VALUES (?, ?)', [userId, playerId]);
+      // Add the user-player relationship with default_invite = true
+      await db.run('INSERT INTO user_players (user_id, player_id, default_invite) VALUES (?, ?, ?)', [userId, playerId, 1]);
 
       // Return the created player
       const player = await db.get('SELECT * FROM players WHERE id = ?', [playerId]);
@@ -215,6 +215,22 @@ router.put('/:id/default-invite', authenticateToken, async (req: any, res: Respo
   }
 
   try {
+    // First, ensure the default_invite column exists
+    try {
+      await db.run(`
+        ALTER TABLE user_players
+        ADD COLUMN default_invite BOOLEAN DEFAULT 1
+      `);
+      console.log('✅ Added default_invite column to user_players');
+    } catch (error: any) {
+      if (error.message.includes('duplicate column name') || error.message.includes('already exists')) {
+        console.log('ℹ️  default_invite column already exists in user_players');
+      } else {
+        console.error('Error adding default_invite column:', error.message);
+        // Continue anyway - the column might exist with a different error message
+      }
+    }
+
     // Check if user has access to this player (they added it)
     const userPlayer = await db.get(
       'SELECT * FROM user_players WHERE user_id = ? AND player_id = ?',
