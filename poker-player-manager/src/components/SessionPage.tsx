@@ -425,7 +425,8 @@ function SessionPage(): React.JSX.Element {
   return (
     <div className={`container mx-auto py-4 px-4 ${isDashboardView ? 'max-w-full' : 'max-w-4xl'}`}>
       {/* Session Header */}
-      <Card className="mb-6">
+      {!isDashboardView && (
+        <Card className="mb-6">
         <div className="p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
@@ -494,6 +495,7 @@ function SessionPage(): React.JSX.Element {
           )}
         </div>
       </Card>
+      )}
 
       {/* Bomb Pot Timer Alert Overlay */}
       {bombPotAlert && (
@@ -510,7 +512,7 @@ function SessionPage(): React.JSX.Element {
       )}
 
       {/* Persistent Timer Display - Always visible when timer has been used */}
-      {(bombPotRunning || bombPotTimeLeft < bombPotInterval * 60) && (
+      {!isDashboardView && (bombPotRunning || bombPotTimeLeft < bombPotInterval * 60) && (
         <Card className={`mb-4 border-2 ${bombPotRunning ? 'border-orange-400 bg-orange-50' : 'border-gray-300 bg-gray-50'}`}>
           <CardContent className="py-3">
             <div className="flex items-center justify-between">
@@ -1093,72 +1095,74 @@ function SessionPage(): React.JSX.Element {
         </TabsContent>
       </Tabs>
 
-          {/* Seating Chart Modal - Only for session owners */}
-          {isSessionOwner() && (
-            <SeatingChartModal
-              open={seatingChartModalOpen}
-              onClose={() => setSeatingChartModalOpen(false)}
-              sessionId={session.id}
-              sessionPlayers={getSessionPlayers()}
-              onGenerate={handleGenerateSeatingChart}
-              generating={generatingChart}
-            />
-          )}
-
-          {/* Bomb Pot Timer Settings Modal */}
-          <Dialog open={bombPotTimerModalOpen} onOpenChange={setBombPotTimerModalOpen}>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Timer className="h-5 w-5" />
-                  Bomb Pot Timer Settings
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Timer Interval (minutes)
-                  </label>
-                  <Select
-                    value={bombPotInterval.toString()}
-                    onValueChange={(value) => {
-                      updateBombPotInterval(parseInt(value));
-                      setBombPotTimerModalOpen(false);
-                    }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1 minute (testing)</SelectItem>
-                      <SelectItem value="5">5 minutes</SelectItem>
-                      <SelectItem value="10">10 minutes</SelectItem>
-                      <SelectItem value="15">15 minutes</SelectItem>
-                      <SelectItem value="20">20 minutes</SelectItem>
-                      <SelectItem value="25">25 minutes</SelectItem>
-                      <SelectItem value="30">30 minutes</SelectItem>
-                      <SelectItem value="35">35 minutes</SelectItem>
-                      <SelectItem value="40">40 minutes</SelectItem>
-                      <SelectItem value="45">45 minutes (default)</SelectItem>
-                      <SelectItem value="50">50 minutes</SelectItem>
-                      <SelectItem value="55">55 minutes</SelectItem>
-                      <SelectItem value="60">60 minutes</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="text-sm text-gray-600">
-                  <p>Click on the timer display to quickly adjust the interval. The timer will be reset to the new interval.</p>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setBombPotTimerModalOpen(false)}>
-                  Close
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </>
       )}
+
+      {/* Modals - Always available regardless of dashboard mode */}
+      {/* Seating Chart Modal - Only for session owners */}
+      {isSessionOwner() && (
+        <SeatingChartModal
+          open={seatingChartModalOpen}
+          onClose={() => setSeatingChartModalOpen(false)}
+          sessionId={session.id}
+          sessionPlayers={getSessionPlayers()}
+          onGenerate={handleGenerateSeatingChart}
+          generating={generatingChart}
+        />
+      )}
+
+      {/* Bomb Pot Timer Settings Modal */}
+      <Dialog open={bombPotTimerModalOpen} onOpenChange={setBombPotTimerModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Timer className="h-5 w-5" />
+              Bomb Pot Timer Settings
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Timer Interval (minutes)
+              </label>
+              <Select
+                value={bombPotInterval.toString()}
+                onValueChange={(value) => {
+                  updateBombPotInterval(parseInt(value));
+                  setBombPotTimerModalOpen(false);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 minute (testing)</SelectItem>
+                  <SelectItem value="5">5 minutes</SelectItem>
+                  <SelectItem value="10">10 minutes</SelectItem>
+                  <SelectItem value="15">15 minutes</SelectItem>
+                  <SelectItem value="20">20 minutes</SelectItem>
+                  <SelectItem value="25">25 minutes</SelectItem>
+                  <SelectItem value="30">30 minutes</SelectItem>
+                  <SelectItem value="35">35 minutes</SelectItem>
+                  <SelectItem value="40">40 minutes</SelectItem>
+                  <SelectItem value="45">45 minutes (default)</SelectItem>
+                  <SelectItem value="50">50 minutes</SelectItem>
+                  <SelectItem value="55">55 minutes</SelectItem>
+                  <SelectItem value="60">60 minutes</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="text-sm text-gray-600">
+              <p>Click on the timer display to quickly adjust the interval. The timer will be reset to the new interval.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBombPotTimerModalOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
