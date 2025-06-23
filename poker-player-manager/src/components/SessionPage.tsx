@@ -423,7 +423,7 @@ function SessionPage(): React.JSX.Element {
   const { totalBuyIn } = calculateTotals();
 
   return (
-    <div className="container mx-auto max-w-4xl py-4 px-4">
+    <div className={`container mx-auto py-4 px-4 ${isDashboardView ? 'max-w-full' : 'max-w-4xl'}`}>
       {/* Session Header */}
       <Card className="mb-6">
         <div className="p-4">
@@ -574,8 +574,8 @@ function SessionPage(): React.JSX.Element {
 
       {/* Dashboard View */}
       {isDashboardView ? (
-        <div className="fixed inset-0 bg-gray-900 z-40 overflow-hidden">
-          <div className="h-screen flex flex-col p-4 sm:p-6">
+        <div className="bg-gray-900 min-h-screen -mx-4 -my-4 p-4 sm:p-6">
+          <div className="flex flex-col h-screen">
             {/* Dashboard Header */}
             <div className="flex items-center justify-between mb-6 flex-shrink-0">
               <h1 className="text-3xl font-bold text-white">
@@ -1107,7 +1107,7 @@ function SessionPage(): React.JSX.Element {
 
           {/* Bomb Pot Timer Settings Modal */}
           <Dialog open={bombPotTimerModalOpen} onOpenChange={setBombPotTimerModalOpen}>
-            <DialogContent className="max-w-md z-[60]">
+            <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Timer className="h-5 w-5" />

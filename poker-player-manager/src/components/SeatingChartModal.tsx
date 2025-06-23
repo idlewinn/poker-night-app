@@ -103,7 +103,7 @@ function SeatingChartModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md z-[60]">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shuffle className="h-5 w-5" />
@@ -130,7 +130,7 @@ function SeatingChartModal({
               <SelectTrigger>
                 <SelectValue placeholder="Select number of tables" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" sideOffset={4}>
                 {Array.from({ length: Math.min(selectedPlayerIds.length || 1, 10) }, (_, i) => i + 1).map((num) => (
                   <SelectItem key={num} value={num.toString()}>
                     {num} Table{num > 1 ? 's' : ''}
