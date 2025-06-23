@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Edit,
   Trash2,
@@ -18,23 +19,35 @@ function PlayerItem({ player, onRemove, onRename, onViewDetails, onToggleDefault
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editName, setEditName] = useState<string>(player.name);
   const [editEmail, setEditEmail] = useState<string>(player.email || '');
+  const [editDefaultInvite, setEditDefaultInvite] = useState<boolean>(player.default_invite !== false);
 
   // Determine if this player can be edited (has email = user has full access)
   const canEdit = player.email !== null;
 
+  // Sync state when player prop changes (e.g., when auto-invite is toggled)
+  useEffect(() => {
+    setEditName(player.name);
+    setEditEmail(player.email || '');
+    setEditDefaultInvite(player.default_invite !== false);
+  }, [player.name, player.email, player.default_invite]);
+
   const handleSave = (): void => {
     if (editName.trim()) {
-      // Check if either name or email has changed
+      // Check if name, email, or auto-invite has changed
       const nameChanged = editName !== player.name;
       const emailChanged = editEmail !== (player.email || '');
+      const autoInviteChanged = editDefaultInvite !== (player.default_invite !== false);
 
       console.log('PlayerItem handleSave debug:', {
         editName,
         editEmail,
+        editDefaultInvite,
         playerName: player.name,
         playerEmail: player.email,
+        playerDefaultInvite: player.default_invite,
         nameChanged,
-        emailChanged
+        emailChanged,
+        autoInviteChanged
       });
 
       if (nameChanged || emailChanged) {
@@ -42,16 +55,24 @@ function PlayerItem({ player, onRemove, onRename, onViewDetails, onToggleDefault
         console.log('Calling onRename with:', { name: editName, email: emailToSend });
         onRename(editName, emailToSend);
       }
+
+      // Handle auto-invite setting change separately
+      if (autoInviteChanged && onToggleDefaultInvite) {
+        console.log('Updating auto-invite setting to:', editDefaultInvite);
+        onToggleDefaultInvite(player.id, editDefaultInvite);
+      }
     }
     setIsEditing(false);
     setEditName(player.name);
     setEditEmail(player.email || '');
+    setEditDefaultInvite(player.default_invite !== false);
   };
 
   const handleCancel = (): void => {
     setIsEditing(false);
     setEditName(player.name);
     setEditEmail(player.email || '');
+    setEditDefaultInvite(player.default_invite !== false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -83,20 +104,35 @@ function PlayerItem({ player, onRemove, onRename, onViewDetails, onToggleDefault
               />
             </div>
             {canEdit && (
-              <div className="space-y-1">
-                <label htmlFor="player-email" className="text-xs font-medium text-gray-700">
-                  Email
-                </label>
-                <Input
-                  id="player-email"
-                  type="email"
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder="Enter email (optional)..."
-                  className="text-sm"
-                />
-              </div>
+              <>
+                <div className="space-y-1">
+                  <label htmlFor="player-email" className="text-xs font-medium text-gray-700">
+                    Email
+                  </label>
+                  <Input
+                    id="player-email"
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    placeholder="Enter email (optional)..."
+                    className="text-sm"
+                  />
+                </div>
+                <div className="flex items-center space-x-2 pt-2">
+                  <Checkbox
+                    id="auto-invite"
+                    checked={editDefaultInvite}
+                    onCheckedChange={(checked) => setEditDefaultInvite(checked === true)}
+                  />
+                  <label
+                    htmlFor="auto-invite"
+                    className="text-xs font-medium text-gray-700 cursor-pointer"
+                  >
+                    Include in "Invite All" by default
+                  </label>
+                </div>
+              </>
             )}
             <div className="flex gap-2 justify-end pt-2">
               <Button
