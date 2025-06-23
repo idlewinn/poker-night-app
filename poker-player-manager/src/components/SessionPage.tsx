@@ -35,7 +35,12 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
-  Users
+  Users,
+  Timer,
+  Play,
+  Pause,
+  RotateCcw,
+  Settings
 } from 'lucide-react';
 import { Session, Player, SessionPlayer, SeatingChart, CreateSeatingChartRequest } from '../types/index';
 import { sessionsApi, playersApi, seatingChartsApi } from '../services/api';
@@ -70,6 +75,12 @@ function SessionPage(): React.JSX.Element {
   const [seatingChartModalOpen, setSeatingChartModalOpen] = useState<boolean>(false);
   const [generatingChart, setGeneratingChart] = useState<boolean>(false);
   const [deletingChart, setDeletingChart] = useState<boolean>(false);
+
+  // Bomb Pot Timer State
+  const [bombPotInterval, setBombPotInterval] = useState<number>(45); // minutes
+  const [bombPotTimeLeft, setBombPotTimeLeft] = useState<number>(45 * 60); // seconds
+  const [bombPotRunning, setBombPotRunning] = useState<boolean>(false);
+  const [bombPotAlert, setBombPotAlert] = useState<boolean>(false);
 
   // Check if current user is the session owner
   const isSessionOwner = (): boolean => {
@@ -114,6 +125,45 @@ function SessionPage(): React.JSX.Element {
 
     fetchData();
   }, [sessionId]);
+
+  // Bomb Pot Timer Effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
+    if (bombPotRunning && bombPotTimeLeft > 0) {
+      interval = setInterval(() => {
+        setBombPotTimeLeft(prev => {
+          if (prev <= 1) {
+            // Timer finished - trigger alert
+            setBombPotAlert(true);
+            setBombPotRunning(false);
+
+            // Play sound
+            try {
+              const audio = new Audio('/api/placeholder/bomb-pot-alert.mp3');
+              audio.play().catch(console.error);
+            } catch (error) {
+              console.error('Failed to play alert sound:', error);
+            }
+
+            // Auto-restart timer
+            setTimeout(() => {
+              setBombPotTimeLeft(bombPotInterval * 60);
+              setBombPotRunning(true);
+              setBombPotAlert(false);
+            }, 5000); // Show alert for 5 seconds
+
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [bombPotRunning, bombPotTimeLeft, bombPotInterval]);
 
   const handleEditFinancials = (sessionPlayer: SessionPlayer) => {
     // If we're already editing a different player, don't switch
@@ -209,6 +259,35 @@ function SessionPage(): React.JSX.Element {
     } finally {
       setDeletingChart(false);
     }
+  };
+
+  // Bomb Pot Timer Functions
+  const startBombPotTimer = (): void => {
+    setBombPotRunning(true);
+    setBombPotAlert(false);
+  };
+
+  const pauseBombPotTimer = (): void => {
+    setBombPotRunning(false);
+  };
+
+  const resetBombPotTimer = (): void => {
+    setBombPotRunning(false);
+    setBombPotTimeLeft(bombPotInterval * 60);
+    setBombPotAlert(false);
+  };
+
+  const updateBombPotInterval = (minutes: number): void => {
+    setBombPotInterval(minutes);
+    if (!bombPotRunning) {
+      setBombPotTimeLeft(minutes * 60);
+    }
+  };
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   const formatCurrency = (amount: number): string => {
@@ -364,9 +443,37 @@ function SessionPage(): React.JSX.Element {
         </div>
       </Card>
 
+      {/* Bomb Pot Timer Alert Overlay */}
+      {bombPotAlert && (
+        <div className="fixed inset-0 bg-red-500 bg-opacity-90 flex items-center justify-center z-50 animate-pulse">
+          <div className="text-center text-white">
+            <div className="text-6xl font-bold mb-4">💣 BOMB POT! 💣</div>
+            <div className="text-2xl">Time for a Bomb Pot!</div>
+            <div className="text-lg mt-2">Timer will restart automatically...</div>
+          </div>
+        </div>
+      )}
+
+      {/* Persistent Timer Display */}
+      {bombPotRunning && (
+        <Card className="mb-4 border-2 border-orange-400 bg-orange-50">
+          <CardContent className="py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Timer className="h-5 w-5 text-orange-600" />
+                <span className="font-medium text-orange-800">Bomb Pot Timer</span>
+              </div>
+              <div className="text-2xl font-bold text-orange-600">
+                {formatTime(bombPotTimeLeft)}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Tabs */}
       <Tabs defaultValue="winnings" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="winnings" className="flex items-center gap-2">
             <TrendingDown className="h-4 w-4" />
             Winnings
@@ -374,6 +481,10 @@ function SessionPage(): React.JSX.Element {
           <TabsTrigger value="seating" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Seating
+          </TabsTrigger>
+          <TabsTrigger value="bombpot" className="flex items-center gap-2">
+            <Timer className="h-4 w-4" />
+            Bomb Pot
           </TabsTrigger>
         </TabsList>
 
@@ -612,6 +723,91 @@ function SessionPage(): React.JSX.Element {
             deleting={deletingChart}
             isOwner={isSessionOwner()}
           />
+        </TabsContent>
+
+        <TabsContent value="bombpot" className="mt-0">
+          <div className="space-y-6">
+            {/* Timer Display */}
+            <Card className="text-center">
+              <CardContent className="py-8">
+                <Timer className="h-16 w-16 text-orange-600 mx-auto mb-4" />
+                <div className="text-6xl font-bold text-orange-600 mb-2">
+                  {formatTime(bombPotTimeLeft)}
+                </div>
+                <div className="text-lg text-gray-600 mb-6">
+                  {bombPotRunning ? 'Time until next Bomb Pot' : 'Timer paused'}
+                </div>
+
+                {/* Timer Controls */}
+                <div className="flex justify-center gap-3">
+                  {!bombPotRunning ? (
+                    <Button onClick={startBombPotTimer} className="flex items-center gap-2">
+                      <Play className="h-4 w-4" />
+                      Start Timer
+                    </Button>
+                  ) : (
+                    <Button onClick={pauseBombPotTimer} variant="outline" className="flex items-center gap-2">
+                      <Pause className="h-4 w-4" />
+                      Pause Timer
+                    </Button>
+                  )}
+                  <Button onClick={resetBombPotTimer} variant="outline" className="flex items-center gap-2">
+                    <RotateCcw className="h-4 w-4" />
+                    Reset
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Timer Settings */}
+            <Card>
+              <div className="p-4 bg-primary text-primary-foreground">
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Timer Settings
+                </h3>
+              </div>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Bomb Pot Interval (minutes)
+                    </label>
+                    <Select
+                      value={bombPotInterval.toString()}
+                      onValueChange={(value) => updateBombPotInterval(parseInt(value))}
+                    >
+                      <SelectTrigger className="w-48">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="30">30 minutes</SelectItem>
+                        <SelectItem value="35">35 minutes</SelectItem>
+                        <SelectItem value="40">40 minutes</SelectItem>
+                        <SelectItem value="45">45 minutes (default)</SelectItem>
+                        <SelectItem value="50">50 minutes</SelectItem>
+                        <SelectItem value="55">55 minutes</SelectItem>
+                        <SelectItem value="60">60 minutes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="text-sm text-gray-600">
+                    <p className="mb-2">
+                      <strong>How it works:</strong>
+                    </p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Timer counts down from the selected interval</li>
+                      <li>When it reaches zero, a full-screen alert appears</li>
+                      <li>Timer automatically restarts after the alert</li>
+                      <li>Timer display is visible on all tabs when running</li>
+                      <li>Audio alert plays when timer completes (if supported)</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
 
