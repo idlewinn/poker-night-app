@@ -4,7 +4,7 @@ import { Calendar } from 'lucide-react';
 import SessionItem from './SessionItem';
 import { SessionListProps } from '../types/index';
 
-function SessionList({ sessions, players, onRemoveSession, onEditSession, onViewSessionDetails, onViewSession, onViewMetrics, hideHeader = false, isSessionOwner, isPastSessions = false, isActiveSessions = false }: SessionListProps): React.JSX.Element {
+function SessionList({ sessions, players, onRemoveSession, onEditSession, onViewSessionDetails, onViewSession, onViewMetrics, onSendReminders, hideHeader = false, isSessionOwner, isPastSessions = false, isActiveSessions = false }: SessionListProps): React.JSX.Element {
   if (sessions.length === 0) {
     return (
       <Card className="border-2 border-dashed border-gray-300">
@@ -37,6 +37,7 @@ function SessionList({ sessions, players, onRemoveSession, onEditSession, onView
             onViewDetails={() => onViewSessionDetails(session)}
             onViewSession={() => onViewSession(session)}
             onViewMetrics={() => onViewMetrics(session)}
+            onSendReminders={onSendReminders ? () => onSendReminders(session) : () => {}}
             isOwner={isSessionOwner ? isSessionOwner(session) : false}
             isPast={isPastSessions}
             isActive={isActiveSessions}

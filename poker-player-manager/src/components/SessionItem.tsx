@@ -18,12 +18,13 @@ import {
   Mail,
   ExternalLink,
   MoreVertical,
-  BarChart3
+  BarChart3,
+  Bell
 } from 'lucide-react';
 import { SessionItemProps } from '../types/index';
 import PlayerStatusBadge from './PlayerStatusBadge';
 
-function SessionItem({ session, onRemove, onEdit, onViewDetails, onViewSession, onViewMetrics, isOwner = false, isPast = false, isActive = false }: SessionItemProps): React.JSX.Element {
+function SessionItem({ session, onRemove, onEdit, onViewDetails, onViewSession, onViewMetrics, onSendReminders, isOwner = false, isPast = false, isActive = false }: SessionItemProps): React.JSX.Element {
   // Session players are now directly available in session.players
   const sessionPlayers = session.players;
 
@@ -218,6 +219,12 @@ function SessionItem({ session, onRemove, onEdit, onViewDetails, onViewSession, 
                       <BarChart3 className="h-4 w-4 mr-2" />
                       View Metrics
                     </DropdownMenuItem>
+                    {onSendReminders && !isPast && (
+                      <DropdownMenuItem onClick={onSendReminders}>
+                        <Bell className="h-4 w-4 mr-2" />
+                        Send Reminders
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={onEdit}>
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Session

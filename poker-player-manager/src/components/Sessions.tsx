@@ -22,6 +22,7 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
   const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
   const [isMetricsModalOpen, setIsMetricsModalOpen] = useState<boolean>(false);
   const [addingPastSession, setAddingPastSession] = useState<boolean>(false);
+  const [, setSendingReminders] = useState<boolean>(false);
   const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null);
   const [sessionToView, setSessionToView] = useState<Session | null>(null);
   const [sessionForMetrics, setSessionForMetrics] = useState<Session | null>(null);
@@ -115,6 +116,40 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
       throw error; // Re-throw to let modal handle it
     } finally {
       setAddingPastSession(false);
+    }
+  };
+
+  const handleSendReminders = async (session: Session): Promise<void> => {
+    try {
+      setSendingReminders(true);
+
+      const result = await sessionsApi.sendReminders(session.id);
+
+      if (result.sent > 0) {
+        setNotification({
+          message: `Reminder emails sent to ${result.sent} player${result.sent !== 1 ? 's' : ''}!`,
+          severity: 'success'
+        });
+      } else if (result.totalNonResponders === 0) {
+        setNotification({
+          message: 'All players have already responded to this session.',
+          severity: 'success'
+        });
+      } else {
+        setNotification({
+          message: 'No players with email addresses found to send reminders to.',
+          severity: 'error'
+        });
+      }
+
+    } catch (error) {
+      console.error('Failed to send reminder emails:', error);
+      setNotification({
+        message: 'Failed to send reminder emails',
+        severity: 'error'
+      });
+    } finally {
+      setSendingReminders(false);
     }
   };
 
@@ -264,6 +299,7 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
                 onViewSessionDetails={handleOpenDetailModal}
                 onViewSession={handleViewSession}
                 onViewMetrics={handleOpenMetricsModal}
+                onSendReminders={handleSendReminders}
                 hideHeader={true}
                 isSessionOwner={isSessionOwner}
                 isPastSessions={false}
@@ -289,6 +325,7 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
                 onViewSessionDetails={handleOpenDetailModal}
                 onViewSession={handleViewSession}
                 onViewMetrics={handleOpenMetricsModal}
+                onSendReminders={handleSendReminders}
                 hideHeader={true}
                 isSessionOwner={isSessionOwner}
                 isPastSessions={false}
@@ -324,6 +361,7 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
                     onViewSessionDetails={handleOpenDetailModal}
                     onViewSession={handleViewSession}
                     onViewMetrics={handleOpenMetricsModal}
+                    onSendReminders={handleSendReminders}
                     hideHeader={true}
                     isSessionOwner={isSessionOwner}
                     isPastSessions={true}
