@@ -73,6 +73,17 @@ router.get('/', authenticateToken, async (req: any, res: Response) => {
 
   try {
     const rows = await db.all(sql, [userId, userId, userEmail, userId]);
+
+    // Debug: Log raw data for first few players
+    console.log('DEBUG - Raw player data for user', userId, ':',
+      rows.slice(0, 3).map(r => ({
+        id: r.id,
+        name: r.name,
+        default_invite: r.default_invite,
+        default_invite_type: typeof r.default_invite
+      }))
+    );
+
     // Transform the results to standard Player format
     const players = rows.map(row => ({
       id: row.id,
@@ -81,6 +92,17 @@ router.get('/', authenticateToken, async (req: any, res: Response) => {
       created_at: row.created_at,
       default_invite: row.default_invite === 1 ? true : row.default_invite === 0 ? false : undefined
     }));
+
+    // Debug: Log transformed data
+    console.log('DEBUG - Transformed player data:',
+      players.slice(0, 3).map(p => ({
+        id: p.id,
+        name: p.name,
+        default_invite: p.default_invite,
+        default_invite_type: typeof p.default_invite
+      }))
+    );
+
     res.json(players);
   } catch (err: any) {
     console.error('Error fetching players:', err.message);
@@ -217,16 +239,28 @@ router.put('/:id/default-invite', authenticateToken, async (req: any, res: Respo
       [userId, id]
     );
 
+    console.log('DEBUG - Update default_invite - userPlayer found:', userPlayer);
+
     if (!userPlayer) {
       res.status(403).json({ error: 'You can only modify players you have added' });
       return;
     }
 
     // Update the default_invite setting in user_players table
+    console.log('DEBUG - Updating default_invite to:', default_invite, 'for user:', userId, 'player:', id);
     const result = await db.run(
       'UPDATE user_players SET default_invite = ? WHERE user_id = ? AND player_id = ?',
       [default_invite ? 1 : 0, userId, id]
     );
+
+    console.log('DEBUG - Update result:', result);
+
+    // Verify the update worked
+    const updatedUserPlayer = await db.get(
+      'SELECT * FROM user_players WHERE user_id = ? AND player_id = ?',
+      [userId, id]
+    );
+    console.log('DEBUG - After update, userPlayer is:', updatedUserPlayer);
 
     if (result.changes === 0) {
       res.status(404).json({ error: 'Player relationship not found' });
