@@ -5,20 +5,23 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Calendar, Clock, History, Play, ChevronDown, ChevronRight } from 'lucide-react';
 import SessionList from './SessionList';
 import CreateSessionModal from './CreateSessionModal';
+import AddPastSessionModal, { PastSessionData } from './AddPastSessionModal';
 import EditSessionModal from './EditSessionModal';
 import SessionDetailModal from './SessionDetailModal';
 import SessionMetricsModal from './SessionMetricsModal';
 import { SessionsProps, Session, PlayerStatus } from '../types/index';
-import { sessionsApi } from '../services/api';
+import { sessionsApi, CreatePastSessionRequest } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemoveSession }: SessionsProps): React.JSX.Element {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  const [isAddPastModalOpen, setIsAddPastModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
   const [isMetricsModalOpen, setIsMetricsModalOpen] = useState<boolean>(false);
+  const [addingPastSession, setAddingPastSession] = useState<boolean>(false);
   const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null);
   const [sessionToView, setSessionToView] = useState<Session | null>(null);
   const [sessionForMetrics, setSessionForMetrics] = useState<Session | null>(null);
@@ -32,6 +35,14 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
 
   const handleCloseCreateModal = (): void => {
     setIsCreateModalOpen(false);
+  };
+
+  const handleOpenAddPastModal = (): void => {
+    setIsAddPastModalOpen(true);
+  };
+
+  const handleCloseAddPastModal = (): void => {
+    setIsAddPastModalOpen(false);
   };
 
   const handleOpenEditModal = (session: Session): void => {
@@ -67,6 +78,44 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
 
   const handleCreateSession = (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): void => {
     onCreateSession(sessionName, selectedPlayerIds, scheduledDateTime);
+  };
+
+  const handleCreatePastSession = async (pastSessionData: PastSessionData): Promise<void> => {
+    try {
+      setAddingPastSession(true);
+
+      // Convert PastSessionData to CreatePastSessionRequest format
+      const requestData: CreatePastSessionRequest = {
+        name: pastSessionData.name,
+        scheduledDateTime: pastSessionData.scheduledDateTime,
+        game_type: pastSessionData.gameType,
+        players: pastSessionData.players.map(p => ({
+          playerId: p.playerId,
+          buyIn: p.buyIn,
+          cashOut: p.cashOut
+        }))
+      };
+
+      await sessionsApi.createPast(requestData);
+
+      setNotification({
+        message: 'Past session added successfully!',
+        severity: 'success'
+      });
+
+      // Refresh the page to show the new session
+      window.location.reload();
+
+    } catch (error) {
+      console.error('Failed to create past session:', error);
+      setNotification({
+        message: 'Failed to create past session',
+        severity: 'error'
+      });
+      throw error; // Re-throw to let modal handle it
+    } finally {
+      setAddingPastSession(false);
+    }
   };
 
   const handleUpdateSession = (sessionId: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): void => {
@@ -148,19 +197,29 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
 
   return (
     <div>
-      {/* Sessions Header with Create Button */}
+      {/* Sessions Header with Create Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h2 className="text-2xl font-semibold text-foreground flex items-center gap-3">
           <Calendar className="h-7 w-7 text-primary" />
           Sessions ({sessions.length})
         </h2>
-        <Button
-          onClick={handleOpenCreateModal}
-          className="h-10 w-full sm:w-auto"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Session
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button
+            onClick={handleOpenCreateModal}
+            className="h-10 w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Session
+          </Button>
+          <Button
+            onClick={handleOpenAddPastModal}
+            variant="outline"
+            className="h-10 w-full sm:w-auto"
+          >
+            <History className="h-4 w-4 mr-2" />
+            Add Past Session
+          </Button>
+        </div>
       </div>
 
       {/* Sessions List */}
@@ -269,6 +328,15 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
         onClose={handleCloseCreateModal}
         onCreateSession={handleCreateSession}
         players={players}
+      />
+
+      {/* Add Past Session Modal */}
+      <AddPastSessionModal
+        open={isAddPastModalOpen}
+        onClose={handleCloseAddPastModal}
+        onSubmit={handleCreatePastSession}
+        players={players}
+        loading={addingPastSession}
       />
 
       {/* Edit Session Modal */}

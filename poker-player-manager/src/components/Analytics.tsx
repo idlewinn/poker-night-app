@@ -392,7 +392,7 @@ function Analytics({ sessions, players }: AnalyticsProps): React.JSX.Element {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              {selectedPlayerId === 'all' ? 'Session Performance' : 'Player Performance Over Time'}
+              {selectedPlayerId === 'all' ? 'Total Buy-in by Session' : 'Player Performance Over Time'}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -409,49 +409,86 @@ function Analytics({ sessions, players }: AnalyticsProps): React.JSX.Element {
                   />
                   <YAxisComponent tick={{ fontSize: 12 }} />
                   <TooltipComponent
-                    formatter={(value: any, name: any) => [
-                      name === 'totalProfit' ? formatCurrency(value as number) : value,
-                      name === 'totalProfit' ? 'Net Result' : name === 'totalBuyIn' ? 'Total Buy-in' : 'Players'
+                    formatter={(value: any) => [
+                      formatCurrency(value as number),
+                      'Total Buy-in'
                     ]}
                   />
                   <BarComponent dataKey="totalBuyIn" fill="#10b981" name="totalBuyIn" />
-                  <BarComponent dataKey="totalProfit" fill="#f59e0b" name="totalProfit" />
                 </BarChartComponent>
               ) : (
-                <LineChartComponent data={chartData}>
-                  <CartesianGridComponent strokeDasharray="3 3" />
-                  <XAxisComponent
-                    dataKey="date"
-                    tick={{ fontSize: 12 }}
-                    angle={-45}
-                    textAnchor="end"
-                    height={60}
-                  />
-                  <YAxisComponent tick={{ fontSize: 12 }} />
-                  <TooltipComponent
-                    formatter={(value: any, name: any) => [
-                      formatCurrency(value as number),
-                      name === 'profit' ? 'Session Profit' : 'Cumulative Profit'
-                    ]}
-                  />
-                  <LineComponent
-                    type="monotone"
-                    dataKey="profit"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                    name="profit"
-                  />
-                  <LineComponent
-                    type="monotone"
-                    dataKey="cumulativeProfit"
-                    stroke="#8b5cf6"
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
-                    name="cumulativeProfit"
-                  />
-                </LineChartComponent>
+                <div style={{ position: 'relative' }}>
+                  <ResponsiveContainerComponent width="100%" height={300}>
+                    <BarChartComponent data={chartData}>
+                      <CartesianGridComponent strokeDasharray="3 3" />
+                      <XAxisComponent
+                        dataKey="date"
+                        tick={{ fontSize: 12 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxisComponent
+                        tick={{ fontSize: 12 }}
+                        domain={['dataMin - 10', 'dataMax + 10']}
+                      />
+                      {/* Zero reference line */}
+                      <CartesianGridComponent
+                        strokeDasharray="2 2"
+                        stroke="#ef4444"
+                        strokeWidth={2}
+                        horizontalPoints={[0]}
+                      />
+                      <TooltipComponent
+                        formatter={(value: any, name: any) => [
+                          formatCurrency(value as number),
+                          name === 'profit' ? 'Session Profit' : 'Cumulative Profit'
+                        ]}
+                      />
+                      <BarComponent
+                        dataKey="profit"
+                        name="profit"
+                      >
+                        {chartData.map((entry, index) => {
+                          const profit = 'profit' in entry ? entry.profit : 0;
+                          return (
+                            <CellComponent key={`cell-${index}`} fill={profit >= 0 ? '#10b981' : '#ef4444'} />
+                          );
+                        })}
+                      </BarComponent>
+                    </BarChartComponent>
+                  </ResponsiveContainerComponent>
+
+                  {/* Overlay line chart for cumulative profit */}
+                  <ResponsiveContainerComponent width="100%" height={300} style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}>
+                    <LineChartComponent data={chartData}>
+                      <XAxisComponent
+                        dataKey="date"
+                        tick={{ fontSize: 12 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxisComponent
+                        tick={{ fontSize: 12 }}
+                        domain={['dataMin - 10', 'dataMax + 10']}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <LineComponent
+                        type="monotone"
+                        dataKey="cumulativeProfit"
+                        stroke="#8b5cf6"
+                        strokeWidth={3}
+                        strokeDasharray="5 5"
+                        dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
+                        name="cumulativeProfit"
+                      />
+                    </LineChartComponent>
+                  </ResponsiveContainerComponent>
+                </div>
               )}
             </ResponsiveContainerComponent>
           </CardContent>

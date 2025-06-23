@@ -80,6 +80,18 @@ export const playersApi = {
   }),
 };
 
+// Past session creation interface
+export interface CreatePastSessionRequest {
+  name?: string;
+  scheduledDateTime: string;
+  game_type: 'cash' | 'tournament';
+  players: {
+    playerId: number;
+    buyIn: number;
+    cashOut: number;
+  }[];
+}
+
 // Sessions API
 export const sessionsApi = {
   // Get all sessions
@@ -125,6 +137,12 @@ export const sessionsApi = {
       method: 'PUT',
       body: JSON.stringify(financials),
     }),
+
+  // Create past session with financial data
+  createPast: (sessionData: CreatePastSessionRequest): Promise<Session> => apiRequest<Session>('/sessions/past', {
+    method: 'POST',
+    body: JSON.stringify(sessionData),
+  }),
 };
 
 // Seating Charts API

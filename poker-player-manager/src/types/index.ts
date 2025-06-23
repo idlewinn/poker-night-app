@@ -164,6 +164,17 @@ export interface CreateSessionRequest {
   game_type?: 'cash' | 'tournament';
 }
 
+export interface CreatePastSessionRequest {
+  name?: string;
+  scheduledDateTime: string;
+  game_type: 'cash' | 'tournament';
+  players: {
+    playerId: number;
+    buyIn: number;
+    cashOut: number;
+  }[];
+}
+
 export interface UpdateSessionRequest {
   name?: string;
   scheduledDateTime: string;

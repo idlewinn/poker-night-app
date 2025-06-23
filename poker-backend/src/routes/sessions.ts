@@ -151,6 +151,86 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+// POST create past session with financial data
+router.post('/past', authenticateToken, async (req: any, res: Response): Promise<void> => {
+  const { name, scheduledDateTime, game_type, players } = req.body;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
+
+  if (!scheduledDateTime || !players || !Array.isArray(players) || players.length === 0) {
+    res.status(400).json({ error: 'scheduledDateTime and players array are required' });
+    return;
+  }
+
+  try {
+    // Create the session
+    const sessionResult = await db.run(
+      'INSERT INTO sessions (name, scheduled_datetime, created_by, game_type, created_at) VALUES (?, ?, ?, ?, ?)',
+      [name || 'Poker Night', scheduledDateTime, userId, game_type || 'cash', new Date().toISOString()]
+    );
+
+    const sessionId = sessionResult.lastID;
+
+    // Add players with their financial data
+    for (const player of players) {
+      const { playerId, buyIn, cashOut } = player;
+
+      if (typeof playerId !== 'number' || typeof buyIn !== 'number' || typeof cashOut !== 'number') {
+        res.status(400).json({ error: 'Invalid player data format' });
+        return;
+      }
+
+      // Add player to session with financial data
+      await db.run(
+        'INSERT INTO session_players (session_id, player_id, status, buy_in, cash_out) VALUES (?, ?, ?, ?, ?)',
+        [sessionId, playerId, 'In', buyIn, cashOut]
+      );
+    }
+
+    // Fetch the complete session data
+    const session = await db.get(`
+      SELECT s.*, u.email as created_by_email
+      FROM sessions s
+      LEFT JOIN users u ON s.created_by = u.id
+      WHERE s.id = ?
+    `, [sessionId]);
+
+    // Fetch session players
+    const sessionPlayers = await db.all(`
+      SELECT sp.*, p.name as player_name, p.email as player_email
+      FROM session_players sp
+      JOIN players p ON sp.player_id = p.id
+      WHERE sp.session_id = ?
+    `, [sessionId]);
+
+    const responseSession = {
+      ...session,
+      scheduledDateTime: session.scheduled_datetime,
+      createdAt: session.created_at,
+      createdBy: session.created_by,
+      createdByEmail: session.created_by_email,
+      gameType: session.game_type,
+      players: sessionPlayers.map(sp => ({
+        player_id: sp.player_id,
+        player_name: sp.player_name,
+        player_email: sp.player_email,
+        status: sp.status,
+        buy_in: sp.buy_in,
+        cash_out: sp.cash_out
+      }))
+    };
+
+    res.status(201).json(responseSession);
+  } catch (err: any) {
+    console.error('Error creating past session:', err.message);
+    res.status(500).json({ error: 'Failed to create past session' });
+  }
+});
+
 // POST create new session
 router.post('/', authenticateToken, async (req: any, res: Response): Promise<void> => {
   const { name, scheduledDateTime, playerIds, game_type } = req.body;
