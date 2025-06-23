@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import {
   BarChart,
   Bar,
@@ -36,7 +35,10 @@ import {
   DollarSign,
   Trophy,
   Target,
-  BarChart3
+  BarChart3,
+  Star,
+  Crown,
+  Zap
 } from 'lucide-react';
 import { Session, Player } from '../types/index';
 
@@ -234,26 +236,57 @@ function Analytics({ sessions, players }: AnalyticsProps): React.JSX.Element {
     const totalSessions = ownedSessions.length;
     const totalPlayers = playerPerformanceData.length;
     const totalBuyIn = sessionAnalyticsData.reduce((sum, s) => sum + s.totalBuyIn, 0);
-    const averagePlayersPerSession = totalSessions > 0 
-      ? sessionAnalyticsData.reduce((sum, s) => sum + s.playerCount, 0) / totalSessions 
+    const averagePlayersPerSession = totalSessions > 0
+      ? sessionAnalyticsData.reduce((sum, s) => sum + s.playerCount, 0) / totalSessions
       : 0;
-    
-    const mostProfitablePlayer = playerPerformanceData[0];
-    const mostActivePlayer = playerPerformanceData.length > 0
-      ? playerPerformanceData.reduce((prev, current) =>
-          current.sessionsPlayed > prev.sessionsPlayed ? current : prev
-        )
-      : null;
+
+    // Calculate new highlight statistics
+    let largestWinningSession = { playerName: '', amount: 0, sessionName: '' };
+    let topCashWinnings = { playerName: '', amount: 0 };
+    let topTournamentWinnings = { playerName: '', amount: 0 };
+    let highestSessionWin = { playerName: '', amount: 0, sessionName: '' };
+
+    // Find largest winning session and highest session win
+    ownedSessions.forEach(session => {
+      const inPlayers = session.players?.filter(sp => sp.status === 'In') || [];
+      inPlayers.forEach(sp => {
+        const profit = sp.cash_out - sp.buy_in;
+        const player = players.find(p => p.id === sp.player_id);
+        const playerName = player?.name || 'Unknown';
+        const sessionName = session.name || 'Poker Night';
+
+        if (profit > largestWinningSession.amount) {
+          largestWinningSession = { playerName, amount: profit, sessionName };
+        }
+
+        if (profit > highestSessionWin.amount) {
+          highestSessionWin = { playerName, amount: profit, sessionName };
+        }
+
+        // Determine if it's cash or tournament based on session type
+        if (session.game_type === 'tournament') {
+          if (profit > topTournamentWinnings.amount) {
+            topTournamentWinnings = { playerName, amount: profit };
+          }
+        } else {
+          if (profit > topCashWinnings.amount) {
+            topCashWinnings = { playerName, amount: profit };
+          }
+        }
+      });
+    });
 
     return {
       totalSessions,
       totalPlayers,
       totalBuyIn,
       averagePlayersPerSession: Math.round(averagePlayersPerSession * 10) / 10,
-      mostProfitablePlayer,
-      mostActivePlayer
+      largestWinningSession: largestWinningSession.amount > 0 ? largestWinningSession : null,
+      topCashWinnings: topCashWinnings.amount > 0 ? topCashWinnings : null,
+      topTournamentWinnings: topTournamentWinnings.amount > 0 ? topTournamentWinnings : null,
+      highestSessionWin: highestSessionWin.amount > 0 ? highestSessionWin : null
     };
-  }, [ownedSessions.length, playerPerformanceData, sessionAnalyticsData]);
+  }, [ownedSessions, playerPerformanceData, sessionAnalyticsData, players]);
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
@@ -472,49 +505,7 @@ function Analytics({ sessions, players }: AnalyticsProps): React.JSX.Element {
           </CardContent>
         </Card>
 
-        {/* Player Performance Ranking */}
-        {selectedPlayerId === 'all' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5" />
-                Top Performers
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {playerPerformanceData.slice(0, 8).map((player, index) => (
-                  <div key={player.playerId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Badge
-                        variant={index < 3 ? 'default' : 'secondary'}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          index === 0 ? 'bg-yellow-500 text-white' :
-                          index === 1 ? 'bg-gray-400 text-white' :
-                          index === 2 ? 'bg-amber-600 text-white' : ''
-                        }`}
-                      >
-                        {index + 1}
-                      </Badge>
-                      <div>
-                        <div className="font-medium text-sm">{player.playerName}</div>
-                        <div className="text-xs text-gray-600">
-                          {player.sessionsPlayed} sessions • {player.winRate.toFixed(1)}% win rate
-                        </div>
-                      </div>
-                    </div>
-                    <div className={`text-right ${
-                      player.totalProfit >= 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      <div className="font-bold text-sm">{formatCurrency(player.totalProfit)}</div>
-                      <div className="text-xs">{formatCurrency(player.averageProfit)}/session</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+
 
         {/* Top Winners */}
         {selectedPlayerId === 'all' && (
@@ -599,50 +590,68 @@ function Analytics({ sessions, players }: AnalyticsProps): React.JSX.Element {
           </Card>
         )}
 
-        {/* Session Highlights */}
+        {/* Highlights */}
         {selectedPlayerId === 'all' && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                Session Highlights
+                <Star className="h-5 w-5" />
+                Highlights
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {overallStats.mostProfitablePlayer && (
+                {overallStats.largestWinningSession && (
+                  <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Crown className="h-4 w-4 text-yellow-600" />
+                      <span className="font-medium text-yellow-800">Largest Winning Session</span>
+                    </div>
+                    <div className="text-sm text-yellow-700">
+                      {overallStats.largestWinningSession.playerName} • {formatCurrency(overallStats.largestWinningSession.amount)} • {overallStats.largestWinningSession.sessionName}
+                    </div>
+                  </div>
+                )}
+
+                {overallStats.topCashWinnings && (
                   <div className="p-3 bg-green-50 rounded-lg border border-green-200">
                     <div className="flex items-center gap-2 mb-1">
-                      <Trophy className="h-4 w-4 text-green-600" />
-                      <span className="font-medium text-green-800">Most Profitable Player</span>
+                      <DollarSign className="h-4 w-4 text-green-600" />
+                      <span className="font-medium text-green-800">Top Cash Game Winnings</span>
                     </div>
                     <div className="text-sm text-green-700">
-                      {overallStats.mostProfitablePlayer.playerName} • {formatCurrency(overallStats.mostProfitablePlayer.totalProfit)}
+                      {overallStats.topCashWinnings.playerName} • {formatCurrency(overallStats.topCashWinnings.amount)}
                     </div>
                   </div>
                 )}
 
-                {overallStats.mostActivePlayer && (
+                {overallStats.topTournamentWinnings && (
                   <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <div className="flex items-center gap-2 mb-1">
-                      <Users className="h-4 w-4 text-blue-600" />
-                      <span className="font-medium text-blue-800">Most Active Player</span>
+                      <Trophy className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium text-blue-800">Top Tournament Winnings</span>
                     </div>
                     <div className="text-sm text-blue-700">
-                      {overallStats.mostActivePlayer.playerName} • {overallStats.mostActivePlayer.sessionsPlayed} sessions
+                      {overallStats.topTournamentWinnings.playerName} • {formatCurrency(overallStats.topTournamentWinnings.amount)}
                     </div>
                   </div>
                 )}
 
-                {sessionAnalyticsData.length > 0 && sessionAnalyticsData[0] && (
+                {overallStats.highestSessionWin && (
                   <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
                     <div className="flex items-center gap-2 mb-1">
-                      <Calendar className="h-4 w-4 text-purple-600" />
-                      <span className="font-medium text-purple-800">Latest Session</span>
+                      <Zap className="h-4 w-4 text-purple-600" />
+                      <span className="font-medium text-purple-800">Highest Amount Won Per Session</span>
                     </div>
                     <div className="text-sm text-purple-700">
-                      {sessionAnalyticsData[0].sessionName} • {sessionAnalyticsData[0].playerCount} players • {sessionAnalyticsData[0].date}
+                      {overallStats.highestSessionWin.playerName} • {formatCurrency(overallStats.highestSessionWin.amount)} • {overallStats.highestSessionWin.sessionName}
                     </div>
+                  </div>
+                )}
+
+                {!overallStats.largestWinningSession && !overallStats.topCashWinnings && !overallStats.topTournamentWinnings && !overallStats.highestSessionWin && (
+                  <div className="text-center py-8 text-gray-500">
+                    No highlights available yet
                   </div>
                 )}
               </div>
