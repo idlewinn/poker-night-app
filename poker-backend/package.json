@@ -10,6 +10,7 @@
     "seed": "ts-node src/scripts/seed.ts",
     "seed:prod": "node dist/scripts/seed.js",
     "create-admin": "ts-node src/scripts/createAdmin.ts",
+    "generate-test-metrics": "ts-node src/scripts/generateTestMetrics.ts",
     "clean": "rm -rf dist",
     "postbuild": "cp -r database dist/ || mkdir -p dist/database",
     "type-check": "tsc --noEmit",

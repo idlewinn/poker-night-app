@@ -209,17 +209,17 @@ function SessionItem({ session, onRemove, onEdit, onViewDetails, onViewSession, 
                   <Mail className="h-4 w-4 mr-2" />
                   Invite Status
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
-                  console.log('View Metrics clicked');
-                  onViewMetrics();
-                }}>
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  View Metrics
-                </DropdownMenuItem>
-                {/* Only show edit/delete options for session owners */}
+                {/* Only show owner-only options for session owners */}
                 {isOwner && (
                   <>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => {
+                      console.log('View Metrics clicked');
+                      onViewMetrics();
+                    }}>
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      View Metrics
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={onEdit}>
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Session
