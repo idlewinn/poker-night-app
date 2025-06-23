@@ -118,16 +118,18 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }: 
   };
 
   const handleInviteAll = (): void => {
-    // Only invite players with default_invite = true (or undefined for backward compatibility)
-    const playersToInvite = players.filter(player => player.default_invite !== false);
+    // Only invite players with default_invite = true (or undefined for backward compatibility) AND email addresses
+    const playersToInvite = players.filter(player =>
+      player.default_invite !== false && player.email !== null
+    );
     setSelectedPlayerIds(playersToInvite.map(player => player.id));
   };
 
-  const availablePlayers = players.filter(player => 
-    !selectedPlayerIds.includes(player.id)
+  const availablePlayers = players.filter(player =>
+    !selectedPlayerIds.includes(player.id) && player.email !== null
   )
-  
-  const selectedPlayers = players.filter(player => 
+
+  const selectedPlayers = players.filter(player =>
     selectedPlayerIds.includes(player.id)
   )
 
