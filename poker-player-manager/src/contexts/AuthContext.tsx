@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import Cookies from 'js-cookie';
-import { User, AuthState } from '../types/index';
+import { AuthState } from '../types/index';
 
 interface AuthContextType extends AuthState {
   login: (token: string) => void;

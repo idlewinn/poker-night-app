@@ -30,4 +30,11 @@ export default [
       ],
     },
   },
+  // Config files (Node.js environment)
+  {
+    files: ['*.config.js', '*.config.ts', 'vite.config.js', 'tailwind.config.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ]

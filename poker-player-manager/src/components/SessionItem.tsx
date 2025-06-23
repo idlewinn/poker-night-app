@@ -24,7 +24,7 @@ import {
 import { SessionItemProps } from '../types/index';
 import PlayerStatusBadge from './PlayerStatusBadge';
 
-function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onViewSession, onViewMetrics, isOwner = false, isPast = false, isActive = false }: SessionItemProps): React.JSX.Element {
+function SessionItem({ session, onRemove, onEdit, onViewDetails, onViewSession, onViewMetrics, isOwner = false, isPast = false, isActive = false }: SessionItemProps): React.JSX.Element {
   // Session players are now directly available in session.players
   const sessionPlayers = session.players;
 
@@ -155,7 +155,7 @@ function SessionItem({ session, players, onRemove, onEdit, onViewDetails, onView
                     variant="outline"
                     className="text-xs"
                   >
-                    {sessionPlayer.player.name}
+                    {sessionPlayer.player?.name || 'Unknown Player'}
                   </Badge>
                 ))}
                 {sessionPlayers.length > 3 && (

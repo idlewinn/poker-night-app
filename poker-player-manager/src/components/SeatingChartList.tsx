@@ -84,7 +84,7 @@ function SeatingChartList({
           <SeatingChartDisplay
             key={chart.id}
             seatingChart={chart}
-            onDelete={isOwner ? onDelete : undefined}
+            {...(isOwner && onDelete ? { onDelete: onDelete } : {})}
             deleting={deleting}
           />
         ))}

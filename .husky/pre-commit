@@ -1,0 +1,21 @@
+#!/bin/sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Run TypeScript checks and linting for both packages
+echo "📋 Checking frontend (TypeScript + ESLint)..."
+cd poker-player-manager && npm run type-check && npm run lint
+if [ $? -ne 0 ]; then
+  echo "❌ Frontend checks failed! Please fix TypeScript errors and linting issues."
+  exit 1
+fi
+
+echo "📋 Checking backend (TypeScript)..."
+cd ../poker-backend && npm run type-check
+if [ $? -ne 0 ]; then
+  echo "❌ Backend TypeScript checks failed! Please fix type errors."
+  exit 1
+fi
+
+echo "✅ All pre-commit checks passed!"

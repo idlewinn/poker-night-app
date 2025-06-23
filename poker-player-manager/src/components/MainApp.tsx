@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Calendar, Loader2, AlertCircle, X, Plus } from 'lucide-react';
 import PlayerList from './PlayerList';
@@ -11,12 +11,12 @@ import PlayerDetailModal from './PlayerDetailModal';
 import UserMenu from './UserMenu';
 import { useAuth } from '../contexts/AuthContext';
 import { playersApi, sessionsApi } from '../services/api';
-import { Player, Session, TabValue, CreateSessionRequest, UpdateSessionRequest, CreatePlayerRequest } from '../types/index';
+import { Player, Session, CreateSessionRequest, UpdateSessionRequest, CreatePlayerRequest } from '../types/index';
 
 function MainApp(): React.JSX.Element {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -144,10 +144,7 @@ function MainApp(): React.JSX.Element {
     setError(null);
   };
 
-  // Helper function to check if user owns a session
-  const isSessionOwner = (session: Session): boolean => {
-    return user?.id === session.createdBy;
-  };
+
 
   const addSession = async (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): Promise<void> => {
     try {

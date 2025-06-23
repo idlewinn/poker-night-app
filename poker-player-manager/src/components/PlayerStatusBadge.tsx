@@ -15,7 +15,7 @@ interface PlayerStatusBadgeProps {
   variant?: 'filled' | 'outlined';
 }
 
-function PlayerStatusBadge({ status, size = 'small', variant = 'filled' }: PlayerStatusBadgeProps): React.JSX.Element {
+function PlayerStatusBadge({ status, variant = 'filled' }: PlayerStatusBadgeProps): React.JSX.Element {
   const getStatusConfig = (status: PlayerStatus) => {
     switch (status) {
       case 'Invited':

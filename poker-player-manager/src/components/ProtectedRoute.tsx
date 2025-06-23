@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Shield, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import LoginButton from './LoginButton';
 

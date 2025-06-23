@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+
 import {
   BarChart3,
   Users,
@@ -62,7 +62,7 @@ function SessionMetricsModal({ open, onClose, session }: SessionMetricsModalProp
     
     try {
       const response = await api.get(`/metrics/sessions/${session.id}`);
-      setMetrics(response);
+      setMetrics(response as SessionMetrics);
     } catch (err: any) {
       console.error('Error fetching session metrics:', err);
       setError('Failed to load session metrics');

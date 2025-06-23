@@ -1,4 +1,4 @@
-import { SeatingChart, SeatingAssignment, SeatingTable, Player } from '../types/index';
+import { SeatingAssignment, SeatingTable } from '../types/index';
 
 /**
  * Fisher-Yates shuffle algorithm to randomize array order
@@ -7,7 +7,7 @@ export function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
   }
   return shuffled;
 }
@@ -26,7 +26,7 @@ export function distributePlayersToTables(playerIds: number[], numberOfTables: n
   // Distribute players round-robin style to ensure even distribution
   shuffledPlayers.forEach((playerId, index) => {
     const tableIndex = index % numberOfTables;
-    tables[tableIndex].push(playerId);
+    tables[tableIndex]?.push(playerId);
   });
   
   return tables;
@@ -174,7 +174,7 @@ export function generateCompleteSeatingChart(
   // Validate parameters
   const validation = validateSeatingChartParams(playerIds, numberOfTables);
   if (!validation.isValid) {
-    return { success: false, error: validation.error };
+    return { success: false, error: validation.error || 'Validation failed' };
   }
   
   try {

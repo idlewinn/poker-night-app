@@ -1,0 +1,27 @@
+{
+  "name": "poker-night",
+  "version": "1.0.0",
+  "description": "A modern full-stack poker session management application built with React, Node.js, Express, and SQLite.",
+  "main": "verify-production.js",
+  "scripts": {
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "cd poker-player-manager && npm run type-check && npm run lint",
+    "test:backend": "cd poker-backend && npm run type-check",
+    "type-check": "npm run test:frontend && npm run test:backend",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/idlewinn/poker-night-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/idlewinn/poker-night-app/issues"
+  },
+  "homepage": "https://github.com/idlewinn/poker-night-app#readme",
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}

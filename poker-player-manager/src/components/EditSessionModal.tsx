@@ -11,7 +11,6 @@ import {
 import {
   Plus,
   Minus,
-  Calendar,
   Users,
   User,
   Clock,
@@ -123,7 +122,7 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }: 
     selectedPlayerIds.includes(player.id)
   )
 
-  if (!session) return null
+  if (!session) return <></>
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

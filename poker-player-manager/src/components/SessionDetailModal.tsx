@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { X, Calendar } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { Session, Player, PlayerStatus } from '../types/index';
 import SessionPlayerList from './SessionPlayerList';
 import SessionStatusSummary from './SessionStatusSummary';
@@ -75,7 +75,7 @@ function SessionDetailModal({
               <SessionPlayerList
                 session={session}
                 players={players}
-                onStatusChange={onStatusChange}
+                {...(onStatusChange ? { onStatusChange } : {})}
                 readonly={!onStatusChange}
               />
             </div>

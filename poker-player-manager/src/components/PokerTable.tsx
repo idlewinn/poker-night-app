@@ -8,7 +8,7 @@ interface PokerTableProps {
   maxSeats?: number;
 }
 
-function PokerTable({ table, maxSeats = 10 }: PokerTableProps): React.JSX.Element {
+function PokerTable({ table }: PokerTableProps): React.JSX.Element {
   const players = table.players;
   
   // Calculate positions around the oval table

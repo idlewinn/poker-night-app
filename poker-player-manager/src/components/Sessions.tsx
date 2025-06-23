@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Calendar, Clock, History, Play } from 'lucide-react';
 import SessionList from './SessionList';
 import CreateSessionModal from './CreateSessionModal';
@@ -23,7 +23,7 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
   const [sessionToView, setSessionToView] = useState<Session | null>(null);
   const [sessionForMetrics, setSessionForMetrics] = useState<Session | null>(null);
   const [notification, setNotification] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
+
 
   const handleOpenCreateModal = (): void => {
     setIsCreateModalOpen(true);
@@ -75,7 +75,7 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
   const handleStatusChange = async (playerId: number, newStatus: PlayerStatus): Promise<void> => {
     if (!sessionToView) return;
 
-    setIsUpdatingStatus(true);
+
     try {
       await sessionsApi.updatePlayerStatus(sessionToView.id, playerId, newStatus);
 
@@ -104,8 +104,6 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
         message: 'Failed to update player status',
         severity: 'error'
       });
-    } finally {
-      setIsUpdatingStatus(false);
     }
   };
 

@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import {
   Calendar,
   Clock,
-  MapPin,
   User,
   CheckCircle,
   XCircle,
@@ -19,10 +18,10 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { sessionsApi } from '../services/api';
-import { Session, SessionPlayer } from '../types/index';
+import { Session } from '../types/index';
 import { getStatusPriority } from '../utils/playerSorting';
 
-interface InvitePageParams {
+interface InvitePageParams extends Record<string, string | undefined> {
   sessionId: string;
   encodedEmail: string;
 }
