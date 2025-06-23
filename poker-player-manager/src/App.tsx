@@ -26,6 +26,11 @@ function App(): React.JSX.Element {
               <MainApp />
             </ProtectedRoute>
           } />
+          <Route path="/analytics" element={
+            <ProtectedRoute>
+              <MainApp />
+            </ProtectedRoute>
+          } />
           <Route path="/session/:sessionId" element={
             <ProtectedRoute>
               <SessionPage />
