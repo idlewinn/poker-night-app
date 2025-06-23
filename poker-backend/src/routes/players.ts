@@ -211,22 +211,6 @@ router.put('/:id/default-invite', authenticateToken, async (req: any, res: Respo
   }
 
   try {
-    // First, ensure the default_invite column exists
-    try {
-      await db.run(`
-        ALTER TABLE user_players
-        ADD COLUMN default_invite BOOLEAN DEFAULT 1
-      `);
-      console.log('✅ Added default_invite column to user_players');
-    } catch (error: any) {
-      if (error.message.includes('duplicate column name') || error.message.includes('already exists')) {
-        console.log('ℹ️  default_invite column already exists in user_players');
-      } else {
-        console.error('Error adding default_invite column:', error.message);
-        // Continue anyway - the column might exist with a different error message
-      }
-    }
-
     // Check if user has access to this player (they added it)
     const userPlayer = await db.get(
       'SELECT * FROM user_players WHERE user_id = ? AND player_id = ?',
