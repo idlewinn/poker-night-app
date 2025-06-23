@@ -54,11 +54,10 @@ function PlayerDetailModal({ open, onClose, player, sessions }: PlayerDetailModa
     }
 
     // Find all sessions where this player participated and has financial data
-    const playerSessions = sessions.filter(session => 
-      session.players?.some(sp => 
-        sp.player_id === player.id && 
-        sp.status === 'In' && 
-        sp.cash_out > 0 // Only count sessions where they actually cashed out
+    const playerSessions = sessions.filter(session =>
+      session.players?.some(sp =>
+        sp.player_id === player.id &&
+        sp.status === 'In' // Include all sessions where they played, including $0 cash-outs
       )
     );
 
