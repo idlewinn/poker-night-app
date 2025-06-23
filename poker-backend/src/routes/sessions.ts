@@ -12,6 +12,7 @@ import {
   PlayerStatus
 } from '../types/index';
 import MetricsService from '../services/metricsService';
+import { emailService } from '../services/emailService';
 
 const router = express.Router();
 
@@ -267,6 +268,11 @@ router.post('/', authenticateToken, async (req: any, res: Response): Promise<voi
 
     // Track session creation
     MetricsService.trackSessionCreated(userId, sessionId);
+
+    // Send invitation emails if players were added
+    if (playerIds && playerIds.length > 0) {
+      await sendSessionInviteEmails(sessionId, userId);
+    }
 
     await fetchSessionById(sessionId, res);
   } catch (err: any) {
@@ -586,5 +592,63 @@ router.post('/:sessionId/invite-view', async (req: Request, res: Response): Prom
     res.status(500).json({ error: 'Failed to track invite view' });
   }
 });
+
+// Helper function to send session invite emails
+async function sendSessionInviteEmails(sessionId: number, hostUserId: number): Promise<void> {
+  try {
+    // Get session details
+    const sessionSql = `
+      SELECT s.*, u.email as host_email, u.name as host_name
+      FROM sessions s
+      JOIN users u ON s.created_by = u.id
+      WHERE s.id = ?
+    `;
+    const session = await db.get(sessionSql, [sessionId]);
+
+    if (!session) {
+      console.error('Session not found for email sending:', sessionId);
+      return;
+    }
+
+    // Get players with email addresses
+    const playersSql = `
+      SELECT p.id, p.name, p.email
+      FROM session_players sp
+      JOIN players p ON sp.player_id = p.id
+      WHERE sp.session_id = ? AND p.email IS NOT NULL AND p.email != ''
+    `;
+    const players = await db.all(playersSql, [sessionId]);
+
+    if (players.length === 0) {
+      console.log('No players with email addresses found for session:', sessionId);
+      return;
+    }
+
+    // Get base URL from environment or use default
+    const baseUrl = process.env.FRONTEND_URL || 'https://edwinpokernight.com';
+
+    // Host name fallback
+    const hostName = session.host_name || session.host_email || 'Poker Night Host';
+
+    // Send emails
+    const result = await emailService.sendBulkSessionInvites(
+      {
+        id: session.id,
+        name: session.name,
+        scheduled_datetime: session.scheduled_datetime,
+        created_by: session.created_by,
+        created_at: session.created_at,
+        game_type: session.game_type
+      },
+      players,
+      hostName,
+      baseUrl
+    );
+
+    console.log(`Session invite emails sent for session ${sessionId}: ${result.sent} sent, ${result.failed} failed`);
+  } catch (error) {
+    console.error('Error sending session invite emails:', error);
+  }
+}
 
 export default router;
