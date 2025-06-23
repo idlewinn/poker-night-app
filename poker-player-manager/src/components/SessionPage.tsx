@@ -124,7 +124,7 @@ function SessionPage(): React.JSX.Element {
     setEditingFinancials({
       playerId: sessionPlayer.player_id,
       buy_in: sessionPlayer.buy_in.toString(),
-      cash_out: sessionPlayer.cash_out > 0 ? sessionPlayer.cash_out.toString() : ''
+      cash_out: sessionPlayer.cash_out.toString()
     });
   };
 
@@ -279,8 +279,8 @@ function SessionPage(): React.JSX.Element {
   const calculateTotals = () => {
     const sessionPlayers = getSessionPlayers();
     const totalBuyIn = sessionPlayers.reduce((sum, sp) => sum + sp.buy_in, 0);
-    // Only include cash-out amounts that are actually set (> 0)
-    const totalCashOut = sessionPlayers.reduce((sum, sp) => sum + (sp.cash_out > 0 ? sp.cash_out : 0), 0);
+    // Include all cash-out amounts, including 0 (players who lost everything)
+    const totalCashOut = sessionPlayers.reduce((sum, sp) => sum + sp.cash_out, 0);
     const netResult = totalCashOut - totalBuyIn;
 
     return { totalBuyIn, totalCashOut, netResult };
@@ -509,26 +509,22 @@ function SessionPage(): React.JSX.Element {
                         />
                       ) : (
                         <div className="text-sm font-medium">
-                          {sessionPlayer.cash_out > 0 ? formatCurrency(sessionPlayer.cash_out) : '—'}
+                          {formatCurrency(sessionPlayer.cash_out)}
                         </div>
                       )}
                     </TableCell>
 
                     <TableCell className="py-3 text-right">
-                      {sessionPlayer.cash_out > 0 ? (
-                        <Badge
-                          variant={netResult === 0 ? 'outline' : 'default'}
-                          className={`text-xs ${
-                            netResult >= 0
-                              ? 'bg-green-100 text-green-800 border-green-300'
-                              : 'bg-red-100 text-red-800 border-red-300'
-                          }`}
-                        >
-                          {netResult >= 0 ? '+' : '-'}{formatCurrency(Math.abs(netResult))}
-                        </Badge>
-                      ) : (
-                        <div className="text-sm text-gray-400">—</div>
-                      )}
+                      <Badge
+                        variant={netResult === 0 ? 'outline' : 'default'}
+                        className={`text-xs ${
+                          netResult >= 0
+                            ? 'bg-green-100 text-green-800 border-green-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {netResult >= 0 ? '+' : '-'}{formatCurrency(Math.abs(netResult))}
+                      </Badge>
                     </TableCell>
                   </TableRow>
                 );
