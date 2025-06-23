@@ -46,6 +46,9 @@ function PokerTable({ table }: PokerTableProps): React.JSX.Element {
         {/* Player Positions */}
         {players.map((assignment, index) => {
           const position = getPlayerPosition(index, Math.max(players.length, 6));
+          // Position badge on top-left for players on the right side to prevent clipping
+          const isRightSide = position.x > 50;
+          const badgePosition = isRightSide ? "-top-1 -left-1" : "-top-1 -right-1";
 
           return (
             <div
@@ -61,7 +64,7 @@ function PokerTable({ table }: PokerTableProps): React.JSX.Element {
                 {/* Seat Position Badge */}
                 <Badge
                   variant="secondary"
-                  className="absolute -top-1 -right-1 z-10 bg-amber-500 text-amber-900 text-xs md:text-sm font-bold min-w-[20px] md:min-w-[24px] h-4 md:h-5 flex items-center justify-center"
+                  className={`absolute ${badgePosition} z-10 bg-amber-500 text-amber-900 text-xs md:text-sm font-bold min-w-[20px] md:min-w-[24px] h-4 md:h-5 flex items-center justify-center`}
                 >
                   {assignment.seat_position}
                 </Badge>
