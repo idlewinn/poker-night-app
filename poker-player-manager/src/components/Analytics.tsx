@@ -5,8 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import {
   BarChart,
   Bar,
-  LineChart,
   Line,
+  ComposedChart,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -14,14 +14,15 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  ReferenceLine
 } from 'recharts';
 
 // Type assertion for Recharts components
 const BarChartComponent = BarChart as any;
 const BarComponent = Bar as any;
-const LineChartComponent = LineChart as any;
 const LineComponent = Line as any;
+const ComposedChartComponent = ComposedChart as any;
 const XAxisComponent = XAxis as any;
 const YAxisComponent = YAxis as any;
 const CartesianGridComponent = CartesianGrid as any;
@@ -30,6 +31,7 @@ const ResponsiveContainerComponent = ResponsiveContainer as any;
 const PieChartComponent = PieChart as any;
 const PieComponent = Pie as any;
 const CellComponent = Cell as any;
+const ReferenceLineComponent = ReferenceLine as any;
 import {
   TrendingUp,
   Users,
@@ -417,78 +419,57 @@ function Analytics({ sessions, players }: AnalyticsProps): React.JSX.Element {
                   <BarComponent dataKey="totalBuyIn" fill="#10b981" name="totalBuyIn" />
                 </BarChartComponent>
               ) : (
-                <div style={{ position: 'relative' }}>
-                  <ResponsiveContainerComponent width="100%" height={300}>
-                    <BarChartComponent data={chartData}>
-                      <CartesianGridComponent strokeDasharray="3 3" />
-                      <XAxisComponent
-                        dataKey="date"
-                        tick={{ fontSize: 12 }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxisComponent
-                        tick={{ fontSize: 12 }}
-                        domain={['dataMin - 10', 'dataMax + 10']}
-                      />
-                      {/* Zero reference line */}
-                      <CartesianGridComponent
-                        strokeDasharray="2 2"
-                        stroke="#ef4444"
-                        strokeWidth={2}
-                        horizontalPoints={[0]}
-                      />
-                      <TooltipComponent
-                        formatter={(value: any, name: any) => [
-                          formatCurrency(value as number),
-                          name === 'profit' ? 'Session Profit' : 'Cumulative Profit'
-                        ]}
-                      />
-                      <BarComponent
-                        dataKey="profit"
-                        name="profit"
-                      >
-                        {chartData.map((entry, index) => {
-                          const profit = 'profit' in entry ? entry.profit : 0;
-                          return (
-                            <CellComponent key={`cell-${index}`} fill={profit >= 0 ? '#10b981' : '#ef4444'} />
-                          );
-                        })}
-                      </BarComponent>
-                    </BarChartComponent>
-                  </ResponsiveContainerComponent>
-
-                  {/* Overlay line chart for cumulative profit */}
-                  <ResponsiveContainerComponent width="100%" height={300} style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}>
-                    <LineChartComponent data={chartData}>
-                      <XAxisComponent
-                        dataKey="date"
-                        tick={{ fontSize: 12 }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxisComponent
-                        tick={{ fontSize: 12 }}
-                        domain={['dataMin - 10', 'dataMax + 10']}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <LineComponent
-                        type="monotone"
-                        dataKey="cumulativeProfit"
-                        stroke="#8b5cf6"
-                        strokeWidth={3}
-                        strokeDasharray="5 5"
-                        dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
-                        name="cumulativeProfit"
-                      />
-                    </LineChartComponent>
-                  </ResponsiveContainerComponent>
-                </div>
+                <ResponsiveContainerComponent width="100%" height={300}>
+                  <ComposedChartComponent data={chartData}>
+                    <CartesianGridComponent strokeDasharray="3 3" />
+                    <XAxisComponent
+                      dataKey="date"
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxisComponent
+                      tick={{ fontSize: 12 }}
+                      domain={['dataMin - 10', 'dataMax + 10']}
+                    />
+                    {/* Zero reference line */}
+                    <ReferenceLineComponent
+                      y={0}
+                      stroke="#ef4444"
+                      strokeDasharray="2 2"
+                      strokeWidth={2}
+                    />
+                    <TooltipComponent
+                      formatter={(value: any, name: any) => [
+                        formatCurrency(value as number),
+                        name === 'profit' ? 'Session Profit' : 'Cumulative Profit'
+                      ]}
+                    />
+                    {/* Session profit bars */}
+                    <BarComponent
+                      dataKey="profit"
+                      name="profit"
+                    >
+                      {chartData.map((entry, index) => {
+                        const profit = 'profit' in entry ? entry.profit : 0;
+                        return (
+                          <CellComponent key={`cell-${index}`} fill={profit >= 0 ? '#10b981' : '#ef4444'} />
+                        );
+                      })}
+                    </BarComponent>
+                    {/* Cumulative profit line */}
+                    <LineComponent
+                      type="monotone"
+                      dataKey="cumulativeProfit"
+                      stroke="#8b5cf6"
+                      strokeWidth={3}
+                      strokeDasharray="5 5"
+                      dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
+                      name="cumulativeProfit"
+                    />
+                  </ComposedChartComponent>
+                </ResponsiveContainerComponent>
               )}
             </ResponsiveContainerComponent>
           </CardContent>
