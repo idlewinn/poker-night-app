@@ -6,9 +6,10 @@ import { SeatingTable } from '../types/index';
 interface PokerTableProps {
   table: SeatingTable;
   maxSeats?: number;
+  variant?: 'default' | 'dashboard';
 }
 
-function PokerTable({ table }: PokerTableProps): React.JSX.Element {
+function PokerTable({ table, variant = 'default' }: PokerTableProps): React.JSX.Element {
   const players = table.players;
   
   // Calculate positions around the oval table
@@ -31,8 +32,13 @@ function PokerTable({ table }: PokerTableProps): React.JSX.Element {
 
 
 
+  // Dynamic sizing based on variant
+  const sizeClasses = variant === 'dashboard'
+    ? "relative w-full h-full bg-gradient-to-br from-green-800 to-green-900 border-2 sm:border-4 border-amber-600 shadow-2xl overflow-hidden"
+    : "relative w-full aspect-[4/3] min-h-[350px] md:min-h-[400px] lg:min-h-[450px] xl:min-h-[500px] bg-gradient-to-br from-green-800 to-green-900 border-4 border-amber-600 shadow-2xl overflow-hidden";
+
   return (
-    <Card className="relative w-full aspect-[4/3] min-h-[350px] md:min-h-[400px] lg:min-h-[450px] xl:min-h-[500px] bg-gradient-to-br from-green-800 to-green-900 border-4 border-amber-600 shadow-2xl overflow-hidden">
+    <Card className={sizeClasses}>
       {/* Table Surface */}
       <div className="absolute inset-4 bg-gradient-to-br from-green-600 to-green-700 rounded-full border-4 border-green-800 shadow-inner">
         {/* Table Center */}

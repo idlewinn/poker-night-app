@@ -583,44 +583,45 @@ function SessionPage(): React.JSX.Element {
 
       {/* Dashboard View */}
       {isDashboardView ? (
-        <div className="bg-gray-900 min-h-screen -mx-4 -my-4 p-4 sm:p-6">
-          <div className="flex flex-col" style={{ height: 'calc(100vh - 2rem)' }}>
+        <div className="bg-gray-900 min-h-screen -mx-4 -my-4 p-3 sm:p-4">
+          <div className="flex flex-col h-screen">
             {/* Dashboard Header */}
-            <div className="flex items-center justify-between mb-4 flex-shrink-0">
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">
+            <div className="flex items-center justify-between mb-3 flex-shrink-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-white truncate mr-4">
                 {session.name || 'Poker Night'} - Dashboard
               </h1>
               <Button
                 onClick={toggleDashboardView}
                 variant="outline"
-                className="bg-white text-gray-900 hover:bg-gray-100"
+                className="bg-white text-gray-900 hover:bg-gray-100 flex-shrink-0"
+                size="sm"
               >
                 <Minimize2 className="h-4 w-4 mr-2" />
                 Exit Dashboard
               </Button>
             </div>
 
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 min-h-0">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 min-h-0 overflow-hidden">
               {/* Player Buy-ins - Full Height */}
-              <Card className="md:col-span-2 lg:col-span-1 flex flex-col">
-                <div className="p-3 bg-green-600 text-white flex-shrink-0">
+              <Card className="md:col-span-2 lg:col-span-1 flex flex-col min-h-0">
+                <div className="p-2 sm:p-3 bg-green-600 text-white flex-shrink-0">
                   <div className="text-center">
-                    <TrendingUp className="h-8 w-8 mx-auto mb-1" />
-                    <div className="text-2xl sm:text-3xl font-bold mb-1">
+                    <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-1" />
+                    <div className="text-xl sm:text-2xl font-bold mb-1">
                       {formatCurrency(getTotalBuyIns())}
                     </div>
-                    <div className="text-sm sm:text-base">
+                    <div className="text-xs sm:text-sm">
                       Total Buy-ins ({sessionPlayers.length} players)
                     </div>
                   </div>
                 </div>
-                <CardContent className="flex-1 p-0 overflow-hidden">
+                <CardContent className="flex-1 p-0 overflow-hidden min-h-0">
                   <div className="h-full overflow-y-auto">
                     <Table>
                       <TableHeader className="sticky top-0 bg-white">
                         <TableRow>
-                          <TableHead className="py-3 text-base font-semibold">Player</TableHead>
-                          <TableHead className="py-3 text-base font-semibold text-right">Buy-In</TableHead>
+                          <TableHead className="py-2 text-sm font-semibold">Player</TableHead>
+                          <TableHead className="py-2 text-sm font-semibold text-right">Buy-In</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -630,13 +631,13 @@ function SessionPage(): React.JSX.Element {
                             const player = sessionPlayer.player;
                             return (
                               <TableRow key={sessionPlayer.player_id}>
-                                <TableCell className="py-3">
-                                  <div className="text-base font-medium text-gray-900">
+                                <TableCell className="py-2">
+                                  <div className="text-sm font-medium text-gray-900">
                                     {player?.name || 'Unknown Player'}
                                   </div>
                                 </TableCell>
-                                <TableCell className="py-3 text-right">
-                                  <div className={`text-base font-medium ${getBuyInColorClass(sessionPlayer.buy_in)}`}>
+                                <TableCell className="py-2 text-right">
+                                  <div className={`text-sm font-medium ${getBuyInColorClass(sessionPlayer.buy_in)}`}>
                                     {formatCurrency(sessionPlayer.buy_in)}
                                   </div>
                                 </TableCell>
@@ -650,44 +651,44 @@ function SessionPage(): React.JSX.Element {
               </Card>
 
               {/* Bomb Pot Timer */}
-              <Card className="flex flex-col">
-                <CardContent className="flex-1 flex flex-col justify-center p-3 sm:p-4 text-center">
-                  <Timer className="h-8 w-8 sm:h-12 sm:w-12 text-orange-600 mx-auto mb-2" />
+              <Card className="flex flex-col min-h-0">
+                <CardContent className="flex-1 flex flex-col justify-center p-2 sm:p-3 text-center">
+                  <Timer className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600 mx-auto mb-1" />
                   <div
-                    className="text-3xl sm:text-4xl font-bold text-orange-600 mb-2 cursor-pointer hover:text-orange-700 transition-colors"
+                    className="text-2xl sm:text-3xl font-bold text-orange-600 mb-1 cursor-pointer hover:text-orange-700 transition-colors"
                     onClick={() => setBombPotTimerModalOpen(true)}
                     title="Click to adjust timer interval"
                   >
                     {formatTime(bombPotTimeLeft)}
                   </div>
-                  <div className="text-sm sm:text-base text-gray-600 mb-3">
+                  <div className="text-xs sm:text-sm text-gray-600 mb-2">
                     {bombPotRunning ? 'Next Bomb Pot' : 'Timer Paused'}
                   </div>
-                  <div className="flex justify-center gap-2">
+                  <div className="flex justify-center gap-1">
                     {!bombPotRunning ? (
                       <Button onClick={startBombPotTimer} size="sm">
-                        <Play className="h-4 w-4 mr-1" />
+                        <Play className="h-3 w-3 mr-1" />
                         Start
                       </Button>
                     ) : (
                       <Button onClick={pauseBombPotTimer} variant="outline" size="sm">
-                        <Pause className="h-4 w-4 mr-1" />
+                        <Pause className="h-3 w-3 mr-1" />
                         Pause
                       </Button>
                     )}
                     <Button onClick={resetBombPotTimer} variant="outline" size="sm">
-                      <RotateCcw className="h-4 w-4" />
+                      <RotateCcw className="h-3 w-3" />
                     </Button>
                     <Button onClick={cancelBombPotTimer} variant="outline" size="sm" className="text-red-600">
-                      <X className="h-4 w-4" />
+                      <X className="h-3 w-3" />
                     </Button>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Current Seating Chart - Single Table View with Navigation */}
-              <Card className="flex flex-col">
-                <div className="p-3 sm:p-4 bg-blue-600 text-white flex-shrink-0">
+              <Card className="flex flex-col min-h-0">
+                <div className="p-2 sm:p-3 bg-blue-600 text-white flex-shrink-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Users className="h-6 w-6 sm:h-8 sm:w-8" />
@@ -729,7 +730,7 @@ function SessionPage(): React.JSX.Element {
                     })()}
                   </div>
                 </div>
-                <CardContent className="flex-1 p-2 sm:p-4 overflow-hidden">
+                <CardContent className="flex-1 p-1 sm:p-2 overflow-hidden min-h-0">
                   {getCurrentSeatingChart() && getCurrentSeatingChart()!.assignments ? (
                     <div className="h-full">
                       {(() => {
@@ -744,7 +745,7 @@ function SessionPage(): React.JSX.Element {
 
                         return (
                           <div className="h-full">
-                            <PokerTable table={currentTable} />
+                            <PokerTable table={currentTable} variant="dashboard" />
                           </div>
                         );
                       })()}
