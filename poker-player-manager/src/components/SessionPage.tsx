@@ -41,7 +41,9 @@ import {
   Pause,
   RotateCcw,
   Settings,
-  X
+  X,
+  Monitor,
+  Minimize2
 } from 'lucide-react';
 import { Session, Player, SessionPlayer, SeatingChart, CreateSeatingChartRequest } from '../types/index';
 import { sessionsApi, playersApi, seatingChartsApi } from '../services/api';
@@ -82,6 +84,9 @@ function SessionPage(): React.JSX.Element {
   const [bombPotTimeLeft, setBombPotTimeLeft] = useState<number>(45 * 60); // seconds
   const [bombPotRunning, setBombPotRunning] = useState<boolean>(false);
   const [bombPotAlert, setBombPotAlert] = useState<boolean>(false);
+
+  // Dashboard View State
+  const [isDashboardView, setIsDashboardView] = useState<boolean>(false);
 
   // Check if current user is the session owner
   const isSessionOwner = (): boolean => {
@@ -298,6 +303,24 @@ function SessionPage(): React.JSX.Element {
     setBombPotRunning(true);
   };
 
+  // Dashboard View Functions
+  const toggleDashboardView = (): void => {
+    setIsDashboardView(!isDashboardView);
+  };
+
+  // Calculate total buy-ins
+  const getTotalBuyIns = (): number => {
+    if (!session?.players) return 0;
+    return session.players
+      .filter(sp => sp.status === 'In')
+      .reduce((total, sp) => total + sp.buy_in, 0);
+  };
+
+  // Get current seating chart
+  const getCurrentSeatingChart = (): SeatingChart | null => {
+    return seatingCharts.length > 0 ? seatingCharts[0] || null : null;
+  };
+
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -440,7 +463,26 @@ function SessionPage(): React.JSX.Element {
                 )}
               </div>
             </div>
-            <UserMenu />
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={toggleDashboardView}
+                variant={isDashboardView ? "default" : "outline"}
+                className="flex items-center gap-2"
+              >
+                {isDashboardView ? (
+                  <>
+                    <Minimize2 className="h-4 w-4" />
+                    Exit Dashboard
+                  </>
+                ) : (
+                  <>
+                    <Monitor className="h-4 w-4" />
+                    Dashboard View
+                  </>
+                )}
+              </Button>
+              <UserMenu />
+            </div>
           </div>
 
           {session.scheduledDateTime && (
@@ -528,8 +570,174 @@ function SessionPage(): React.JSX.Element {
         </Card>
       )}
 
-      {/* Tabs */}
-      <Tabs defaultValue="winnings" className="w-full">
+      {/* Dashboard View */}
+      {isDashboardView ? (
+        <div className="fixed inset-0 bg-gray-900 z-40 overflow-auto">
+          <div className="min-h-screen p-8">
+            {/* Dashboard Header */}
+            <div className="flex items-center justify-between mb-8">
+              <h1 className="text-4xl font-bold text-white">
+                {session.name || 'Poker Night'} - Dashboard
+              </h1>
+              <Button
+                onClick={toggleDashboardView}
+                variant="outline"
+                className="bg-white text-gray-900 hover:bg-gray-100"
+              >
+                <Minimize2 className="h-4 w-4 mr-2" />
+                Exit Dashboard
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Total Buy-ins */}
+              <Card className="lg:col-span-1">
+                <CardContent className="p-8 text-center">
+                  <TrendingUp className="h-16 w-16 text-green-600 mx-auto mb-4" />
+                  <div className="text-6xl font-bold text-green-600 mb-2">
+                    {formatCurrency(getTotalBuyIns())}
+                  </div>
+                  <div className="text-xl text-gray-600">
+                    Total Buy-ins
+                  </div>
+                  <div className="text-lg text-gray-500 mt-2">
+                    {sessionPlayers.length} players
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Bomb Pot Timer */}
+              <Card className="lg:col-span-1">
+                <CardContent className="p-8 text-center">
+                  <Timer className="h-16 w-16 text-orange-600 mx-auto mb-4" />
+                  <div className="text-6xl font-bold text-orange-600 mb-2">
+                    {formatTime(bombPotTimeLeft)}
+                  </div>
+                  <div className="text-xl text-gray-600 mb-4">
+                    {bombPotRunning ? 'Next Bomb Pot' : 'Timer Paused'}
+                  </div>
+                  <div className="flex justify-center gap-2">
+                    {!bombPotRunning ? (
+                      <Button onClick={startBombPotTimer} size="sm">
+                        <Play className="h-4 w-4 mr-1" />
+                        Start
+                      </Button>
+                    ) : (
+                      <Button onClick={pauseBombPotTimer} variant="outline" size="sm">
+                        <Pause className="h-4 w-4 mr-1" />
+                        Pause
+                      </Button>
+                    )}
+                    <Button onClick={resetBombPotTimer} variant="outline" size="sm">
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
+                    <Button onClick={cancelBombPotTimer} variant="outline" size="sm" className="text-red-600">
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Current Seating Chart */}
+              <Card className="lg:col-span-1">
+                <CardContent className="p-8">
+                  <div className="text-center mb-6">
+                    <Users className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+                    <div className="text-2xl font-bold text-gray-900 mb-2">
+                      Current Seating
+                    </div>
+                  </div>
+                  {getCurrentSeatingChart() ? (
+                    <div className="space-y-2">
+                      {getCurrentSeatingChart()!.assignments?.map((assignment, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <span className="font-medium text-gray-700">Table {assignment.table_number} - Seat {assignment.seat_position}</span>
+                          <span className="text-gray-900">{assignment.player?.name || 'Unknown Player'}</span>
+                        </div>
+                      )) || (
+                        <div className="text-center text-gray-500">
+                          No seating assignments available
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center text-gray-500">
+                      <p className="mb-4">No seating chart available</p>
+                      {isSessionOwner() && (
+                        <Button onClick={() => setSeatingChartModalOpen(true)} size="sm">
+                          Generate Seating Chart
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Player Details Table */}
+            <Card className="mt-8">
+              <div className="p-6 bg-gray-800 text-white">
+                <h3 className="text-2xl font-bold">Player Details</h3>
+              </div>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="py-4 text-lg font-semibold">Player</TableHead>
+                        <TableHead className="py-4 text-lg font-semibold text-right">Buy-In</TableHead>
+                        <TableHead className="py-4 text-lg font-semibold text-right">Cash-Out</TableHead>
+                        <TableHead className="py-4 text-lg font-semibold text-right">Net</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sessionPlayers.map((sessionPlayer) => {
+                        const player = sessionPlayer.player;
+                        const netResult = sessionPlayer.cash_out - sessionPlayer.buy_in;
+
+                        return (
+                          <TableRow key={sessionPlayer.player_id} className="hover:bg-gray-50">
+                            <TableCell className="py-4">
+                              <div className="text-lg font-medium text-gray-900">
+                                {player?.name || 'Unknown Player'}
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-4 text-right">
+                              <div className={`text-lg font-medium ${getBuyInColorClass(sessionPlayer.buy_in)}`}>
+                                {formatCurrency(sessionPlayer.buy_in)}
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-4 text-right">
+                              <div className="text-lg font-medium">
+                                {formatCurrency(sessionPlayer.cash_out)}
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-4 text-right">
+                              <Badge
+                                variant={netResult === 0 ? 'outline' : 'default'}
+                                className={`text-sm px-3 py-1 ${
+                                  netResult >= 0
+                                    ? 'bg-green-100 text-green-800 border-green-300'
+                                    : 'bg-red-100 text-red-800 border-red-300'
+                                }`}
+                              >
+                                {netResult >= 0 ? '+' : '-'}{formatCurrency(Math.abs(netResult))}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Tabs */}
+          <Tabs defaultValue="winnings" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="winnings" className="flex items-center gap-2">
             <TrendingDown className="h-4 w-4" />
@@ -812,6 +1020,10 @@ function SessionPage(): React.JSX.Element {
                     <RotateCcw className="h-4 w-4" />
                     Reset
                   </Button>
+                  <Button onClick={cancelBombPotTimer} variant="outline" className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:border-red-300">
+                    <X className="h-4 w-4" />
+                    Cancel
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -878,16 +1090,18 @@ function SessionPage(): React.JSX.Element {
         </TabsContent>
       </Tabs>
 
-      {/* Seating Chart Modal - Only for session owners */}
-      {isSessionOwner() && (
-        <SeatingChartModal
-          open={seatingChartModalOpen}
-          onClose={() => setSeatingChartModalOpen(false)}
-          sessionId={session.id}
-          sessionPlayers={getSessionPlayers()}
-          onGenerate={handleGenerateSeatingChart}
-          generating={generatingChart}
-        />
+          {/* Seating Chart Modal - Only for session owners */}
+          {isSessionOwner() && (
+            <SeatingChartModal
+              open={seatingChartModalOpen}
+              onClose={() => setSeatingChartModalOpen(false)}
+              sessionId={session.id}
+              sessionPlayers={getSessionPlayers()}
+              onGenerate={handleGenerateSeatingChart}
+              generating={generatingChart}
+            />
+          )}
+        </>
       )}
     </div>
   );
