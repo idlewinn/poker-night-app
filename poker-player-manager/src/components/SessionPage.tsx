@@ -40,7 +40,8 @@ import {
   Play,
   Pause,
   RotateCcw,
-  Settings
+  Settings,
+  X
 } from 'lucide-react';
 import { Session, Player, SessionPlayer, SeatingChart, CreateSeatingChartRequest } from '../types/index';
 import { sessionsApi, playersApi, seatingChartsApi } from '../services/api';
@@ -290,6 +291,12 @@ function SessionPage(): React.JSX.Element {
     setBombPotRunning(true);
   };
 
+  const cancelBombPotTimer = (): void => {
+    setBombPotRunning(false);
+    setBombPotTimeLeft(bombPotInterval * 60); // Reset to full interval
+    setBombPotAlert(false);
+  };
+
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -468,8 +475,52 @@ function SessionPage(): React.JSX.Element {
                   Bomb Pot Timer {!bombPotRunning && '(Paused)'}
                 </span>
               </div>
-              <div className={`text-2xl font-bold ${bombPotRunning ? 'text-orange-600' : 'text-gray-500'}`}>
-                {formatTime(bombPotTimeLeft)}
+              <div className="flex items-center gap-3">
+                <div className={`text-2xl font-bold ${bombPotRunning ? 'text-orange-600' : 'text-gray-500'}`}>
+                  {formatTime(bombPotTimeLeft)}
+                </div>
+                {/* Timer Controls */}
+                <div className="flex items-center gap-1">
+                  {!bombPotRunning ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={startBombPotTimer}
+                      className="h-8 w-8 p-0"
+                      title="Resume Timer"
+                    >
+                      <Play className="h-3 w-3" />
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={pauseBombPotTimer}
+                      className="h-8 w-8 p-0"
+                      title="Pause Timer"
+                    >
+                      <Pause className="h-3 w-3" />
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={resetBombPotTimer}
+                    className="h-8 w-8 p-0"
+                    title="Reset Timer"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={cancelBombPotTimer}
+                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:border-red-300"
+                    title="Cancel Timer"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -786,6 +837,7 @@ function SessionPage(): React.JSX.Element {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="1">1 minute (testing)</SelectItem>
                         <SelectItem value="5">5 minutes</SelectItem>
                         <SelectItem value="10">10 minutes</SelectItem>
                         <SelectItem value="15">15 minutes</SelectItem>
@@ -807,10 +859,12 @@ function SessionPage(): React.JSX.Element {
                       <strong>How it works:</strong>
                     </p>
                     <ul className="list-disc list-inside space-y-1">
-                      <li>Timer counts down from the selected interval (5-60 minutes)</li>
+                      <li>Timer counts down from the selected interval (1-60 minutes)</li>
+                      <li>Use 1 minute interval for testing purposes only</li>
                       <li>When it reaches zero, a full-screen alert appears</li>
                       <li>Click anywhere on the alert to acknowledge and restart timer</li>
-                      <li>Timer display is visible on all tabs when running or paused</li>
+                      <li>Timer display with controls is visible on all tabs</li>
+                      <li>Use play/pause/reset/cancel buttons from any tab</li>
                       <li>Audio alert plays when timer completes (if supported)</li>
                     </ul>
                   </div>
