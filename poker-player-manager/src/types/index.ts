@@ -77,6 +77,7 @@ export interface PlayerItemProps {
   onRemove: () => void;
   onRename: (newName: string, newEmail?: string) => void;
   onViewDetails?: () => void;
+  onToggleDefaultInvite?: (playerId: number, defaultInvite: boolean) => void;
 }
 
 export interface PlayerListProps {
@@ -84,6 +85,7 @@ export interface PlayerListProps {
   onRemovePlayer: (id: number) => void;
   onRenamePlayer: (id: number, newName: string, newEmail?: string) => void;
   onViewPlayerDetails?: (player: Player) => void;
+  onToggleDefaultInvite?: (playerId: number, defaultInvite: boolean) => void;
 }
 
 

@@ -95,6 +95,17 @@ function SessionItem({ session, onRemove, onEdit, onViewDetails, onViewSession, 
                 >
                   {session.name || 'Poker Night'}
                 </h3>
+                {/* Game Type Badge */}
+                <Badge
+                  variant="outline"
+                  className={`text-xs ${
+                    session.game_type === 'tournament'
+                      ? 'bg-yellow-50 text-yellow-700 border-yellow-300'
+                      : 'bg-green-50 text-green-700 border-green-300'
+                  }`}
+                >
+                  {session.game_type === 'tournament' ? '🏆 Tournament' : '💵 Cash'}
+                </Badge>
                 {isOwner && (
                   <Badge variant="secondary" className="text-xs">
                     Owner

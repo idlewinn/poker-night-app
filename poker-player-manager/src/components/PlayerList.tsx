@@ -4,7 +4,7 @@ import { Users } from 'lucide-react';
 import PlayerItem from './PlayerItem';
 import { PlayerListProps } from '../types/index';
 
-function PlayerList({ players, onRemovePlayer, onRenamePlayer, onViewPlayerDetails }: PlayerListProps): React.JSX.Element {
+function PlayerList({ players, onRemovePlayer, onRenamePlayer, onViewPlayerDetails, onToggleDefaultInvite }: PlayerListProps): React.JSX.Element {
   if (players.length === 0) {
     return (
       <Card className="border-2 border-dashed border-gray-300">
@@ -35,6 +35,7 @@ function PlayerList({ players, onRemovePlayer, onRenamePlayer, onViewPlayerDetai
             onRemove={() => onRemovePlayer(player.id)}
             onRename={(newName, newEmail) => onRenamePlayer(player.id, newName, newEmail)}
             {...(onViewPlayerDetails && { onViewDetails: () => onViewPlayerDetails(player) })}
+            {...(onToggleDefaultInvite && { onToggleDefaultInvite })}
           />
         ))}
       </div>

@@ -330,6 +330,17 @@ function SessionPage(): React.JSX.Element {
                 <h1 className="text-2xl font-bold text-gray-900">
                   {session.name || 'Poker Night'}
                 </h1>
+                {/* Game Type Badge */}
+                <Badge
+                  variant="outline"
+                  className={`text-sm ${
+                    session.game_type === 'tournament'
+                      ? 'bg-yellow-50 text-yellow-700 border-yellow-300'
+                      : 'bg-green-50 text-green-700 border-green-300'
+                  }`}
+                >
+                  {session.game_type === 'tournament' ? '🏆 Tournament' : '💵 Cash Game'}
+                </Badge>
                 {isSessionActive() && (
                   <Badge className="text-xs bg-green-600 text-white animate-pulse">
                     Active Session

@@ -2,17 +2,19 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import {
   Edit,
   Trash2,
   Check,
   X,
   User,
-  Eye
+  Eye,
+  Mail
 } from 'lucide-react';
 import { PlayerItemProps } from '../types/index';
 
-function PlayerItem({ player, onRemove, onRename, onViewDetails }: PlayerItemProps): React.JSX.Element {
+function PlayerItem({ player, onRemove, onRename, onViewDetails, onToggleDefaultInvite }: PlayerItemProps): React.JSX.Element {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editName, setEditName] = useState<string>(player.name);
   const [editEmail, setEditEmail] = useState<string>(player.email || '');
@@ -133,6 +135,24 @@ function PlayerItem({ player, onRemove, onRename, onViewDetails }: PlayerItemPro
                 >
                   {player.email || 'Known from shared sessions'}
                 </p>
+                {/* Default Invite Toggle - only show for players you can edit */}
+                {canEdit && onToggleDefaultInvite && (
+                  <div className="mt-2">
+                    <Badge
+                      variant={player.default_invite !== false ? "default" : "outline"}
+                      className={`text-xs cursor-pointer transition-colors ${
+                        player.default_invite !== false
+                          ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                      onClick={() => onToggleDefaultInvite(player.id, player.default_invite === false)}
+                      title={player.default_invite !== false ? 'Included in "Invite All" - click to exclude' : 'Excluded from "Invite All" - click to include'}
+                    >
+                      <Mail className="h-3 w-3 mr-1" />
+                      {player.default_invite !== false ? 'Auto-invite' : 'Manual invite'}
+                    </Badge>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex gap-2 justify-end">

@@ -72,6 +72,12 @@ export const playersApi = {
   delete: (id: number): Promise<{ message: string }> => apiRequest<{ message: string }>(`/players/${id}`, {
     method: 'DELETE',
   }),
+
+  // Update player default invite setting
+  updateDefaultInvite: (id: number, defaultInvite: boolean): Promise<{ message: string }> => apiRequest<{ message: string }>(`/players/${id}/default-invite`, {
+    method: 'PUT',
+    body: JSON.stringify({ default_invite: defaultInvite }),
+  }),
 };
 
 // Sessions API

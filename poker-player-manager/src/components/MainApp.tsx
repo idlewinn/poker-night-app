@@ -131,6 +131,24 @@ function MainApp(): React.JSX.Element {
     setSelectedPlayer(null);
   };
 
+  const handleToggleDefaultInvite = async (playerId: number, defaultInvite: boolean): Promise<void> => {
+    try {
+      await playersApi.updateDefaultInvite(playerId, defaultInvite);
+
+      // Update local state
+      setPlayers(prevPlayers =>
+        prevPlayers.map(player =>
+          player.id === playerId
+            ? { ...player, default_invite: defaultInvite }
+            : player
+        )
+      );
+    } catch (error: any) {
+      console.error('Failed to update default invite setting:', error);
+      setError('Failed to update invite setting: ' + (error.message || 'Unknown error'));
+    }
+  };
+
   const handleTabChange = (value: string): void => {
     setActiveTab(value);
     if (value === 'players') {
@@ -281,6 +299,7 @@ function MainApp(): React.JSX.Element {
                     onRemovePlayer={removePlayer}
                     onRenamePlayer={renamePlayer}
                     onViewPlayerDetails={handleViewPlayerDetails}
+                    onToggleDefaultInvite={handleToggleDefaultInvite}
                   />
                 </div>
               </TabsContent>

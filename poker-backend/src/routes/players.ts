@@ -59,21 +59,27 @@ router.get('/', authenticateToken, async (req: any, res: Response) => {
         WHEN (MAX(uap.user_added) = 1 OR MAX(uap.from_owned_session) = 1) THEN p.email
         ELSE NULL
       END as email,
-      p.created_at
+      p.created_at,
+      CASE
+        WHEN MAX(uap.user_added) = 1 THEN up.default_invite
+        ELSE NULL
+      END as default_invite
     FROM players p
     JOIN user_accessible_players uap ON p.id = uap.player_id
-    GROUP BY p.id, p.name, p.created_at
+    LEFT JOIN user_players up ON p.id = up.player_id AND up.user_id = ?
+    GROUP BY p.id, p.name, p.created_at, up.default_invite
     ORDER BY p.created_at DESC
   `;
 
   try {
-    const rows = await db.all(sql, [userId, userId, userEmail]);
+    const rows = await db.all(sql, [userId, userId, userEmail, userId]);
     // Transform the results to standard Player format
     const players = rows.map(row => ({
       id: row.id,
       name: row.name,
       email: row.email, // Will be null for players from other users' sessions
-      created_at: row.created_at
+      created_at: row.created_at,
+      default_invite: row.default_invite === 1 ? true : row.default_invite === 0 ? false : undefined
     }));
     res.json(players);
   } catch (err: any) {
@@ -185,6 +191,51 @@ router.put('/:id', authenticateToken, async (req: any, res: Response): Promise<v
       console.error('Error updating player:', err.message);
       res.status(500).json({ error: 'Failed to update player' });
     }
+  }
+});
+
+// PUT update player default invite setting
+router.put('/:id/default-invite', authenticateToken, async (req: any, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { default_invite } = req.body;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
+
+  if (typeof default_invite !== 'boolean') {
+    res.status(400).json({ error: 'default_invite must be a boolean value' });
+    return;
+  }
+
+  try {
+    // Check if user has access to this player (they added it)
+    const userPlayer = await db.get(
+      'SELECT * FROM user_players WHERE user_id = ? AND player_id = ?',
+      [userId, id]
+    );
+
+    if (!userPlayer) {
+      res.status(403).json({ error: 'You can only modify players you have added' });
+      return;
+    }
+
+    // Update the default_invite setting in user_players table
+    const result = await db.run(
+      'UPDATE user_players SET default_invite = ? WHERE user_id = ? AND player_id = ?',
+      [default_invite ? 1 : 0, userId, id]
+    );
+
+    if (result.changes === 0) {
+      res.status(404).json({ error: 'Player relationship not found' });
+    } else {
+      res.json({ message: 'Default invite setting updated successfully' });
+    }
+  } catch (err: any) {
+    console.error('Error updating default invite setting:', err.message);
+    res.status(500).json({ error: 'Failed to update default invite setting' });
   }
 });
 
