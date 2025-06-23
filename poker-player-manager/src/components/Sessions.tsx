@@ -188,11 +188,24 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
     return sessionDate < eightHoursAgo;
   };
 
-  // Group sessions into active, upcoming, and past
+  // Helper function to sort sessions by event time (latest first)
+  const sortByEventTime = (a: Session, b: Session): number => {
+    const dateA = new Date(a.scheduledDateTime || a.createdAt);
+    const dateB = new Date(b.scheduledDateTime || b.createdAt);
+    return dateB.getTime() - dateA.getTime(); // Latest first
+  };
+
+  // Group sessions into active, upcoming, and past, sorted by event time
   const groupedSessions = {
-    active: sessions.filter(session => isSessionActive(session)),
-    upcoming: sessions.filter(session => !isSessionPast(session) && !isSessionActive(session)),
-    past: sessions.filter(session => isSessionPast(session))
+    active: sessions
+      .filter(session => isSessionActive(session))
+      .sort(sortByEventTime),
+    upcoming: sessions
+      .filter(session => !isSessionPast(session) && !isSessionActive(session))
+      .sort(sortByEventTime),
+    past: sessions
+      .filter(session => isSessionPast(session))
+      .sort(sortByEventTime)
   };
 
   return (

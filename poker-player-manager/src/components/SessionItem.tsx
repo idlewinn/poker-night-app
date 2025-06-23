@@ -14,7 +14,6 @@ import {
   Edit,
   Calendar,
   Users,
-  CalendarDays,
   Clock,
   Mail,
   ExternalLink,
@@ -48,18 +47,6 @@ function SessionItem({ session, onRemove, onEdit, onViewDetails, onViewSession, 
   const statusCounts = getStatusCounts();
 
 
-
-  // Format the creation date
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
 
   // Format the scheduled date
   const formatScheduledDate = (dateString: string | null): string | null => {
@@ -148,12 +135,7 @@ function SessionItem({ session, onRemove, onEdit, onViewDetails, onViewSession, 
               </div>
             )}
 
-            <div className="flex items-center">
-              <CalendarDays className="h-4 w-4 text-gray-500 mr-2" />
-              <span className="text-sm text-gray-600">
-                Created {formatDate(session.createdAt)}
-              </span>
-            </div>
+
 
             <div className="flex items-center">
               <Users className="h-4 w-4 text-gray-500 mr-2" />
