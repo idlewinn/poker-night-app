@@ -50,8 +50,10 @@ import { Session, Player, SessionPlayer, SeatingChart, CreateSeatingChartRequest
 import { sessionsApi, playersApi, seatingChartsApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { getStatusPriority } from '../utils/playerSorting';
+import { groupAssignmentsByTable } from '../utils/seatingChart';
 import SeatingChartModal from './SeatingChartModal';
 import SeatingChartList from './SeatingChartList';
+import PokerTable from './PokerTable';
 import UserMenu from './UserMenu';
 
 interface SessionPageParams extends Record<string, string | undefined> {
@@ -577,10 +579,10 @@ function SessionPage(): React.JSX.Element {
       {/* Dashboard View */}
       {isDashboardView ? (
         <div className="bg-gray-900 min-h-screen -mx-4 -my-4 p-4 sm:p-6">
-          <div className="flex flex-col h-screen">
+          <div className="flex flex-col" style={{ height: 'calc(100vh - 2rem)' }}>
             {/* Dashboard Header */}
-            <div className="flex items-center justify-between mb-6 flex-shrink-0">
-              <h1 className="text-3xl font-bold text-white">
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
                 {session.name || 'Poker Night'} - Dashboard
               </h1>
               <Button
@@ -593,16 +595,16 @@ function SessionPage(): React.JSX.Element {
               </Button>
             </div>
 
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 min-h-0">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 min-h-0">
               {/* Player Buy-ins - Full Height */}
               <Card className="md:col-span-2 lg:col-span-1 flex flex-col">
-                <div className="p-4 bg-green-600 text-white flex-shrink-0">
+                <div className="p-3 bg-green-600 text-white flex-shrink-0">
                   <div className="text-center">
-                    <TrendingUp className="h-12 w-12 mx-auto mb-2" />
-                    <div className="text-4xl font-bold mb-1">
+                    <TrendingUp className="h-8 w-8 mx-auto mb-1" />
+                    <div className="text-2xl sm:text-3xl font-bold mb-1">
                       {formatCurrency(getTotalBuyIns())}
                     </div>
-                    <div className="text-lg">
+                    <div className="text-sm sm:text-base">
                       Total Buy-ins ({sessionPlayers.length} players)
                     </div>
                   </div>
@@ -644,16 +646,16 @@ function SessionPage(): React.JSX.Element {
 
               {/* Bomb Pot Timer */}
               <Card className="flex flex-col">
-                <CardContent className="flex-1 flex flex-col justify-center p-4 sm:p-8 text-center">
-                  <Timer className="h-12 w-12 sm:h-16 sm:w-16 text-orange-600 mx-auto mb-4" />
+                <CardContent className="flex-1 flex flex-col justify-center p-3 sm:p-4 text-center">
+                  <Timer className="h-8 w-8 sm:h-12 sm:w-12 text-orange-600 mx-auto mb-2" />
                   <div
-                    className="text-4xl sm:text-6xl font-bold text-orange-600 mb-2 cursor-pointer hover:text-orange-700 transition-colors"
+                    className="text-3xl sm:text-4xl font-bold text-orange-600 mb-2 cursor-pointer hover:text-orange-700 transition-colors"
                     onClick={() => setBombPotTimerModalOpen(true)}
                     title="Click to adjust timer interval"
                   >
                     {formatTime(bombPotTimeLeft)}
                   </div>
-                  <div className="text-lg sm:text-xl text-gray-600 mb-4 sm:mb-6">
+                  <div className="text-sm sm:text-base text-gray-600 mb-3">
                     {bombPotRunning ? 'Next Bomb Pot' : 'Timer Paused'}
                   </div>
                   <div className="flex justify-center gap-2">
@@ -684,54 +686,34 @@ function SessionPage(): React.JSX.Element {
                   <Users className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2" />
                   <div className="text-lg sm:text-xl font-bold">Current Seating</div>
                 </div>
-                <CardContent className="flex-1 flex items-center justify-center p-4 sm:p-6">
+                <CardContent className="flex-1 p-2 sm:p-4 overflow-auto">
                   {getCurrentSeatingChart() && getCurrentSeatingChart()!.assignments ? (
-                    <div className="relative">
-                      {/* Poker Table Visualization */}
-                      <div className="w-64 h-40 sm:w-80 sm:h-48 bg-green-700 rounded-full border-4 sm:border-8 border-green-800 relative mx-auto">
-                        {/* Table center */}
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-white font-bold text-sm sm:text-lg">POKER</div>
-                        </div>
-
-                        {/* Player positions around the table */}
-                        {getCurrentSeatingChart()!.assignments!.map((assignment, index) => {
-                          const totalSeats = getCurrentSeatingChart()!.assignments!.length;
-                          const angle = (index * 360) / totalSeats;
-                          const radius = window.innerWidth < 640 ? 96 : 120; // Responsive radius
-                          const x = Math.cos((angle - 90) * Math.PI / 180) * radius;
-                          const y = Math.sin((angle - 90) * Math.PI / 180) * radius;
-
-                          return (
-                            <div
-                              key={assignment.id}
-                              className="absolute transform -translate-x-1/2 -translate-y-1/2"
-                              style={{
-                                left: `calc(50% + ${x}px)`,
-                                top: `calc(50% + ${y}px)`
-                              }}
-                            >
-                              <div className="bg-white rounded-lg p-1 sm:p-2 shadow-lg text-center min-w-16 sm:min-w-20">
-                                <div className="text-xs font-bold text-gray-800">
-                                  {assignment.seat_position}
-                                </div>
-                                <div className="text-xs text-gray-600 truncate max-w-12 sm:max-w-16">
-                                  {assignment.player?.name || 'Unknown'}
-                                </div>
+                    <div className="h-full">
+                      {(() => {
+                        const tables = groupAssignmentsByTable(getCurrentSeatingChart()!.assignments!);
+                        return (
+                          <div className="grid gap-4 h-full" style={{
+                            gridTemplateColumns: tables.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))'
+                          }}>
+                            {tables.map((table) => (
+                              <div key={table.tableNumber} className="h-full min-h-[250px]">
+                                <PokerTable table={table} />
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                   ) : (
-                    <div className="text-center text-gray-500">
-                      <p className="mb-4">No seating chart available</p>
-                      {isSessionOwner() && (
-                        <Button onClick={() => setSeatingChartModalOpen(true)} size="sm">
-                          Generate Seating Chart
-                        </Button>
-                      )}
+                    <div className="flex items-center justify-center h-full text-center text-gray-500">
+                      <div>
+                        <p className="mb-4">No seating chart available</p>
+                        {isSessionOwner() && (
+                          <Button onClick={() => setSeatingChartModalOpen(true)} size="sm">
+                            Generate Seating Chart
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </CardContent>
