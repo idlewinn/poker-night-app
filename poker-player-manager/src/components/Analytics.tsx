@@ -15,7 +15,8 @@ import {
   PieChart,
   Pie,
   Cell,
-  ReferenceLine
+  ReferenceLine,
+  Legend
 } from 'recharts';
 
 // Type assertion for Recharts components
@@ -32,6 +33,7 @@ const PieChartComponent = PieChart as any;
 const PieComponent = Pie as any;
 const CellComponent = Cell as any;
 const ReferenceLineComponent = ReferenceLine as any;
+const LegendComponent = Legend as any;
 import {
   TrendingUp,
   Users,
@@ -529,25 +531,34 @@ function Analytics({ sessions, players }: AnalyticsProps): React.JSX.Element {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainerComponent width="100%" height={300}>
+              <ResponsiveContainerComponent width="100%" height={350}>
                 <PieChartComponent>
                   <PieComponent
                     data={[
-                      { name: 'High Performers (>60%)', value: playerPerformanceData.filter(p => p.winRate > 60).length, color: '#10b981' },
-                      { name: 'Good Players (40-60%)', value: playerPerformanceData.filter(p => p.winRate >= 40 && p.winRate <= 60).length, color: '#f59e0b' },
-                      { name: 'Struggling (<40%)', value: playerPerformanceData.filter(p => p.winRate < 40).length, color: '#ef4444' }
+                      { name: 'High Performers', fullName: 'High Performers (>60%)', value: playerPerformanceData.filter(p => p.winRate > 60).length, color: '#10b981' },
+                      { name: 'Good Players', fullName: 'Good Players (40-60%)', value: playerPerformanceData.filter(p => p.winRate >= 40 && p.winRate <= 60).length, color: '#f59e0b' },
+                      { name: 'Struggling', fullName: 'Struggling (<40%)', value: playerPerformanceData.filter(p => p.winRate < 40).length, color: '#ef4444' }
                     ]}
                     cx="50%"
-                    cy="50%"
-                    outerRadius={80}
+                    cy="40%"
+                    outerRadius={70}
                     dataKey="value"
-                    label={({ name, value }: any) => `${name}: ${value}`}
                   >
                     {[0, 1, 2].map((index) => (
                       <CellComponent key={`cell-${index}`} fill={COLORS[index]} />
                     ))}
                   </PieComponent>
-                  <TooltipComponent />
+                  <TooltipComponent
+                    formatter={(value: any, _name: any, props: any) => [
+                      `${value} players`,
+                      props.payload.fullName
+                    ]}
+                  />
+                  <LegendComponent
+                    verticalAlign="bottom"
+                    height={36}
+                    formatter={(_value: any, entry: any) => entry.payload.fullName}
+                  />
                 </PieChartComponent>
               </ResponsiveContainerComponent>
             </CardContent>

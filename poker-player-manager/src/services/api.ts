@@ -143,6 +143,12 @@ export const sessionsApi = {
     method: 'POST',
     body: JSON.stringify(sessionData),
   }),
+
+  // Send reminder emails to non-responders
+  sendReminders: (sessionId: number): Promise<{ message: string; sent: number; failed: number; totalNonResponders: number }> =>
+    apiRequest<{ message: string; sent: number; failed: number; totalNonResponders: number }>(`/sessions/${sessionId}/send-reminders`, {
+      method: 'POST',
+    }),
 };
 
 // Seating Charts API

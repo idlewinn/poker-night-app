@@ -488,6 +488,10 @@ router.post('/:sessionId/players/:playerId', async (req: TypedRequest<UpdatePlay
       // Player doesn't exist, add them with the specified status
       const insertSql = 'INSERT INTO session_players (session_id, player_id, status, buy_in, cash_out) VALUES (?, ?, ?, 0, 0)';
       await db.run(insertSql, [sessionIdNum, playerIdNum, status]);
+
+      // Send invitation email to newly added player
+      await sendPlayerAddedEmail(sessionIdNum, playerIdNum);
+
       res.json({ message: 'Player added to session successfully', status, action: 'added' });
     }
   } catch (err: any) {
@@ -593,6 +597,54 @@ router.post('/:sessionId/invite-view', async (req: Request, res: Response): Prom
   }
 });
 
+// POST send reminder emails to non-responders (only by session owner)
+router.post('/:sessionId/send-reminders', authenticateToken, requireSessionOwnership, async (req: any, res: Response): Promise<void> => {
+  try {
+    const { sessionId } = req.params;
+    const sessionIdNum = parseInt(sessionId);
+
+    if (!sessionIdNum) {
+      res.status(400).json({ error: 'Valid session ID is required' });
+      return;
+    }
+
+    // Get players who haven't responded (status = 'Invited')
+    const nonRespondersSql = `
+      SELECT p.id, p.name, p.email
+      FROM session_players sp
+      JOIN players p ON sp.player_id = p.id
+      WHERE sp.session_id = ?
+        AND sp.status = 'Invited'
+        AND p.email IS NOT NULL
+        AND p.email != ''
+    `;
+
+    const nonResponders = await db.all(nonRespondersSql, [sessionIdNum]);
+
+    if (nonResponders.length === 0) {
+      res.json({
+        message: 'No non-responders with email addresses found',
+        sent: 0,
+        failed: 0
+      });
+      return;
+    }
+
+    // Send reminder emails
+    const result = await sendSessionReminderEmails(sessionIdNum, req.user?.id);
+
+    res.json({
+      message: `Reminder emails sent to ${result.sent} players`,
+      sent: result.sent,
+      failed: result.failed,
+      totalNonResponders: nonResponders.length
+    });
+  } catch (error: any) {
+    console.error('Error sending reminder emails:', error);
+    res.status(500).json({ error: 'Failed to send reminder emails' });
+  }
+});
+
 // Helper function to send session invite emails
 async function sendSessionInviteEmails(sessionId: number, hostUserId: number): Promise<void> {
   try {
@@ -648,6 +700,128 @@ async function sendSessionInviteEmails(sessionId: number, hostUserId: number): P
     console.log(`Session invite emails sent for session ${sessionId}: ${result.sent} sent, ${result.failed} failed`);
   } catch (error) {
     console.error('Error sending session invite emails:', error);
+  }
+}
+
+// Helper function to send email when a player is added to an existing session
+async function sendPlayerAddedEmail(sessionId: number, playerId: number): Promise<void> {
+  try {
+    // Get session details
+    const sessionSql = `
+      SELECT s.*, u.email as host_email, u.name as host_name
+      FROM sessions s
+      JOIN users u ON s.created_by = u.id
+      WHERE s.id = ?
+    `;
+    const session = await db.get(sessionSql, [sessionId]);
+
+    if (!session) {
+      console.error('Session not found for player added email:', sessionId);
+      return;
+    }
+
+    // Get player details
+    const playerSql = 'SELECT id, name, email FROM players WHERE id = ?';
+    const player = await db.get(playerSql, [playerId]);
+
+    if (!player || !player.email) {
+      console.log(`Player ${playerId} has no email address. Skipping email send.`);
+      return;
+    }
+
+    // Get base URL from environment or use default
+    const baseUrl = process.env.FRONTEND_URL || 'https://edwinpokernight.com';
+
+    // Host name fallback
+    const hostName = session.host_name || session.host_email || 'Poker Night Host';
+
+    // Generate invite URL with base64 encoded email
+    const encodedEmail = Buffer.from(player.email).toString('base64');
+    const inviteUrl = `${baseUrl}/invite/${session.id}/${encodedEmail}`;
+
+    // Send email
+    const success = await emailService.sendSessionInviteEmail({
+      session: {
+        id: session.id,
+        name: session.name,
+        scheduled_datetime: session.scheduled_datetime,
+        created_by: session.created_by,
+        created_at: session.created_at,
+        game_type: session.game_type
+      },
+      player,
+      inviteUrl,
+      hostName
+    });
+
+    if (success) {
+      console.log(`Player added email sent to ${player.email} for session ${sessionId}`);
+    }
+  } catch (error) {
+    console.error('Error sending player added email:', error);
+  }
+}
+
+// Helper function to send reminder emails to non-responders
+async function sendSessionReminderEmails(sessionId: number, hostUserId: number): Promise<{ sent: number; failed: number }> {
+  try {
+    // Get session details
+    const sessionSql = `
+      SELECT s.*, u.email as host_email, u.name as host_name
+      FROM sessions s
+      JOIN users u ON s.created_by = u.id
+      WHERE s.id = ?
+    `;
+    const session = await db.get(sessionSql, [sessionId]);
+
+    if (!session) {
+      console.error('Session not found for reminder emails:', sessionId);
+      return { sent: 0, failed: 0 };
+    }
+
+    // Get non-responders with email addresses
+    const nonRespondersSql = `
+      SELECT p.id, p.name, p.email
+      FROM session_players sp
+      JOIN players p ON sp.player_id = p.id
+      WHERE sp.session_id = ?
+        AND sp.status = 'Invited'
+        AND p.email IS NOT NULL
+        AND p.email != ''
+    `;
+    const nonResponders = await db.all(nonRespondersSql, [sessionId]);
+
+    if (nonResponders.length === 0) {
+      console.log('No non-responders with email addresses found for session:', sessionId);
+      return { sent: 0, failed: 0 };
+    }
+
+    // Get base URL from environment or use default
+    const baseUrl = process.env.FRONTEND_URL || 'https://edwinpokernight.com';
+
+    // Host name fallback
+    const hostName = session.host_name || session.host_email || 'Poker Night Host';
+
+    // Send reminder emails
+    const result = await emailService.sendBulkSessionReminders(
+      {
+        id: session.id,
+        name: session.name,
+        scheduled_datetime: session.scheduled_datetime,
+        created_by: session.created_by,
+        created_at: session.created_at,
+        game_type: session.game_type
+      },
+      nonResponders,
+      hostName,
+      baseUrl
+    );
+
+    console.log(`Session reminder emails sent for session ${sessionId}: ${result.sent} sent, ${result.failed} failed`);
+    return result;
+  } catch (error) {
+    console.error('Error sending session reminder emails:', error);
+    return { sent: 0, failed: 0 };
   }
 }
 
