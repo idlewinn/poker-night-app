@@ -454,16 +454,18 @@ function SessionPage(): React.JSX.Element {
         </div>
       )}
 
-      {/* Persistent Timer Display */}
-      {bombPotRunning && (
-        <Card className="mb-4 border-2 border-orange-400 bg-orange-50">
+      {/* Persistent Timer Display - Always visible when timer has been used */}
+      {(bombPotRunning || bombPotTimeLeft < bombPotInterval * 60) && (
+        <Card className={`mb-4 border-2 ${bombPotRunning ? 'border-orange-400 bg-orange-50' : 'border-gray-300 bg-gray-50'}`}>
           <CardContent className="py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Timer className="h-5 w-5 text-orange-600" />
-                <span className="font-medium text-orange-800">Bomb Pot Timer</span>
+                <Timer className={`h-5 w-5 ${bombPotRunning ? 'text-orange-600' : 'text-gray-500'}`} />
+                <span className={`font-medium ${bombPotRunning ? 'text-orange-800' : 'text-gray-600'}`}>
+                  Bomb Pot Timer {!bombPotRunning && '(Paused)'}
+                </span>
               </div>
-              <div className="text-2xl font-bold text-orange-600">
+              <div className={`text-2xl font-bold ${bombPotRunning ? 'text-orange-600' : 'text-gray-500'}`}>
                 {formatTime(bombPotTimeLeft)}
               </div>
             </div>
@@ -781,6 +783,11 @@ function SessionPage(): React.JSX.Element {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="5">5 minutes</SelectItem>
+                        <SelectItem value="10">10 minutes</SelectItem>
+                        <SelectItem value="15">15 minutes</SelectItem>
+                        <SelectItem value="20">20 minutes</SelectItem>
+                        <SelectItem value="25">25 minutes</SelectItem>
                         <SelectItem value="30">30 minutes</SelectItem>
                         <SelectItem value="35">35 minutes</SelectItem>
                         <SelectItem value="40">40 minutes</SelectItem>
@@ -797,10 +804,10 @@ function SessionPage(): React.JSX.Element {
                       <strong>How it works:</strong>
                     </p>
                     <ul className="list-disc list-inside space-y-1">
-                      <li>Timer counts down from the selected interval</li>
+                      <li>Timer counts down from the selected interval (5-60 minutes)</li>
                       <li>When it reaches zero, a full-screen alert appears</li>
                       <li>Timer automatically restarts after the alert</li>
-                      <li>Timer display is visible on all tabs when running</li>
+                      <li>Timer display is visible on all tabs when running or paused</li>
                       <li>Audio alert plays when timer completes (if supported)</li>
                     </ul>
                   </div>
