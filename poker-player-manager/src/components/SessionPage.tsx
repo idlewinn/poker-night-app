@@ -146,13 +146,6 @@ function SessionPage(): React.JSX.Element {
               console.error('Failed to play alert sound:', error);
             }
 
-            // Auto-restart timer
-            setTimeout(() => {
-              setBombPotTimeLeft(bombPotInterval * 60);
-              setBombPotRunning(true);
-              setBombPotAlert(false);
-            }, 5000); // Show alert for 5 seconds
-
             return 0;
           }
           return prev - 1;
@@ -163,7 +156,7 @@ function SessionPage(): React.JSX.Element {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [bombPotRunning, bombPotTimeLeft, bombPotInterval]);
+  }, [bombPotRunning, bombPotTimeLeft]);
 
   const handleEditFinancials = (sessionPlayer: SessionPlayer) => {
     // If we're already editing a different player, don't switch
@@ -288,6 +281,13 @@ function SessionPage(): React.JSX.Element {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const acknowledgeBombPotAlert = (): void => {
+    setBombPotAlert(false);
+    // Reset timer and start next countdown
+    setBombPotTimeLeft(bombPotInterval * 60);
+    setBombPotRunning(true);
   };
 
   const formatCurrency = (amount: number): string => {
@@ -445,11 +445,14 @@ function SessionPage(): React.JSX.Element {
 
       {/* Bomb Pot Timer Alert Overlay */}
       {bombPotAlert && (
-        <div className="fixed inset-0 bg-red-500 bg-opacity-90 flex items-center justify-center z-50 animate-pulse">
-          <div className="text-center text-white">
+        <div
+          className="fixed inset-0 bg-red-500 bg-opacity-90 flex items-center justify-center z-50 animate-pulse cursor-pointer"
+          onClick={acknowledgeBombPotAlert}
+        >
+          <div className="text-center text-white pointer-events-none">
             <div className="text-6xl font-bold mb-4">💣 BOMB POT! 💣</div>
             <div className="text-2xl">Time for a Bomb Pot!</div>
-            <div className="text-lg mt-2">Timer will restart automatically...</div>
+            <div className="text-lg mt-4">Click anywhere to acknowledge and restart timer</div>
           </div>
         </div>
       )}
@@ -806,7 +809,7 @@ function SessionPage(): React.JSX.Element {
                     <ul className="list-disc list-inside space-y-1">
                       <li>Timer counts down from the selected interval (5-60 minutes)</li>
                       <li>When it reaches zero, a full-screen alert appears</li>
-                      <li>Timer automatically restarts after the alert</li>
+                      <li>Click anywhere on the alert to acknowledge and restart timer</li>
                       <li>Timer display is visible on all tabs when running or paused</li>
                       <li>Audio alert plays when timer completes (if supported)</li>
                     </ul>
