@@ -266,6 +266,13 @@ function SessionPage(): React.JSX.Element {
   };
 
   const resetBombPotTimer = (): void => {
+    // Reset timer to full interval but maintain current running/paused state
+    setBombPotTimeLeft(bombPotInterval * 60);
+    setBombPotAlert(false);
+  };
+
+  const cancelBombPotTimer = (): void => {
+    // Cancel timer: reset to full interval AND stop running
     setBombPotRunning(false);
     setBombPotTimeLeft(bombPotInterval * 60);
     setBombPotAlert(false);
@@ -289,12 +296,6 @@ function SessionPage(): React.JSX.Element {
     // Reset timer and start next countdown
     setBombPotTimeLeft(bombPotInterval * 60);
     setBombPotRunning(true);
-  };
-
-  const cancelBombPotTimer = (): void => {
-    setBombPotRunning(false);
-    setBombPotTimeLeft(bombPotInterval * 60); // Reset to full interval
-    setBombPotAlert(false);
   };
 
   const formatCurrency = (amount: number): string => {
@@ -507,7 +508,7 @@ function SessionPage(): React.JSX.Element {
                     variant="outline"
                     onClick={resetBombPotTimer}
                     className="h-8 w-8 p-0"
-                    title="Reset Timer"
+                    title="Reset Timer to Full Interval"
                   >
                     <RotateCcw className="h-3 w-3" />
                   </Button>
@@ -516,7 +517,7 @@ function SessionPage(): React.JSX.Element {
                     variant="outline"
                     onClick={cancelBombPotTimer}
                     className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:border-red-300"
-                    title="Cancel Timer"
+                    title="Cancel Timer (Reset and Stop)"
                   >
                     <X className="h-3 w-3" />
                   </Button>
@@ -864,7 +865,9 @@ function SessionPage(): React.JSX.Element {
                       <li>When it reaches zero, a full-screen alert appears</li>
                       <li>Click anywhere on the alert to acknowledge and restart timer</li>
                       <li>Timer display with controls is visible on all tabs</li>
-                      <li>Use play/pause/reset/cancel buttons from any tab</li>
+                      <li><strong>Play/Pause:</strong> Start or stop timer</li>
+                      <li><strong>Reset:</strong> Restart at full interval (keeps running/paused state)</li>
+                      <li><strong>Cancel:</strong> Reset timer and stop it completely</li>
                       <li>Audio alert plays when timer completes (if supported)</li>
                     </ul>
                   </div>
