@@ -44,7 +44,9 @@ import {
   Settings,
   X,
   Monitor,
-  Minimize2
+  Minimize2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Session, Player, SessionPlayer, SeatingChart, CreateSeatingChartRequest } from '../types/index';
 import { sessionsApi, playersApi, seatingChartsApi } from '../services/api';
@@ -91,6 +93,7 @@ function SessionPage(): React.JSX.Element {
   // Dashboard View State
   const [isDashboardView, setIsDashboardView] = useState<boolean>(false);
   const [bombPotTimerModalOpen, setBombPotTimerModalOpen] = useState<boolean>(false);
+  const [currentTableIndex, setCurrentTableIndex] = useState<number>(0);
 
   // Check if current user is the session owner
   const isSessionOwner = (): boolean => {
@@ -310,6 +313,8 @@ function SessionPage(): React.JSX.Element {
   // Dashboard View Functions
   const toggleDashboardView = (): void => {
     setIsDashboardView(!isDashboardView);
+    // Reset table index when toggling dashboard view
+    setCurrentTableIndex(0);
   };
 
   // Calculate total buy-ins
@@ -680,26 +685,66 @@ function SessionPage(): React.JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Current Seating Chart - Poker Table View */}
+              {/* Current Seating Chart - Single Table View with Navigation */}
               <Card className="flex flex-col">
-                <div className="p-3 sm:p-4 bg-blue-600 text-white text-center flex-shrink-0">
-                  <Users className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2" />
-                  <div className="text-lg sm:text-xl font-bold">Current Seating</div>
+                <div className="p-3 sm:p-4 bg-blue-600 text-white flex-shrink-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-6 w-6 sm:h-8 sm:w-8" />
+                      <div className="text-base sm:text-lg font-bold">Current Seating</div>
+                    </div>
+                    {(() => {
+                      const currentChart = getCurrentSeatingChart();
+                      if (currentChart && currentChart.assignments) {
+                        const tables = groupAssignmentsByTable(currentChart.assignments);
+                        if (tables.length > 1) {
+                          return (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setCurrentTableIndex(Math.max(0, currentTableIndex - 1))}
+                                disabled={currentTableIndex === 0}
+                                className="text-white hover:bg-blue-700 p-1 h-8 w-8"
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                              </Button>
+                              <span className="text-sm font-medium min-w-[60px] text-center">
+                                {currentTableIndex + 1} of {tables.length}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setCurrentTableIndex(Math.min(tables.length - 1, currentTableIndex + 1))}
+                                disabled={currentTableIndex >= tables.length - 1}
+                                className="text-white hover:bg-blue-700 p-1 h-8 w-8"
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          );
+                        }
+                      }
+                      return null;
+                    })()}
+                  </div>
                 </div>
-                <CardContent className="flex-1 p-2 sm:p-4 overflow-auto">
+                <CardContent className="flex-1 p-2 sm:p-4 overflow-hidden">
                   {getCurrentSeatingChart() && getCurrentSeatingChart()!.assignments ? (
                     <div className="h-full">
                       {(() => {
                         const tables = groupAssignmentsByTable(getCurrentSeatingChart()!.assignments!);
+                        if (tables.length === 0) return null;
+
+                        // Ensure currentTableIndex is within bounds
+                        const safeTableIndex = Math.min(currentTableIndex, tables.length - 1);
+                        const currentTable = tables[safeTableIndex];
+
+                        if (!currentTable) return null;
+
                         return (
-                          <div className="grid gap-4 h-full" style={{
-                            gridTemplateColumns: tables.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))'
-                          }}>
-                            {tables.map((table) => (
-                              <div key={table.tableNumber} className="h-full min-h-[250px]">
-                                <PokerTable table={table} />
-                              </div>
-                            ))}
+                          <div className="h-full">
+                            <PokerTable table={currentTable} />
                           </div>
                         );
                       })()}
