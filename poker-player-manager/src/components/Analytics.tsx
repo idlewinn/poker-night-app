@@ -244,9 +244,15 @@ function Analytics({ sessions, players }: AnalyticsProps): React.JSX.Element {
     let largestWinningSession = { playerName: '', amount: 0, sessionName: '' };
     let topCashWinnings = { playerName: '', amount: 0 };
     let topTournamentWinnings = { playerName: '', amount: 0 };
-    let highestSessionWin = { playerName: '', amount: 0, sessionName: '' };
+    let highestAvgWinPerSession = { playerName: '', amount: 0 };
 
-    // Find largest winning session and highest session win
+    // Calculate total winnings by game type for each player
+    const playerCashWinnings = new Map<string, number>();
+    const playerTournamentWinnings = new Map<string, number>();
+    const playerSessionCounts = new Map<string, number>();
+    const playerTotalWinnings = new Map<string, number>();
+
+    // Find largest winning session and calculate totals
     ownedSessions.forEach(session => {
       const inPlayers = session.players?.filter(sp => sp.status === 'In') || [];
       inPlayers.forEach(sp => {
@@ -255,26 +261,50 @@ function Analytics({ sessions, players }: AnalyticsProps): React.JSX.Element {
         const playerName = player?.name || 'Unknown';
         const sessionName = session.name || 'Poker Night';
 
+        // Track largest single session win
         if (profit > largestWinningSession.amount) {
           largestWinningSession = { playerName, amount: profit, sessionName };
         }
 
-        if (profit > highestSessionWin.amount) {
-          highestSessionWin = { playerName, amount: profit, sessionName };
+        // Track totals by game type
+        if (session.game_type === 'tournament') {
+          const currentTournament = playerTournamentWinnings.get(playerName) || 0;
+          playerTournamentWinnings.set(playerName, currentTournament + profit);
+        } else {
+          const currentCash = playerCashWinnings.get(playerName) || 0;
+          playerCashWinnings.set(playerName, currentCash + profit);
         }
 
-        // Determine if it's cash or tournament based on session type
-        if (session.game_type === 'tournament') {
-          if (profit > topTournamentWinnings.amount) {
-            topTournamentWinnings = { playerName, amount: profit };
-          }
-        } else {
-          if (profit > topCashWinnings.amount) {
-            topCashWinnings = { playerName, amount: profit };
-          }
-        }
+        // Track session counts and total winnings for average calculation
+        const currentSessions = playerSessionCounts.get(playerName) || 0;
+        const currentTotal = playerTotalWinnings.get(playerName) || 0;
+        playerSessionCounts.set(playerName, currentSessions + 1);
+        playerTotalWinnings.set(playerName, currentTotal + profit);
       });
     });
+
+    // Find top cash game winnings (total across all cash sessions)
+    for (const [playerName, totalCashWinnings] of playerCashWinnings.entries()) {
+      if (totalCashWinnings > topCashWinnings.amount) {
+        topCashWinnings = { playerName, amount: totalCashWinnings };
+      }
+    }
+
+    // Find top tournament winnings (total across all tournament sessions)
+    for (const [playerName, totalTournamentWinnings] of playerTournamentWinnings.entries()) {
+      if (totalTournamentWinnings > topTournamentWinnings.amount) {
+        topTournamentWinnings = { playerName, amount: totalTournamentWinnings };
+      }
+    }
+
+    // Find highest average winnings per session
+    for (const [playerName, totalWinnings] of playerTotalWinnings.entries()) {
+      const sessionCount = playerSessionCounts.get(playerName) || 1;
+      const avgWinnings = totalWinnings / sessionCount;
+      if (avgWinnings > highestAvgWinPerSession.amount) {
+        highestAvgWinPerSession = { playerName, amount: avgWinnings };
+      }
+    }
 
     return {
       totalSessions,
@@ -284,7 +314,7 @@ function Analytics({ sessions, players }: AnalyticsProps): React.JSX.Element {
       largestWinningSession: largestWinningSession.amount > 0 ? largestWinningSession : null,
       topCashWinnings: topCashWinnings.amount > 0 ? topCashWinnings : null,
       topTournamentWinnings: topTournamentWinnings.amount > 0 ? topTournamentWinnings : null,
-      highestSessionWin: highestSessionWin.amount > 0 ? highestSessionWin : null
+      highestAvgWinPerSession: highestAvgWinPerSession.amount > 0 ? highestAvgWinPerSession : null
     };
   }, [ownedSessions, playerPerformanceData, sessionAnalyticsData, players]);
 
@@ -637,19 +667,19 @@ function Analytics({ sessions, players }: AnalyticsProps): React.JSX.Element {
                   </div>
                 )}
 
-                {overallStats.highestSessionWin && (
+                {overallStats.highestAvgWinPerSession && (
                   <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
                     <div className="flex items-center gap-2 mb-1">
                       <Zap className="h-4 w-4 text-purple-600" />
-                      <span className="font-medium text-purple-800">Highest Amount Won Per Session</span>
+                      <span className="font-medium text-purple-800">Highest Average Winnings Per Session</span>
                     </div>
                     <div className="text-sm text-purple-700">
-                      {overallStats.highestSessionWin.playerName} • {formatCurrency(overallStats.highestSessionWin.amount)} • {overallStats.highestSessionWin.sessionName}
+                      {overallStats.highestAvgWinPerSession.playerName} • {formatCurrency(overallStats.highestAvgWinPerSession.amount)} average
                     </div>
                   </div>
                 )}
 
-                {!overallStats.largestWinningSession && !overallStats.topCashWinnings && !overallStats.topTournamentWinnings && !overallStats.highestSessionWin && (
+                {!overallStats.largestWinningSession && !overallStats.topCashWinnings && !overallStats.topTournamentWinnings && !overallStats.highestAvgWinPerSession && (
                   <div className="text-center py-8 text-gray-500">
                     No highlights available yet
                   </div>
