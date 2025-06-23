@@ -24,6 +24,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -87,6 +88,7 @@ function SessionPage(): React.JSX.Element {
 
   // Dashboard View State
   const [isDashboardView, setIsDashboardView] = useState<boolean>(false);
+  const [bombPotTimerModalOpen, setBombPotTimerModalOpen] = useState<boolean>(false);
 
   // Check if current user is the session owner
   const isSessionOwner = (): boolean => {
@@ -572,8 +574,8 @@ function SessionPage(): React.JSX.Element {
 
       {/* Dashboard View */}
       {isDashboardView ? (
-        <div className="fixed inset-0 bg-gray-900 z-50 overflow-hidden">
-          <div className="h-screen flex flex-col p-6">
+        <div className="fixed inset-0 bg-gray-900 z-40 overflow-hidden">
+          <div className="h-screen flex flex-col p-4 sm:p-6">
             {/* Dashboard Header */}
             <div className="flex items-center justify-between mb-6 flex-shrink-0">
               <h1 className="text-3xl font-bold text-white">
@@ -589,9 +591,9 @@ function SessionPage(): React.JSX.Element {
               </Button>
             </div>
 
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 min-h-0">
               {/* Player Buy-ins - Full Height */}
-              <Card className="lg:col-span-1 flex flex-col">
+              <Card className="md:col-span-2 lg:col-span-1 flex flex-col">
                 <div className="p-4 bg-green-600 text-white flex-shrink-0">
                   <div className="text-center">
                     <TrendingUp className="h-12 w-12 mx-auto mb-2" />
@@ -639,13 +641,17 @@ function SessionPage(): React.JSX.Element {
               </Card>
 
               {/* Bomb Pot Timer */}
-              <Card className="lg:col-span-1 flex flex-col">
-                <CardContent className="flex-1 flex flex-col justify-center p-8 text-center">
-                  <Timer className="h-16 w-16 text-orange-600 mx-auto mb-4" />
-                  <div className="text-6xl font-bold text-orange-600 mb-2">
+              <Card className="flex flex-col">
+                <CardContent className="flex-1 flex flex-col justify-center p-4 sm:p-8 text-center">
+                  <Timer className="h-12 w-12 sm:h-16 sm:w-16 text-orange-600 mx-auto mb-4" />
+                  <div
+                    className="text-4xl sm:text-6xl font-bold text-orange-600 mb-2 cursor-pointer hover:text-orange-700 transition-colors"
+                    onClick={() => setBombPotTimerModalOpen(true)}
+                    title="Click to adjust timer interval"
+                  >
                     {formatTime(bombPotTimeLeft)}
                   </div>
-                  <div className="text-xl text-gray-600 mb-6">
+                  <div className="text-lg sm:text-xl text-gray-600 mb-4 sm:mb-6">
                     {bombPotRunning ? 'Next Bomb Pot' : 'Timer Paused'}
                   </div>
                   <div className="flex justify-center gap-2">
@@ -671,26 +677,26 @@ function SessionPage(): React.JSX.Element {
               </Card>
 
               {/* Current Seating Chart - Poker Table View */}
-              <Card className="lg:col-span-1 flex flex-col">
-                <div className="p-4 bg-blue-600 text-white text-center flex-shrink-0">
-                  <Users className="h-12 w-12 mx-auto mb-2" />
-                  <div className="text-xl font-bold">Current Seating</div>
+              <Card className="flex flex-col">
+                <div className="p-3 sm:p-4 bg-blue-600 text-white text-center flex-shrink-0">
+                  <Users className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2" />
+                  <div className="text-lg sm:text-xl font-bold">Current Seating</div>
                 </div>
-                <CardContent className="flex-1 flex items-center justify-center p-6">
+                <CardContent className="flex-1 flex items-center justify-center p-4 sm:p-6">
                   {getCurrentSeatingChart() && getCurrentSeatingChart()!.assignments ? (
                     <div className="relative">
                       {/* Poker Table Visualization */}
-                      <div className="w-80 h-48 bg-green-700 rounded-full border-8 border-green-800 relative">
+                      <div className="w-64 h-40 sm:w-80 sm:h-48 bg-green-700 rounded-full border-4 sm:border-8 border-green-800 relative mx-auto">
                         {/* Table center */}
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-white font-bold text-lg">POKER</div>
+                          <div className="text-white font-bold text-sm sm:text-lg">POKER</div>
                         </div>
 
                         {/* Player positions around the table */}
                         {getCurrentSeatingChart()!.assignments!.map((assignment, index) => {
                           const totalSeats = getCurrentSeatingChart()!.assignments!.length;
                           const angle = (index * 360) / totalSeats;
-                          const radius = 120;
+                          const radius = window.innerWidth < 640 ? 96 : 120; // Responsive radius
                           const x = Math.cos((angle - 90) * Math.PI / 180) * radius;
                           const y = Math.sin((angle - 90) * Math.PI / 180) * radius;
 
@@ -703,11 +709,11 @@ function SessionPage(): React.JSX.Element {
                                 top: `calc(50% + ${y}px)`
                               }}
                             >
-                              <div className="bg-white rounded-lg p-2 shadow-lg text-center min-w-20">
+                              <div className="bg-white rounded-lg p-1 sm:p-2 shadow-lg text-center min-w-16 sm:min-w-20">
                                 <div className="text-xs font-bold text-gray-800">
                                   {assignment.seat_position}
                                 </div>
-                                <div className="text-xs text-gray-600 truncate max-w-16">
+                                <div className="text-xs text-gray-600 truncate max-w-12 sm:max-w-16">
                                   {assignment.player?.name || 'Unknown'}
                                 </div>
                               </div>
@@ -1098,6 +1104,59 @@ function SessionPage(): React.JSX.Element {
               generating={generatingChart}
             />
           )}
+
+          {/* Bomb Pot Timer Settings Modal */}
+          <Dialog open={bombPotTimerModalOpen} onOpenChange={setBombPotTimerModalOpen}>
+            <DialogContent className="max-w-md z-[60]">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Timer className="h-5 w-5" />
+                  Bomb Pot Timer Settings
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Timer Interval (minutes)
+                  </label>
+                  <Select
+                    value={bombPotInterval.toString()}
+                    onValueChange={(value) => {
+                      updateBombPotInterval(parseInt(value));
+                      setBombPotTimerModalOpen(false);
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 minute (testing)</SelectItem>
+                      <SelectItem value="5">5 minutes</SelectItem>
+                      <SelectItem value="10">10 minutes</SelectItem>
+                      <SelectItem value="15">15 minutes</SelectItem>
+                      <SelectItem value="20">20 minutes</SelectItem>
+                      <SelectItem value="25">25 minutes</SelectItem>
+                      <SelectItem value="30">30 minutes</SelectItem>
+                      <SelectItem value="35">35 minutes</SelectItem>
+                      <SelectItem value="40">40 minutes</SelectItem>
+                      <SelectItem value="45">45 minutes (default)</SelectItem>
+                      <SelectItem value="50">50 minutes</SelectItem>
+                      <SelectItem value="55">55 minutes</SelectItem>
+                      <SelectItem value="60">60 minutes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-sm text-gray-600">
+                  <p>Click on the timer display to quickly adjust the interval. The timer will be reset to the new interval.</p>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setBombPotTimerModalOpen(false)}>
+                  Close
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </>
       )}
     </div>
