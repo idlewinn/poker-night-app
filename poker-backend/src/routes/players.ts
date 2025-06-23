@@ -90,7 +90,10 @@ router.get('/', authenticateToken, async (req: any, res: Response) => {
       name: row.name,
       email: row.email, // Will be null for players from other users' sessions
       created_at: row.created_at,
-      default_invite: row.default_invite === 1 ? true : row.default_invite === 0 ? false : undefined
+      // Handle both PostgreSQL (boolean) and SQLite (integer) default_invite values
+      default_invite: row.default_invite === true || row.default_invite === 1 ? true :
+                     row.default_invite === false || row.default_invite === 0 ? false :
+                     undefined
     }));
 
     // Debug: Log transformed data
@@ -150,11 +153,13 @@ router.post('/', authenticateToken, async (req: any, res: Response): Promise<voi
     if (existingPlayer) {
       // Player exists, just add the relationship if it doesn't exist
       // Use INSERT ... ON CONFLICT for PostgreSQL compatibility
-      const insertSql = process.env.DATABASE_URL?.startsWith('postgresql')
+      const isPostgreSQL = process.env.DATABASE_URL?.startsWith('postgresql');
+      const insertSql = isPostgreSQL
         ? 'INSERT INTO user_players (user_id, player_id, default_invite) VALUES (?, ?, ?) ON CONFLICT (user_id, player_id) DO NOTHING'
         : 'INSERT OR IGNORE INTO user_players (user_id, player_id, default_invite) VALUES (?, ?, ?)';
 
-      await db.run(insertSql, [userId, existingPlayer.id, 1]);
+      const defaultInviteValue = isPostgreSQL ? true : 1;
+      await db.run(insertSql, [userId, existingPlayer.id, defaultInviteValue]);
       res.status(201).json(existingPlayer);
     } else {
       // Player doesn't exist, create new player
@@ -167,7 +172,9 @@ router.post('/', authenticateToken, async (req: any, res: Response): Promise<voi
       }
 
       // Add the user-player relationship with default_invite = true
-      await db.run('INSERT INTO user_players (user_id, player_id, default_invite) VALUES (?, ?, ?)', [userId, playerId, 1]);
+      const isPostgreSQL = process.env.DATABASE_URL?.startsWith('postgresql');
+      const defaultInviteValue = isPostgreSQL ? true : 1;
+      await db.run('INSERT INTO user_players (user_id, player_id, default_invite) VALUES (?, ?, ?)', [userId, playerId, defaultInviteValue]);
 
       // Return the created player
       const player = await db.get('SELECT * FROM players WHERE id = ?', [playerId]);
@@ -248,9 +255,14 @@ router.put('/:id/default-invite', authenticateToken, async (req: any, res: Respo
 
     // Update the default_invite setting in user_players table
     console.log('DEBUG - Updating default_invite to:', default_invite, 'for user:', userId, 'player:', id);
+
+    // Use boolean for PostgreSQL, integer for SQLite
+    const isPostgreSQL = process.env.DATABASE_URL?.startsWith('postgresql');
+    const defaultInviteValue = isPostgreSQL ? default_invite : (default_invite ? 1 : 0);
+
     const result = await db.run(
       'UPDATE user_players SET default_invite = ? WHERE user_id = ? AND player_id = ?',
-      [default_invite ? 1 : 0, userId, id]
+      [defaultInviteValue, userId, id]
     );
 
     console.log('DEBUG - Update result:', result);
