@@ -12,11 +12,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
   Cell,
-  ReferenceLine,
-  Legend
+  ReferenceLine
 } from 'recharts';
 
 // Type assertion for Recharts components
@@ -29,13 +26,11 @@ const YAxisComponent = YAxis as any;
 const CartesianGridComponent = CartesianGrid as any;
 const TooltipComponent = Tooltip as any;
 const ResponsiveContainerComponent = ResponsiveContainer as any;
-const PieChartComponent = PieChart as any;
-const PieComponent = Pie as any;
 const CellComponent = Cell as any;
 const ReferenceLineComponent = ReferenceLine as any;
-const LegendComponent = Legend as any;
 import {
   TrendingUp,
+  TrendingDown,
   Users,
   Calendar,
   DollarSign,
@@ -76,7 +71,7 @@ interface SessionAnalytics {
   biggestLoss: number;
 }
 
-const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316'];
+
 
 function Analytics({ sessions, players }: AnalyticsProps): React.JSX.Element {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>('all');
@@ -521,46 +516,85 @@ function Analytics({ sessions, players }: AnalyticsProps): React.JSX.Element {
           </Card>
         )}
 
-        {/* Win Rate Distribution */}
+        {/* Top Winners */}
         {selectedPlayerId === 'all' && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                Win Rate Distribution
+                <Trophy className="h-5 w-5" />
+                Top Winners
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainerComponent width="100%" height={350}>
-                <PieChartComponent>
-                  <PieComponent
-                    data={[
-                      { name: 'High Performers', fullName: 'High Performers (>60%)', value: playerPerformanceData.filter(p => p.winRate > 60).length, color: '#10b981' },
-                      { name: 'Good Players', fullName: 'Good Players (40-60%)', value: playerPerformanceData.filter(p => p.winRate >= 40 && p.winRate <= 60).length, color: '#f59e0b' },
-                      { name: 'Struggling', fullName: 'Struggling (<40%)', value: playerPerformanceData.filter(p => p.winRate < 40).length, color: '#ef4444' }
-                    ]}
-                    cx="50%"
-                    cy="40%"
-                    outerRadius={70}
-                    dataKey="value"
-                  >
-                    {[0, 1, 2].map((index) => (
-                      <CellComponent key={`cell-${index}`} fill={COLORS[index]} />
-                    ))}
-                  </PieComponent>
-                  <TooltipComponent
-                    formatter={(value: any, _name: any, props: any) => [
-                      `${value} players`,
-                      props.payload.fullName
-                    ]}
-                  />
-                  <LegendComponent
-                    verticalAlign="bottom"
-                    height={36}
-                    formatter={(_value: any, entry: any) => entry.payload.fullName}
-                  />
-                </PieChartComponent>
-              </ResponsiveContainerComponent>
+              <div className="space-y-3">
+                {playerPerformanceData
+                  .filter(player => player.totalProfit > 0)
+                  .slice(0, 5)
+                  .map((player, index) => (
+                    <div key={player.playerName} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full">
+                          <span className="text-sm font-bold text-green-800">#{index + 1}</span>
+                        </div>
+                        <div>
+                          <div className="font-medium text-green-800">{player.playerName}</div>
+                          <div className="text-xs text-green-600">{player.sessionsPlayed} sessions</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-green-800">{formatCurrency(player.totalProfit)}</div>
+                        <div className="text-xs text-green-600">{player.winRate.toFixed(1)}% win rate</div>
+                      </div>
+                    </div>
+                  ))}
+                {playerPerformanceData.filter(player => player.totalProfit > 0).length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No profitable players yet
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Top Losers */}
+        {selectedPlayerId === 'all' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingDown className="h-5 w-5" />
+                Top Losers
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {playerPerformanceData
+                  .filter(player => player.totalProfit < 0)
+                  .sort((a, b) => a.totalProfit - b.totalProfit) // Sort by most negative first
+                  .slice(0, 5)
+                  .map((player, index) => (
+                    <div key={player.playerName} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 bg-red-100 rounded-full">
+                          <span className="text-sm font-bold text-red-800">#{index + 1}</span>
+                        </div>
+                        <div>
+                          <div className="font-medium text-red-800">{player.playerName}</div>
+                          <div className="text-xs text-red-600">{player.sessionsPlayed} sessions</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-red-800">{formatCurrency(player.totalProfit)}</div>
+                        <div className="text-xs text-red-600">{player.winRate.toFixed(1)}% win rate</div>
+                      </div>
+                    </div>
+                  ))}
+                {playerPerformanceData.filter(player => player.totalProfit < 0).length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No losing players yet
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         )}
