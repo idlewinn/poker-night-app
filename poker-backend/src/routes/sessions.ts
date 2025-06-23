@@ -71,6 +71,7 @@ router.get('/', authenticateToken, async (req: any, res: Response) => {
       scheduledDateTime: row.scheduled_datetime,
       createdBy: row.created_by,
       createdAt: row.created_at,
+      game_type: row.game_type || 'cash',
       players: row.player_ids ? row.player_ids.split(',').map((id: string, index: number) => ({
         id: `${row.id}-${parseInt(id)}`, // Unique session_player id using session-player combination
         session_id: row.id,
@@ -125,6 +126,7 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
         scheduledDateTime: row.scheduled_datetime,
         createdBy: row.created_by,
         createdAt: row.created_at,
+        game_type: row.game_type || 'cash',
         players: row.player_ids ? row.player_ids.split(',').map((id: string, index: number) => ({
           id: `${row.id}-${parseInt(id)}`, // Unique session_player id using session-player combination
           session_id: row.id,
@@ -151,7 +153,7 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 
 // POST create new session
 router.post('/', authenticateToken, async (req: any, res: Response): Promise<void> => {
-  const { name, scheduledDateTime, playerIds } = req.body;
+  const { name, scheduledDateTime, playerIds, game_type } = req.body;
   const userId = req.user?.id;
 
   if (!userId) {
@@ -166,11 +168,12 @@ router.post('/', authenticateToken, async (req: any, res: Response): Promise<voi
 
   // Generate session name from date/time if not provided
   const sessionName = name?.trim() || generateSessionNameFromDateTime(scheduledDateTime);
+  const gameType = game_type || 'cash'; // Default to cash game
 
-  const sql = 'INSERT INTO sessions (name, scheduled_datetime, created_by) VALUES (?, ?, ?)';
+  const sql = 'INSERT INTO sessions (name, scheduled_datetime, created_by, game_type) VALUES (?, ?, ?, ?)';
 
   try {
-    const result = await db.run(sql, [sessionName, scheduledDateTime, userId]);
+    const result = await db.run(sql, [sessionName, scheduledDateTime, userId, gameType]);
     const sessionId = result.lastID;
 
     if (!sessionId) {
@@ -195,7 +198,7 @@ router.post('/', authenticateToken, async (req: any, res: Response): Promise<voi
 // PUT update session (only by owner)
 router.put('/:id', authenticateToken, requireSessionOwnership, async (req: any, res: Response): Promise<void> => {
   const { id } = req.params;
-  const { name, scheduledDateTime, playerIds } = req.body;
+  const { name, scheduledDateTime, playerIds, game_type } = req.body;
 
   if (!scheduledDateTime) {
     res.status(400).json({ error: 'Scheduled date and time is required' });
@@ -204,11 +207,12 @@ router.put('/:id', authenticateToken, requireSessionOwnership, async (req: any, 
 
   // Generate session name from date/time if not provided
   const sessionName = name?.trim() || generateSessionNameFromDateTime(scheduledDateTime);
-  
-  const sql = 'UPDATE sessions SET name = ?, scheduled_datetime = ? WHERE id = ?';
+  const gameType = game_type || 'cash'; // Default to cash game
+
+  const sql = 'UPDATE sessions SET name = ?, scheduled_datetime = ?, game_type = ? WHERE id = ?';
 
   try {
-    const result = await db.run(sql, [sessionName, scheduledDateTime, id]);
+    const result = await db.run(sql, [sessionName, scheduledDateTime, gameType, id]);
 
     if (result.changes === 0) {
       res.status(404).json({ error: 'Session not found' });
@@ -450,6 +454,7 @@ async function fetchSessionById(sessionId: number, res: Response): Promise<void>
         scheduledDateTime: row.scheduled_datetime,
         createdBy: row.created_by,
         createdAt: row.created_at,
+        game_type: row.game_type || 'cash',
         players: row.player_ids ? row.player_ids.split(',').map((id: string, index: number) => ({
           id: `${row.id}-${parseInt(id)}`, // Unique session_player id using session-player combination
           session_id: row.id,

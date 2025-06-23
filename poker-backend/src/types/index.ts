@@ -22,6 +22,7 @@ export interface Session {
   scheduled_datetime: string | null;
   created_by: number;
   created_at: string;
+  game_type?: 'cash' | 'tournament';
 }
 
 export type PlayerStatus = 'Invited' | 'In' | 'Out' | 'Maybe' | 'Attending but not playing';
@@ -71,12 +72,14 @@ export interface CreateSessionRequest {
   name?: string;
   scheduledDateTime: string;
   playerIds?: number[];
+  game_type?: 'cash' | 'tournament';
 }
 
 export interface UpdateSessionRequest {
   name?: string;
   scheduledDateTime: string;
   playerIds?: number[];
+  game_type?: 'cash' | 'tournament';
 }
 
 export interface UpdatePlayerStatusRequest {
@@ -106,6 +109,7 @@ export interface SessionWithPlayers {
   scheduledDateTime: string | null;
   createdBy: number;
   createdAt: string;
+  game_type?: 'cash' | 'tournament';
   players: SessionPlayer[]; // Always populated player data with status
 }
 

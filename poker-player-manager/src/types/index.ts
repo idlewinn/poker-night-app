@@ -4,6 +4,7 @@ export interface Player {
   name: string;
   email?: string;
   created_at: string;
+  default_invite?: boolean;
 }
 
 // Authentication Types
@@ -41,6 +42,7 @@ export interface Session {
   scheduledDateTime: string | null;
   createdBy: number;
   createdAt: string;
+  game_type?: 'cash' | 'tournament';
   players: SessionPlayer[]; // Always populated player data with status
 }
 
@@ -157,12 +159,14 @@ export interface CreateSessionRequest {
   name?: string;
   scheduledDateTime: string;
   playerIds?: number[];
+  game_type?: 'cash' | 'tournament';
 }
 
 export interface UpdateSessionRequest {
   name?: string;
   scheduledDateTime: string;
   playerIds?: number[];
+  game_type?: 'cash' | 'tournament';
 }
 
 export interface UpdatePlayerStatusRequest {
