@@ -159,10 +159,22 @@ class EmailService {
       const emailHtml = this.generateSessionReminderHtml(data);
       const emailText = this.generateSessionReminderText(data);
 
+      // Format date for email subject
+      const formatDateForSubject = (dateString: string): string => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      };
+
+      const dateText = data.session.scheduled_datetime ? ` - ${formatDateForSubject(data.session.scheduled_datetime)}` : '';
+
       const mailOptions = {
         from: `"Poker Night" <${process.env.EMAIL_USER}>`,
         to: data.player.email,
-        subject: `🔔 Reminder: Please respond to ${data.session.name || 'Poker Night'}`,
+        subject: `🔔 Reminder: Please respond to ${data.session.name || 'Poker Night'}${dateText}`,
         text: emailText,
         html: emailHtml,
       };
@@ -245,8 +257,8 @@ class EmailService {
           .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
           .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
           .session-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
-          .cta-button { display: inline-block; background: #1f2937; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; border: 2px solid #1f2937; }
-          .cta-button:hover { background: #374151; border-color: #374151; color: #ffffff; }
+          .cta-button { display: inline-block; background: #3b82f6; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; border: 2px solid #3b82f6; }
+          .cta-button:hover { background: #2563eb; border-color: #2563eb; color: #ffffff; }
           .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
           .emoji { font-size: 1.2em; }
         </style>
@@ -364,8 +376,8 @@ If you have any questions, please contact the host directly.
           .header { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
           .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
           .session-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b; }
-          .cta-button { display: inline-block; background: #1f2937; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; border: 2px solid #1f2937; }
-          .cta-button:hover { background: #374151; border-color: #374151; color: #ffffff; }
+          .cta-button { display: inline-block; background: #3b82f6; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; border: 2px solid #3b82f6; }
+          .cta-button:hover { background: #2563eb; border-color: #2563eb; color: #ffffff; }
           .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
           .emoji { font-size: 1.2em; }
           .reminder-notice { background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; margin: 20px 0; }
