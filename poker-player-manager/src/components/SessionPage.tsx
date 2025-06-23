@@ -572,11 +572,11 @@ function SessionPage(): React.JSX.Element {
 
       {/* Dashboard View */}
       {isDashboardView ? (
-        <div className="fixed inset-0 bg-gray-900 z-40 overflow-auto">
-          <div className="min-h-screen p-8">
+        <div className="fixed inset-0 bg-gray-900 z-50 overflow-hidden">
+          <div className="h-screen flex flex-col p-6">
             {/* Dashboard Header */}
-            <div className="flex items-center justify-between mb-8">
-              <h1 className="text-4xl font-bold text-white">
+            <div className="flex items-center justify-between mb-6 flex-shrink-0">
+              <h1 className="text-3xl font-bold text-white">
                 {session.name || 'Poker Night'} - Dashboard
               </h1>
               <Button
@@ -589,31 +589,63 @@ function SessionPage(): React.JSX.Element {
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Total Buy-ins */}
-              <Card className="lg:col-span-1">
-                <CardContent className="p-8 text-center">
-                  <TrendingUp className="h-16 w-16 text-green-600 mx-auto mb-4" />
-                  <div className="text-6xl font-bold text-green-600 mb-2">
-                    {formatCurrency(getTotalBuyIns())}
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
+              {/* Player Buy-ins - Full Height */}
+              <Card className="lg:col-span-1 flex flex-col">
+                <div className="p-4 bg-green-600 text-white flex-shrink-0">
+                  <div className="text-center">
+                    <TrendingUp className="h-12 w-12 mx-auto mb-2" />
+                    <div className="text-4xl font-bold mb-1">
+                      {formatCurrency(getTotalBuyIns())}
+                    </div>
+                    <div className="text-lg">
+                      Total Buy-ins ({sessionPlayers.length} players)
+                    </div>
                   </div>
-                  <div className="text-xl text-gray-600">
-                    Total Buy-ins
-                  </div>
-                  <div className="text-lg text-gray-500 mt-2">
-                    {sessionPlayers.length} players
+                </div>
+                <CardContent className="flex-1 p-0 overflow-hidden">
+                  <div className="h-full overflow-y-auto">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-white">
+                        <TableRow>
+                          <TableHead className="py-3 text-base font-semibold">Player</TableHead>
+                          <TableHead className="py-3 text-base font-semibold text-right">Buy-In</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {sessionPlayers
+                          .sort((a, b) => b.buy_in - a.buy_in) // Sort by highest buy-in first
+                          .map((sessionPlayer) => {
+                            const player = sessionPlayer.player;
+                            return (
+                              <TableRow key={sessionPlayer.player_id}>
+                                <TableCell className="py-3">
+                                  <div className="text-base font-medium text-gray-900">
+                                    {player?.name || 'Unknown Player'}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="py-3 text-right">
+                                  <div className={`text-base font-medium ${getBuyInColorClass(sessionPlayer.buy_in)}`}>
+                                    {formatCurrency(sessionPlayer.buy_in)}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                      </TableBody>
+                    </Table>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Bomb Pot Timer */}
-              <Card className="lg:col-span-1">
-                <CardContent className="p-8 text-center">
+              <Card className="lg:col-span-1 flex flex-col">
+                <CardContent className="flex-1 flex flex-col justify-center p-8 text-center">
                   <Timer className="h-16 w-16 text-orange-600 mx-auto mb-4" />
                   <div className="text-6xl font-bold text-orange-600 mb-2">
                     {formatTime(bombPotTimeLeft)}
                   </div>
-                  <div className="text-xl text-gray-600 mb-4">
+                  <div className="text-xl text-gray-600 mb-6">
                     {bombPotRunning ? 'Next Bomb Pot' : 'Timer Paused'}
                   </div>
                   <div className="flex justify-center gap-2">
@@ -638,27 +670,51 @@ function SessionPage(): React.JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Current Seating Chart */}
-              <Card className="lg:col-span-1">
-                <CardContent className="p-8">
-                  <div className="text-center mb-6">
-                    <Users className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-                    <div className="text-2xl font-bold text-gray-900 mb-2">
-                      Current Seating
-                    </div>
-                  </div>
-                  {getCurrentSeatingChart() ? (
-                    <div className="space-y-2">
-                      {getCurrentSeatingChart()!.assignments?.map((assignment, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <span className="font-medium text-gray-700">Table {assignment.table_number} - Seat {assignment.seat_position}</span>
-                          <span className="text-gray-900">{assignment.player?.name || 'Unknown Player'}</span>
+              {/* Current Seating Chart - Poker Table View */}
+              <Card className="lg:col-span-1 flex flex-col">
+                <div className="p-4 bg-blue-600 text-white text-center flex-shrink-0">
+                  <Users className="h-12 w-12 mx-auto mb-2" />
+                  <div className="text-xl font-bold">Current Seating</div>
+                </div>
+                <CardContent className="flex-1 flex items-center justify-center p-6">
+                  {getCurrentSeatingChart() && getCurrentSeatingChart()!.assignments ? (
+                    <div className="relative">
+                      {/* Poker Table Visualization */}
+                      <div className="w-80 h-48 bg-green-700 rounded-full border-8 border-green-800 relative">
+                        {/* Table center */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-white font-bold text-lg">POKER</div>
                         </div>
-                      )) || (
-                        <div className="text-center text-gray-500">
-                          No seating assignments available
-                        </div>
-                      )}
+
+                        {/* Player positions around the table */}
+                        {getCurrentSeatingChart()!.assignments!.map((assignment, index) => {
+                          const totalSeats = getCurrentSeatingChart()!.assignments!.length;
+                          const angle = (index * 360) / totalSeats;
+                          const radius = 120;
+                          const x = Math.cos((angle - 90) * Math.PI / 180) * radius;
+                          const y = Math.sin((angle - 90) * Math.PI / 180) * radius;
+
+                          return (
+                            <div
+                              key={assignment.id}
+                              className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                              style={{
+                                left: `calc(50% + ${x}px)`,
+                                top: `calc(50% + ${y}px)`
+                              }}
+                            >
+                              <div className="bg-white rounded-lg p-2 shadow-lg text-center min-w-20">
+                                <div className="text-xs font-bold text-gray-800">
+                                  {assignment.seat_position}
+                                </div>
+                                <div className="text-xs text-gray-600 truncate max-w-16">
+                                  {assignment.player?.name || 'Unknown'}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center text-gray-500">
@@ -673,65 +729,6 @@ function SessionPage(): React.JSX.Element {
                 </CardContent>
               </Card>
             </div>
-
-            {/* Player Details Table */}
-            <Card className="mt-8">
-              <div className="p-6 bg-gray-800 text-white">
-                <h3 className="text-2xl font-bold">Player Details</h3>
-              </div>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="py-4 text-lg font-semibold">Player</TableHead>
-                        <TableHead className="py-4 text-lg font-semibold text-right">Buy-In</TableHead>
-                        <TableHead className="py-4 text-lg font-semibold text-right">Cash-Out</TableHead>
-                        <TableHead className="py-4 text-lg font-semibold text-right">Net</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sessionPlayers.map((sessionPlayer) => {
-                        const player = sessionPlayer.player;
-                        const netResult = sessionPlayer.cash_out - sessionPlayer.buy_in;
-
-                        return (
-                          <TableRow key={sessionPlayer.player_id} className="hover:bg-gray-50">
-                            <TableCell className="py-4">
-                              <div className="text-lg font-medium text-gray-900">
-                                {player?.name || 'Unknown Player'}
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-4 text-right">
-                              <div className={`text-lg font-medium ${getBuyInColorClass(sessionPlayer.buy_in)}`}>
-                                {formatCurrency(sessionPlayer.buy_in)}
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-4 text-right">
-                              <div className="text-lg font-medium">
-                                {formatCurrency(sessionPlayer.cash_out)}
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-4 text-right">
-                              <Badge
-                                variant={netResult === 0 ? 'outline' : 'default'}
-                                className={`text-sm px-3 py-1 ${
-                                  netResult >= 0
-                                    ? 'bg-green-100 text-green-800 border-green-300'
-                                    : 'bg-red-100 text-red-800 border-red-300'
-                                }`}
-                              >
-                                {netResult >= 0 ? '+' : '-'}{formatCurrency(Math.abs(netResult))}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       ) : (
