@@ -83,18 +83,21 @@ function SessionItem({ session, onRemove, onEdit, onViewDetails, onViewSession, 
       <CardContent className="p-4 flex flex-col h-full">
         <div className="flex flex-col h-full">
           {/* Session Header */}
-          <div className="flex items-center mb-3">
+          <div className="flex items-start mb-3">
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3 flex-shrink-0">
               <Calendar className="h-5 w-5 text-primary-foreground" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3
-                  className="font-semibold text-gray-900 leading-tight truncate"
-                  title={session.name || 'Poker Night'}
-                >
-                  {session.name || 'Poker Night'}
-                </h3>
+              {/* Session Title */}
+              <h3
+                className="font-semibold text-gray-900 leading-tight mb-2"
+                title={session.name || 'Poker Night'}
+              >
+                {session.name || 'Poker Night'}
+              </h3>
+
+              {/* Badges Row */}
+              <div className="flex flex-wrap gap-1.5">
                 {/* Game Type Badge */}
                 <Badge
                   variant="outline"
@@ -106,11 +109,8 @@ function SessionItem({ session, onRemove, onEdit, onViewDetails, onViewSession, 
                 >
                   {session.game_type === 'tournament' ? '🏆 Tournament' : '💵 Cash'}
                 </Badge>
-                {isOwner && (
-                  <Badge variant="secondary" className="text-xs">
-                    Owner
-                  </Badge>
-                )}
+
+                {/* Status Badges */}
                 {isActive && (
                   <Badge className="text-xs bg-green-600 text-white animate-pulse">
                     Active
@@ -121,15 +121,20 @@ function SessionItem({ session, onRemove, onEdit, onViewDetails, onViewSession, 
                     Past
                   </Badge>
                 )}
+                {isOwner && (
+                  <Badge variant="secondary" className="text-xs">
+                    Owner
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
 
           {/* Session Details */}
-          <div className="flex-1 mb-3">
+          <div className="flex-1 mb-4 space-y-2">
             {/* Scheduled Date */}
             {session.scheduledDateTime && (
-              <div className="flex items-center mb-2">
+              <div className="flex items-center">
                 <Clock className={`h-4 w-4 mr-2 ${
                   isActive ? 'text-green-600' :
                   isPast ? 'text-gray-500' : 'text-primary'
@@ -143,14 +148,14 @@ function SessionItem({ session, onRemove, onEdit, onViewDetails, onViewSession, 
               </div>
             )}
 
-            <div className="flex items-center mb-2">
+            <div className="flex items-center">
               <CalendarDays className="h-4 w-4 text-gray-500 mr-2" />
               <span className="text-sm text-gray-600">
                 Created {formatDate(session.createdAt)}
               </span>
             </div>
 
-            <div className="flex items-center mb-3">
+            <div className="flex items-center">
               <Users className="h-4 w-4 text-gray-500 mr-2" />
               <span className="text-sm text-gray-600">
                 {sessionPlayers.length} player{sessionPlayers.length !== 1 ? 's' : ''}
@@ -159,41 +164,41 @@ function SessionItem({ session, onRemove, onEdit, onViewDetails, onViewSession, 
 
             {/* Player chips */}
             {sessionPlayers.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-2">
-                {sessionPlayers.slice(0, 3).map(sessionPlayer => (
-                  <Badge
-                    key={sessionPlayer.player_id}
-                    variant="outline"
-                    className="text-xs"
-                  >
-                    {sessionPlayer.player?.name || 'Unknown Player'}
-                  </Badge>
-                ))}
-                {sessionPlayers.length > 3 && (
-                  <Badge
-                    variant="outline"
-                    className="text-xs text-gray-500"
-                  >
-                    +{sessionPlayers.length - 3} more
-                  </Badge>
-                )}
-              </div>
-            )}
+              <div className="pt-1">
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {sessionPlayers.slice(0, 4).map(sessionPlayer => (
+                    <Badge
+                      key={sessionPlayer.player_id}
+                      variant="outline"
+                      className="text-xs"
+                    >
+                      {sessionPlayer.player?.name || 'Unknown Player'}
+                    </Badge>
+                  ))}
+                  {sessionPlayers.length > 4 && (
+                    <Badge
+                      variant="outline"
+                      className="text-xs text-gray-500"
+                    >
+                      +{sessionPlayers.length - 4} more
+                    </Badge>
+                  )}
+                </div>
 
-            {/* Status summary */}
-            {sessionPlayers.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {Object.entries(statusCounts).map(([status, count]) => {
-                  if (count === 0) return null;
-                  return (
-                    <PlayerStatusBadge
-                      key={status}
-                      status={status as any}
-                      size="small"
-                      variant="outlined"
-                    />
-                  );
-                })}
+                {/* Status summary */}
+                <div className="flex flex-wrap gap-1">
+                  {Object.entries(statusCounts).map(([status, count]) => {
+                    if (count === 0) return null;
+                    return (
+                      <PlayerStatusBadge
+                        key={status}
+                        status={status as any}
+                        size="small"
+                        variant="outlined"
+                      />
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
