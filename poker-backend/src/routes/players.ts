@@ -73,6 +73,8 @@ router.get('/', authenticateToken, async (req: any, res: Response) => {
 
   try {
     const rows = await db.all(sql, [userId, userId, userEmail, userId]);
+    console.log('Raw player rows:', rows.map(r => ({ id: r.id, name: r.name, default_invite: r.default_invite })));
+
     // Transform the results to standard Player format
     const players = rows.map(row => ({
       id: row.id,
@@ -81,6 +83,8 @@ router.get('/', authenticateToken, async (req: any, res: Response) => {
       created_at: row.created_at,
       default_invite: row.default_invite === 1 ? true : row.default_invite === 0 ? false : undefined
     }));
+
+    console.log('Transformed players:', players.map(p => ({ id: p.id, name: p.name, default_invite: p.default_invite })));
     res.json(players);
   } catch (err: any) {
     console.error('Error fetching players:', err.message);
@@ -217,16 +221,21 @@ router.put('/:id/default-invite', authenticateToken, async (req: any, res: Respo
       [userId, id]
     );
 
+    console.log('Default invite update - userPlayer found:', userPlayer);
+
     if (!userPlayer) {
       res.status(403).json({ error: 'You can only modify players you have added' });
       return;
     }
 
     // Update the default_invite setting in user_players table
+    console.log('Updating default_invite to:', default_invite, 'for user:', userId, 'player:', id);
     const result = await db.run(
       'UPDATE user_players SET default_invite = ? WHERE user_id = ? AND player_id = ?',
       [default_invite ? 1 : 0, userId, id]
     );
+
+    console.log('Update result:', result);
 
     if (result.changes === 0) {
       res.status(404).json({ error: 'Player relationship not found' });
