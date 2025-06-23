@@ -15,8 +15,15 @@ import {
   User,
   Clock,
   UserPlus,
-  Edit
+  Edit,
+  AlertCircle
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { EditSessionModalProps } from '../types/index';
 
 // Helper function to get the nearest Saturday 3 weeks from today at 7pm
@@ -210,22 +217,34 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }: 
                   </div>
                 ) : (
                   <div className="p-2">
-                    {availablePlayers.map(player => (
-                      <div key={player.id} className="flex items-center justify-between p-2 hover:bg-gray-100 rounded">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{player.name}</span>
+                    <TooltipProvider>
+                      {availablePlayers.map(player => (
+                        <div key={player.id} className="flex items-center justify-between p-2 hover:bg-gray-100 rounded">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{player.name}</span>
+                            {player.default_invite === false && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <AlertCircle className="h-3 w-3 text-orange-500" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">Excluded from "Invite All" - must be added manually</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleAddPlayer(player.id)}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleAddPlayer(player.id)}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                      ))}
+                    </TooltipProvider>
                   </div>
                 )}
               </div>

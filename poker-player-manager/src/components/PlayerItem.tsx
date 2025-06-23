@@ -171,21 +171,17 @@ function PlayerItem({ player, onRemove, onRename, onViewDetails, onToggleDefault
                 >
                   {player.email || 'Known from shared sessions'}
                 </p>
-                {/* Default Invite Toggle - only show for players you can edit */}
-                {canEdit && onToggleDefaultInvite && (
+                {/* Default Invite Toggle - only show for excluded players */}
+                {canEdit && onToggleDefaultInvite && player.default_invite === false && (
                   <div className="mt-2">
                     <Badge
-                      variant={player.default_invite !== false ? "default" : "outline"}
-                      className={`text-xs cursor-pointer transition-colors ${
-                        player.default_invite !== false
-                          ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                      onClick={() => onToggleDefaultInvite(player.id, player.default_invite === false)}
-                      title={player.default_invite !== false ? 'Included in "Invite All" - click to exclude' : 'Excluded from "Invite All" - click to include'}
+                      variant="outline"
+                      className="text-xs cursor-pointer transition-colors text-orange-600 border-orange-300 hover:bg-orange-50"
+                      onClick={() => onToggleDefaultInvite(player.id, true)}
+                      title="Excluded from 'Invite All' - click to include"
                     >
                       <Mail className="h-3 w-3 mr-1" />
-                      {player.default_invite !== false ? 'Auto-invite' : 'Manual invite'}
+                      Excluded from invite all
                     </Badge>
                   </div>
                 )}
