@@ -146,11 +146,12 @@ function MainApp(): React.JSX.Element {
 
 
 
-  const addSession = async (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): Promise<void> => {
+  const addSession = async (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string, gameType?: 'cash' | 'tournament'): Promise<void> => {
     try {
       const requestData: CreateSessionRequest = {
         scheduledDateTime: scheduledDateTime,
-        playerIds: selectedPlayerIds || []
+        playerIds: selectedPlayerIds || [],
+        game_type: gameType || 'cash'
       };
 
       if (sessionName.trim()) {

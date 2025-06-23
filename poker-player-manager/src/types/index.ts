@@ -118,7 +118,7 @@ export interface SessionListProps {
 export interface CreateSessionModalProps {
   open: boolean;
   onClose: () => void;
-  onCreateSession: (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string) => void;
+  onCreateSession: (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string, gameType?: 'cash' | 'tournament') => void;
   players: Player[];
 }
 

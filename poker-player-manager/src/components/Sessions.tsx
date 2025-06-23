@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Calendar, Clock, History, Play } from 'lucide-react';
+import { Plus, Calendar, Clock, History, Play, ChevronDown, ChevronRight } from 'lucide-react';
 import SessionList from './SessionList';
 import CreateSessionModal from './CreateSessionModal';
 import EditSessionModal from './EditSessionModal';
@@ -23,6 +23,7 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
   const [sessionToView, setSessionToView] = useState<Session | null>(null);
   const [sessionForMetrics, setSessionForMetrics] = useState<Session | null>(null);
   const [notification, setNotification] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
+  const [showPastSessions, setShowPastSessions] = useState<boolean>(false);
 
 
   const handleOpenCreateModal = (): void => {
@@ -224,29 +225,39 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
             </div>
           )}
 
-          {/* Past Sessions */}
+          {/* Past Sessions - Collapsible */}
           {groupedSessions.past.length > 0 && (
             <div>
-              <div className="flex items-center gap-3 mb-4">
+              <div
+                className="flex items-center gap-3 mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                onClick={() => setShowPastSessions(!showPastSessions)}
+              >
                 <History className="h-5 w-5 text-gray-500" />
-                <h3 className="text-lg font-semibold text-gray-600">
+                <h3 className="text-lg font-semibold text-gray-600 flex-1">
                   Past Sessions ({groupedSessions.past.length})
                 </h3>
+                {showPastSessions ? (
+                  <ChevronDown className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <ChevronRight className="h-5 w-5 text-gray-500" />
+                )}
               </div>
-              <div className="opacity-75">
-                <SessionList
-                  sessions={groupedSessions.past}
-                  players={players}
-                  onRemoveSession={onRemoveSession}
-                  onEditSession={handleOpenEditModal}
-                  onViewSessionDetails={handleOpenDetailModal}
-                  onViewSession={handleViewSession}
-                  onViewMetrics={handleOpenMetricsModal}
-                  hideHeader={true}
-                  isSessionOwner={isSessionOwner}
-                  isPastSessions={true}
-                />
-              </div>
+              {showPastSessions && (
+                <div className="opacity-75">
+                  <SessionList
+                    sessions={groupedSessions.past}
+                    players={players}
+                    onRemoveSession={onRemoveSession}
+                    onEditSession={handleOpenEditModal}
+                    onViewSessionDetails={handleOpenDetailModal}
+                    onViewSession={handleViewSession}
+                    onViewMetrics={handleOpenMetricsModal}
+                    hideHeader={true}
+                    isSessionOwner={isSessionOwner}
+                    isPastSessions={true}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>

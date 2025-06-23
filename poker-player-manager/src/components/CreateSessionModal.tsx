@@ -9,13 +9,21 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Plus,
   Minus,
   Calendar,
   Users,
   User,
   Clock,
-  UserPlus
+  UserPlus,
+  Gamepad2
 } from 'lucide-react';
 import { CreateSessionModalProps } from '../types/index';
 
@@ -59,11 +67,13 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
   const [sessionName, setSessionName] = useState<string>('Poker Night');
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<number[]>([]);
   const [scheduledDateTime, setScheduledDateTime] = useState<string>(getDefaultSessionDate());
+  const [gameType, setGameType] = useState<'cash' | 'tournament'>('cash');
 
   const handleClose = (): void => {
     setSessionName('Poker Night');
     setSelectedPlayerIds([]);
     setScheduledDateTime(getDefaultSessionDate());
+    setGameType('cash');
     onClose();
   };
 
@@ -74,7 +84,7 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
       const finalSessionName = sessionName.trim() || 'Poker Night';
       // Convert datetime-local to ISO string
       const isoDateTime = new Date(scheduledDateTime).toISOString();
-      onCreateSession(finalSessionName, selectedPlayerIds, isoDateTime);
+      onCreateSession(finalSessionName, selectedPlayerIds, isoDateTime, gameType);
       handleClose();
     }
   };
@@ -92,7 +102,9 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
   };
 
   const handleInviteAll = (): void => {
-    setSelectedPlayerIds(players.map(player => player.id));
+    // Only invite players with default_invite = true (or undefined for backward compatibility)
+    const playersToInvite = players.filter(player => player.default_invite !== false);
+    setSelectedPlayerIds(playersToInvite.map(player => player.id));
   };
 
   const availablePlayers = players.filter(player => 
@@ -128,6 +140,37 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
               />
               <p className="text-xs text-muted-foreground">
                 Customize the session name or leave as 'Poker Night'
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="game-type" className="text-sm font-medium">
+                Game Type
+              </label>
+              <Select value={gameType} onValueChange={(value: 'cash' | 'tournament') => setGameType(value)}>
+                <SelectTrigger className="w-full">
+                  <div className="flex items-center gap-2">
+                    <Gamepad2 className="h-4 w-4 text-muted-foreground" />
+                    <SelectValue placeholder="Select game type" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">
+                    <div className="flex items-center gap-2">
+                      <span className="text-green-600">💵</span>
+                      <span>Cash Game</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="tournament">
+                    <div className="flex items-center gap-2">
+                      <span className="text-yellow-600">🏆</span>
+                      <span>Tournament</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Choose between cash game or tournament format
               </p>
             </div>
 
