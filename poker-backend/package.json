@@ -14,6 +14,7 @@
     "fix-session-ownership": "ts-node src/scripts/fixSessionOwnership.ts",
     "add-game-type-and-default-invite": "ts-node src/scripts/addGameTypeAndDefaultInvite.ts",
     "migrate-production": "ts-node src/scripts/migrateProduction.ts",
+    "import-historical-data": "ts-node src/scripts/importHistoricalData.ts",
     "clean": "rm -rf dist",
     "postbuild": "cp -r database dist/ || mkdir -p dist/database",
     "type-check": "tsc --noEmit",
