@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import MainApp from './components/MainApp';
+import AnalyticsPage from './components/AnalyticsPage';
 import SessionPage from './components/SessionPage';
 import InvitePage from './components/InvitePage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -28,7 +29,7 @@ function App(): React.JSX.Element {
           } />
           <Route path="/analytics" element={
             <ProtectedRoute>
-              <MainApp />
+              <AnalyticsPage />
             </ProtectedRoute>
           } />
           <Route path="/session/:sessionId" element={

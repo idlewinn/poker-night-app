@@ -3,11 +3,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Calendar, BarChart3, Loader2, AlertCircle, X, Plus } from 'lucide-react';
+import { Users, Calendar, Loader2, AlertCircle, X, Plus } from 'lucide-react';
 import PlayerList from './PlayerList';
 import AddPlayerModal from './AddPlayerModal';
 import Sessions from './Sessions';
-import Analytics from './Analytics';
 import PlayerDetailModal from './PlayerDetailModal';
 import UserMenu from './UserMenu';
 import { useAuth } from '../contexts/AuthContext';
@@ -32,7 +31,6 @@ function MainApp(): React.JSX.Element {
   // Determine active tab based on current URL
   const getTabFromPath = (pathname: string): string => {
     if (pathname === '/sessions') return 'sessions';
-    if (pathname === '/analytics') return 'analytics';
     return 'players'; // Default to players tab for '/' and '/players'
   };
 
@@ -157,8 +155,6 @@ function MainApp(): React.JSX.Element {
       navigate('/players');
     } else if (value === 'sessions') {
       navigate('/sessions');
-    } else if (value === 'analytics') {
-      navigate('/analytics');
     }
   };
 
@@ -242,7 +238,7 @@ function MainApp(): React.JSX.Element {
             </h1>
           </div>
           <div className="flex-shrink-0">
-            <UserMenu />
+            <UserMenu sessions={sessions} />
           </div>
         </div>
 
@@ -271,7 +267,7 @@ function MainApp(): React.JSX.Element {
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <div className="border-b border-gray-200 px-6 pt-6">
-              <TabsList className="grid w-full grid-cols-3 max-w-lg">
+              <TabsList className="grid w-full grid-cols-2 max-w-md">
                 <TabsTrigger value="players" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   Players
@@ -279,10 +275,6 @@ function MainApp(): React.JSX.Element {
                 <TabsTrigger value="sessions" className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   Sessions
-                </TabsTrigger>
-                <TabsTrigger value="analytics" className="flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  Analytics
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -322,12 +314,7 @@ function MainApp(): React.JSX.Element {
                 />
               </TabsContent>
 
-              <TabsContent value="analytics" className="mt-0">
-                <Analytics
-                  sessions={sessions}
-                  players={players}
-                />
-              </TabsContent>
+
             </div>
           </Tabs>
         </Card>

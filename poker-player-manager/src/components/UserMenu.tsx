@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -10,11 +11,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, ChevronDown } from 'lucide-react';
+import { LogOut, ChevronDown, BarChart3 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { Session } from '../types/index';
 
-function UserMenu(): React.JSX.Element {
+interface UserMenuProps {
+  sessions?: Session[];
+}
+
+function UserMenu({ sessions = [] }: UserMenuProps): React.JSX.Element {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   if (!user) {
     return <></>;
@@ -27,6 +34,18 @@ function UserMenu(): React.JSX.Element {
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  // Check if user has hosted at least one past session
+  const hasPastSessions = sessions.some(session => {
+    if (!session.scheduledDateTime) return false;
+    const sessionDate = new Date(session.scheduledDateTime);
+    const now = new Date();
+    return sessionDate < now;
+  });
+
+  const handleAnalyticsClick = (): void => {
+    navigate('/analytics');
   };
 
 
@@ -57,7 +76,17 @@ function UserMenu(): React.JSX.Element {
         </DropdownMenuLabel>
         
         <DropdownMenuSeparator />
-        
+
+        {hasPastSessions && (
+          <>
+            <DropdownMenuItem onClick={handleAnalyticsClick}>
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Analytics
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+
         <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600">
           <LogOut className="h-4 w-4 mr-2" />
           Sign out
