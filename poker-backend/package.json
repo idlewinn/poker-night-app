@@ -13,6 +13,7 @@
     "generate-test-metrics": "ts-node src/scripts/generateTestMetrics.ts",
     "fix-session-ownership": "ts-node src/scripts/fixSessionOwnership.ts",
     "add-game-type-and-default-invite": "ts-node src/scripts/addGameTypeAndDefaultInvite.ts",
+    "migrate-production": "ts-node src/scripts/migrateProduction.ts",
     "clean": "rm -rf dist",
     "postbuild": "cp -r database dist/ || mkdir -p dist/database",
     "type-check": "tsc --noEmit",
