@@ -118,7 +118,9 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }: 
   };
 
   const handleInviteAll = (): void => {
-    setSelectedPlayerIds(players.map(player => player.id));
+    // Only invite players with default_invite = true (or undefined for backward compatibility)
+    const playersToInvite = players.filter(player => player.default_invite !== false);
+    setSelectedPlayerIds(playersToInvite.map(player => player.id));
   };
 
   const availablePlayers = players.filter(player => 
