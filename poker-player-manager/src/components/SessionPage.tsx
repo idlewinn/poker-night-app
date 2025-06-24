@@ -701,14 +701,27 @@ function SessionPage(): React.JSX.Element {
               {/* Player Buy-ins - Full Height */}
               <Card className="md:col-span-2 lg:col-span-1 flex flex-col min-h-0">
                 <div className="p-2 sm:p-3 bg-green-600 text-white flex-shrink-0 rounded-t-lg">
-                  <div className="text-center">
-                    <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-1" />
-                    <div className="text-xl sm:text-2xl font-bold mb-1">
-                      {formatCurrency(getTotalBuyIns())}
+                  <div className="flex items-center justify-between">
+                    <div className="text-center flex-1">
+                      <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-1" />
+                      <div className="text-xl sm:text-2xl font-bold mb-1">
+                        {formatCurrency(getTotalBuyIns())}
+                      </div>
+                      <div className="text-xs sm:text-sm">
+                        Total Buy-ins ({sessionPlayers.length} players)
+                      </div>
                     </div>
-                    <div className="text-xs sm:text-sm">
-                      Total Buy-ins ({sessionPlayers.length} players)
-                    </div>
+                    {isSessionOwner() && (
+                      <Button
+                        onClick={() => setAddPlayerModalOpen(true)}
+                        size="sm"
+                        variant="ghost"
+                        className="text-white hover:bg-green-700 p-2"
+                        title="Add Player"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <CardContent className="flex-1 p-0 overflow-hidden min-h-0">
@@ -725,17 +738,52 @@ function SessionPage(): React.JSX.Element {
                           .sort((a, b) => b.buy_in - a.buy_in) // Sort by highest buy-in first
                           .map((sessionPlayer) => {
                             const player = sessionPlayer.player;
+                            const isEditing = editingFinancials?.playerId === sessionPlayer.player_id;
+
                             return (
-                              <TableRow key={sessionPlayer.player_id}>
+                              <TableRow
+                                key={sessionPlayer.player_id}
+                                className={`${isSessionOwner() ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+                                onClick={() => isSessionOwner() && !isEditing && handleEditFinancials(sessionPlayer)}
+                              >
                                 <TableCell className="py-2">
                                   <div className="text-sm font-medium text-gray-900">
                                     {player?.name || 'Unknown Player'}
                                   </div>
                                 </TableCell>
                                 <TableCell className="py-2 text-right">
-                                  <div className={`text-sm font-medium ${getBuyInColorClass(sessionPlayer.buy_in)}`}>
-                                    {formatCurrency(sessionPlayer.buy_in)}
-                                  </div>
+                                  {isEditing ? (
+                                    <Select
+                                      value={editingFinancials.buy_in}
+                                      onValueChange={(value) => {
+                                        setEditingFinancials({
+                                          ...editingFinancials,
+                                          buy_in: value
+                                        });
+                                      }}
+                                      onOpenChange={(open) => {
+                                        if (!open) {
+                                          // Auto-save when dropdown closes
+                                          handleFinancialInputBlur();
+                                        }
+                                      }}
+                                    >
+                                      <SelectTrigger className="w-20 h-8 text-sm">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {getBuyInOptions().map((amount) => (
+                                          <SelectItem key={amount} value={amount.toString()}>
+                                            {formatCurrency(amount)}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  ) : (
+                                    <div className={`text-sm font-medium ${getBuyInColorClass(sessionPlayer.buy_in)}`}>
+                                      {formatCurrency(sessionPlayer.buy_in)}
+                                    </div>
+                                  )}
                                 </TableCell>
                               </TableRow>
                             );
