@@ -90,8 +90,13 @@ function SessionPage(): React.JSX.Element {
   const [bombPotRunning, setBombPotRunning] = useState<boolean>(false);
   const [bombPotAlert, setBombPotAlert] = useState<boolean>(false);
 
-  // Dashboard View State
-  const [isDashboardView, setIsDashboardView] = useState<boolean>(false);
+  // Dashboard View State - persist across page refreshes
+  const [isDashboardView, setIsDashboardView] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('poker-dashboard-view') === 'true';
+    }
+    return false;
+  });
   const [bombPotTimerModalOpen, setBombPotTimerModalOpen] = useState<boolean>(false);
   const [currentTableIndex, setCurrentTableIndex] = useState<number>(0);
 
@@ -312,7 +317,10 @@ function SessionPage(): React.JSX.Element {
 
   // Dashboard View Functions
   const toggleDashboardView = (): void => {
-    setIsDashboardView(!isDashboardView);
+    const newDashboardState = !isDashboardView;
+    setIsDashboardView(newDashboardState);
+    // Save dashboard state to localStorage
+    localStorage.setItem('poker-dashboard-view', newDashboardState.toString());
     // Reset table index when toggling dashboard view
     setCurrentTableIndex(0);
   };

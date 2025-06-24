@@ -15,18 +15,22 @@ function PokerTable({ table, variant = 'default' }: PokerTableProps): React.JSX.
   // Calculate positions around the oval table
   const getPlayerPosition = (seatIndex: number, totalSeats: number) => {
     // Distribute players around an oval/ellipse
-    // Top positions (seats 1-3): top of table
-    // Right positions (seats 4-5): right side
-    // Bottom positions (seats 6-8): bottom of table  
-    // Left positions (seats 9-10): left side
-    
+    // Adjust radius based on number of players to prevent overlap
     const angle = (seatIndex / totalSeats) * 2 * Math.PI - Math.PI / 2; // Start from top
-    const radiusX = 45; // Horizontal radius percentage
-    const radiusY = 35; // Vertical radius percentage
-    
+
+    // Increase radius for crowded tables to prevent overlap
+    let radiusX = 45; // Horizontal radius percentage
+    let radiusY = 35; // Vertical radius percentage
+
+    if (totalSeats > 8) {
+      // Expand the ellipse for more players
+      radiusX = Math.min(48, 45 + (totalSeats - 8) * 1); // Gradually increase
+      radiusY = Math.min(40, 35 + (totalSeats - 8) * 1.5); // Increase more vertically
+    }
+
     const x = 50 + radiusX * Math.cos(angle); // Center at 50%
     const y = 50 + radiusY * Math.sin(angle); // Center at 50%
-    
+
     return { x, y, angle };
   };
 
@@ -56,6 +60,18 @@ function PokerTable({ table, variant = 'default' }: PokerTableProps): React.JSX.
           const isRightSide = position.x > 50;
           const badgePosition = isRightSide ? "-top-1 -left-1" : "-top-1 -right-1";
 
+          // Scale down player cards for crowded tables
+          const isCrowded = players.length > 8;
+          const cardSizeClasses = isCrowded
+            ? "bg-white/95 backdrop-blur-sm border-2 border-gray-300 shadow-lg min-w-[60px] md:min-w-[70px] lg:min-w-[80px] max-w-[80px] md:max-w-[90px] lg:max-w-[100px]"
+            : "bg-white/95 backdrop-blur-sm border-2 border-gray-300 shadow-lg min-w-[80px] md:min-w-[100px] lg:min-w-[120px] xl:min-w-[140px] max-w-[140px] md:max-w-[160px] lg:max-w-[180px]";
+
+          const textSizeClasses = isCrowded
+            ? "text-xs md:text-sm font-semibold text-gray-900 truncate"
+            : "text-sm md:text-base lg:text-lg font-semibold text-gray-900 truncate";
+
+          const paddingClasses = isCrowded ? "p-1 md:p-2" : "p-2 md:p-3";
+
           return (
             <div
               key={assignment.id}
@@ -70,15 +86,15 @@ function PokerTable({ table, variant = 'default' }: PokerTableProps): React.JSX.
                 {/* Seat Position Badge */}
                 <Badge
                   variant="secondary"
-                  className={`absolute ${badgePosition} z-10 bg-amber-500 text-amber-900 text-xs md:text-sm font-bold min-w-[20px] md:min-w-[24px] h-4 md:h-5 flex items-center justify-center`}
+                  className={`absolute ${badgePosition} z-10 bg-amber-500 text-amber-900 text-xs font-bold min-w-[18px] md:min-w-[20px] h-4 md:h-5 flex items-center justify-center`}
                 >
                   {assignment.seat_position}
                 </Badge>
 
                 {/* Player Info Card */}
-                <Card className="bg-white/95 backdrop-blur-sm border-2 border-gray-300 shadow-lg min-w-[80px] md:min-w-[100px] lg:min-w-[120px] xl:min-w-[140px] max-w-[140px] md:max-w-[160px] lg:max-w-[180px]">
-                  <div className="p-2 md:p-3 text-center">
-                    <div className="text-sm md:text-base lg:text-lg font-semibold text-gray-900 truncate">
+                <Card className={cardSizeClasses}>
+                  <div className={`${paddingClasses} text-center`}>
+                    <div className={textSizeClasses}>
                       {assignment.player?.name || 'Unknown'}
                     </div>
                   </div>
