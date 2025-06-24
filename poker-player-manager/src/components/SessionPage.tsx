@@ -628,7 +628,7 @@ function SessionPage(): React.JSX.Element {
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 min-h-0 overflow-hidden">
               {/* Player Buy-ins - Full Height */}
               <Card className="md:col-span-2 lg:col-span-1 flex flex-col min-h-0">
-                <div className="p-2 sm:p-3 bg-green-600 text-white flex-shrink-0">
+                <div className="p-2 sm:p-3 bg-green-600 text-white flex-shrink-0 rounded-t-lg">
                   <div className="text-center">
                     <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-1" />
                     <div className="text-xl sm:text-2xl font-bold mb-1">
@@ -712,7 +712,7 @@ function SessionPage(): React.JSX.Element {
 
               {/* Current Seating Chart - Single Table View with Navigation */}
               <Card className="flex flex-col min-h-0">
-                <div className="p-2 sm:p-3 bg-blue-600 text-white flex-shrink-0">
+                <div className="p-2 sm:p-3 bg-blue-600 text-white flex-shrink-0 rounded-t-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Users className="h-6 w-6 sm:h-8 sm:w-8" />
