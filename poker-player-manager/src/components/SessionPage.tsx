@@ -1145,57 +1145,7 @@ function SessionPage(): React.JSX.Element {
         )}
       </Card>
 
-      {/* Add Player Modal */}
-      <Dialog open={addPlayerModalOpen} onOpenChange={setAddPlayerModalOpen}>
-        <DialogContent className="max-w-md w-[95vw] sm:w-full max-h-[85vh] overflow-hidden flex flex-col p-4 sm:p-6">
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle className="text-base sm:text-lg">Add Player to Session</DialogTitle>
-          </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 min-h-0">
-            <p className="text-xs sm:text-sm text-gray-600">
-              Select a player to add or change their status to "In".
-            </p>
-
-            <div className="space-y-2 pr-1"> {/* Small right padding for scrollbar */}
-              {getAvailablePlayersToAdd().map((player) => (
-                <div key={player.id} className="flex items-center justify-between p-2 sm:p-3 border border-gray-200 rounded-lg">
-                  <div className="flex items-center flex-1 min-w-0 mr-2">
-                    <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 mr-1 sm:mr-2 flex-shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium text-gray-900 text-sm sm:text-base truncate">{player.name}</div>
-                    </div>
-                  </div>
-                  <Button
-                    onClick={() => handleAddPlayer(player.id)}
-                    disabled={updating}
-                    size="sm"
-                    className="flex-shrink-0"
-                  >
-                    {updating ? (
-                      <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
-                    ) : (
-                      'Add'
-                    )}
-                  </Button>
-                </div>
-              ))}
-            </div>
-
-            {getAvailablePlayersToAdd().length === 0 && (
-              <p className="text-xs sm:text-sm text-gray-600 text-center py-4">
-                All players are already marked as "In" for this session.
-              </p>
-            )}
-          </div>
-
-          <div className="flex justify-end pt-3 sm:pt-4 flex-shrink-0 border-t border-gray-100 mt-3 sm:mt-4">
-            <Button variant="outline" onClick={() => setAddPlayerModalOpen(false)} size="sm">
-              Close
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
         </TabsContent>
 
         <TabsContent value="seating" className="mt-0">
@@ -1312,6 +1262,60 @@ function SessionPage(): React.JSX.Element {
       )}
 
       {/* Modals - Always available regardless of dashboard mode */}
+      {/* Add Player Modal - Only for session owners */}
+      {isSessionOwner() && (
+        <Dialog open={addPlayerModalOpen} onOpenChange={setAddPlayerModalOpen}>
+          <DialogContent className="max-w-md w-[95vw] sm:w-full max-h-[85vh] overflow-hidden flex flex-col p-4 sm:p-6">
+            <DialogHeader className="flex-shrink-0">
+              <DialogTitle className="text-base sm:text-lg">Add Player to Session</DialogTitle>
+            </DialogHeader>
+
+            <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 min-h-0">
+              <p className="text-xs sm:text-sm text-gray-600">
+                Select a player to add or change their status to "In".
+              </p>
+
+              <div className="space-y-2 pr-1"> {/* Small right padding for scrollbar */}
+                {getAvailablePlayersToAdd().map((player) => (
+                  <div key={player.id} className="flex items-center justify-between p-2 sm:p-3 border border-gray-200 rounded-lg">
+                    <div className="flex items-center flex-1 min-w-0 mr-2">
+                      <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 mr-1 sm:mr-2 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-gray-900 text-sm sm:text-base truncate">{player.name}</div>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => handleAddPlayer(player.id)}
+                      disabled={updating}
+                      size="sm"
+                      className="flex-shrink-0"
+                    >
+                      {updating ? (
+                        <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                      ) : (
+                        'Add'
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              {getAvailablePlayersToAdd().length === 0 && (
+                <p className="text-xs sm:text-sm text-gray-600 text-center py-4">
+                  All players are already marked as "In" for this session.
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-3 sm:pt-4 flex-shrink-0 border-t border-gray-100 mt-3 sm:mt-4">
+              <Button variant="outline" onClick={() => setAddPlayerModalOpen(false)} size="sm">
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
       {/* Seating Chart Modal - Only for session owners */}
       {isSessionOwner() && (
         <SeatingChartModal
