@@ -754,32 +754,34 @@ function SessionPage(): React.JSX.Element {
                                 </TableCell>
                                 <TableCell className="py-2 text-right">
                                   {isEditing ? (
-                                    <Select
-                                      value={editingFinancials.buy_in}
-                                      onValueChange={(value) => {
-                                        setEditingFinancials({
-                                          ...editingFinancials,
-                                          buy_in: value
-                                        });
-                                      }}
-                                      onOpenChange={(open) => {
-                                        if (!open) {
-                                          // Auto-save when dropdown closes
-                                          handleFinancialInputBlur();
-                                        }
-                                      }}
-                                    >
-                                      <SelectTrigger className="w-20 h-8 text-sm">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {getBuyInOptions().map((amount) => (
-                                          <SelectItem key={amount} value={amount.toString()}>
-                                            {formatCurrency(amount)}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
+                                    <div className="flex justify-end">
+                                      <Select
+                                        value={editingFinancials.buy_in}
+                                        onValueChange={(value) => {
+                                          setEditingFinancials({
+                                            ...editingFinancials,
+                                            buy_in: value
+                                          });
+                                        }}
+                                        onOpenChange={(open) => {
+                                          if (!open) {
+                                            // Auto-save when dropdown closes
+                                            handleFinancialInputBlur();
+                                          }
+                                        }}
+                                      >
+                                        <SelectTrigger className="w-24 h-8 text-sm text-right">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent align="end">
+                                          {getBuyInOptions().map((amount) => (
+                                            <SelectItem key={amount} value={amount.toString()}>
+                                              {formatCurrency(amount)}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
                                   ) : (
                                     <div className={`text-sm font-medium ${getBuyInColorClass(sessionPlayer.buy_in)}`}>
                                       {formatCurrency(sessionPlayer.buy_in)}
