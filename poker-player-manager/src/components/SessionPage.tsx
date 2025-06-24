@@ -141,6 +141,7 @@ function SessionPage(): React.JSX.Element {
 
   const [bombPotTimerModalOpen, setBombPotTimerModalOpen] = useState<boolean>(false);
   const [currentTableIndex, setCurrentTableIndex] = useState<number>(0);
+  const [dashboardUpdateFlash, setDashboardUpdateFlash] = useState<boolean>(false);
 
   // Get active tab from URL, default to 'winnings'
   const activeTab = tab || 'winnings';
@@ -269,6 +270,17 @@ function SessionPage(): React.JSX.Element {
 
           if (response.ok) {
             const updatedSession = await response.json();
+
+            // Check if data actually changed to trigger animation
+            const currentPlayerData = JSON.stringify(session?.players?.map((p: any) => ({ id: p.player_id, buy_in: p.buy_in })).sort((a: any, b: any) => b.buy_in - a.buy_in));
+            const newPlayerData = JSON.stringify(updatedSession?.players?.map((p: any) => ({ id: p.player_id, buy_in: p.buy_in })).sort((a: any, b: any) => b.buy_in - a.buy_in));
+
+            if (currentPlayerData !== newPlayerData) {
+              // Trigger flash animation for visual feedback
+              setDashboardUpdateFlash(true);
+              setTimeout(() => setDashboardUpdateFlash(false), 1000);
+            }
+
             setSession(updatedSession);
           }
         } catch (error) {
@@ -781,11 +793,11 @@ function SessionPage(): React.JSX.Element {
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 min-h-0 overflow-hidden">
               {/* Player Buy-ins - Full Height */}
               <Card className="md:col-span-2 lg:col-span-1 flex flex-col min-h-0">
-                <div className="p-2 sm:p-3 bg-green-600 text-white flex-shrink-0 rounded-t-lg">
+                <div className={`p-2 sm:p-3 bg-green-600 text-white flex-shrink-0 rounded-t-lg transition-all duration-300 ${dashboardUpdateFlash ? 'bg-green-400 shadow-lg' : ''}`}>
                   <div className="flex items-center justify-between">
                     <div className="text-center flex-1">
-                      <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-1" />
-                      <div className="text-xl sm:text-2xl font-bold mb-1">
+                      <TrendingUp className={`h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-1 transition-transform duration-300 ${dashboardUpdateFlash ? 'scale-110' : ''}`} />
+                      <div className={`text-xl sm:text-2xl font-bold mb-1 transition-all duration-300 ${dashboardUpdateFlash ? 'scale-105 text-green-100' : ''}`}>
                         {formatCurrency(getTotalBuyIns())}
                       </div>
                       <div className="text-xs sm:text-sm">
@@ -817,16 +829,21 @@ function SessionPage(): React.JSX.Element {
                       <TableBody>
                         {sessionPlayers
                           .sort((a, b) => b.buy_in - a.buy_in) // Sort by highest buy-in first
-                          .map((sessionPlayer) => {
+                          .map((sessionPlayer, index) => {
                             const player = sessionPlayer.player;
                             const isEditing = editingFinancials?.playerId === sessionPlayer.player_id;
 
                             return (
                               <TableRow
                                 key={sessionPlayer.player_id}
-                                className={`${isSessionOwner() ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+                                className={`${isSessionOwner() ? 'cursor-pointer hover:bg-gray-50' : ''} transition-all duration-700 ease-in-out ${dashboardUpdateFlash ? 'bg-green-50 border-l-4 border-green-400' : ''}`}
                                 onClick={() => isSessionOwner() && !isEditing && handleEditFinancials(sessionPlayer)}
                                 data-editing-row={isEditing ? 'true' : undefined}
+                                style={{
+                                  transform: `translateY(0)`,
+                                  opacity: 1,
+                                  transitionDelay: `${index * 100}ms`
+                                }}
                               >
                                 <TableCell className="py-2">
                                   <div className="text-sm font-medium text-gray-900">
