@@ -84,12 +84,58 @@ function SessionPage(): React.JSX.Element {
   const [generatingChart, setGeneratingChart] = useState<boolean>(false);
   const [deletingChart, setDeletingChart] = useState<boolean>(false);
 
-  // Bomb Pot Timer State
-  const [bombPotInterval, setBombPotInterval] = useState<number>(45); // minutes
-  const [bombPotTimeLeft, setBombPotTimeLeft] = useState<number>(45 * 60); // seconds
-  const [bombPotRunning, setBombPotRunning] = useState<boolean>(false);
+  // Bomb Pot Timer State with localStorage persistence
+  const [bombPotInterval, setBombPotInterval] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('poker-bomb-pot-interval');
+      return saved ? parseInt(saved) : 45;
+    }
+    return 45;
+  });
+
+  const [bombPotTimeLeft, setBombPotTimeLeft] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('poker-bomb-pot-time-left');
+      const savedTimestamp = localStorage.getItem('poker-bomb-pot-timestamp');
+      const savedRunning = localStorage.getItem('poker-bomb-pot-running') === 'true';
+      const savedInterval = localStorage.getItem('poker-bomb-pot-interval');
+
+      if (saved && savedTimestamp && savedRunning) {
+        const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
+        const remaining = Math.max(0, parseInt(saved) - elapsed);
+        return remaining;
+      } else if (saved) {
+        return parseInt(saved);
+      } else if (savedInterval) {
+        return parseInt(savedInterval) * 60;
+      }
+    }
+    return 45 * 60;
+  });
+
+  const [bombPotRunning, setBombPotRunning] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('poker-bomb-pot-running');
+      const savedTimeLeft = localStorage.getItem('poker-bomb-pot-time-left');
+      const savedTimestamp = localStorage.getItem('poker-bomb-pot-timestamp');
+
+      if (saved === 'true' && savedTimeLeft && savedTimestamp) {
+        const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
+        const remaining = Math.max(0, parseInt(savedTimeLeft) - elapsed);
+        return remaining > 0;
+      }
+    }
+    return false;
+  });
+
   const [bombPotAlert, setBombPotAlert] = useState<boolean>(false);
-  const [bombPotEverStarted, setBombPotEverStarted] = useState<boolean>(false); // Track if timer was ever started
+
+  const [bombPotEverStarted, setBombPotEverStarted] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('poker-bomb-pot-ever-started') === 'true';
+    }
+    return false;
+  });
 
   // Dashboard View State - persist across page refreshes
   const [isDashboardView, setIsDashboardView] = useState<boolean>(() => {
@@ -184,6 +230,25 @@ function SessionPage(): React.JSX.Element {
       if (interval) clearInterval(interval);
     };
   }, [bombPotRunning, bombPotTimeLeft]);
+
+  // Save timer state to localStorage
+  useEffect(() => {
+    localStorage.setItem('poker-bomb-pot-interval', bombPotInterval.toString());
+  }, [bombPotInterval]);
+
+  useEffect(() => {
+    localStorage.setItem('poker-bomb-pot-time-left', bombPotTimeLeft.toString());
+    localStorage.setItem('poker-bomb-pot-timestamp', Date.now().toString());
+  }, [bombPotTimeLeft]);
+
+  useEffect(() => {
+    localStorage.setItem('poker-bomb-pot-running', bombPotRunning.toString());
+    localStorage.setItem('poker-bomb-pot-timestamp', Date.now().toString());
+  }, [bombPotRunning]);
+
+  useEffect(() => {
+    localStorage.setItem('poker-bomb-pot-ever-started', bombPotEverStarted.toString());
+  }, [bombPotEverStarted]);
 
   const handleEditFinancials = (sessionPlayer: SessionPlayer) => {
     // If we're already editing a different player, don't switch
@@ -303,6 +368,13 @@ function SessionPage(): React.JSX.Element {
     setBombPotRunning(false);
     setBombPotTimeLeft(bombPotInterval * 60);
     setBombPotAlert(false);
+    setBombPotEverStarted(false); // Reset to "Timer Ready" state
+
+    // Clear timer state from localStorage
+    localStorage.removeItem('poker-bomb-pot-running');
+    localStorage.removeItem('poker-bomb-pot-time-left');
+    localStorage.removeItem('poker-bomb-pot-timestamp');
+    localStorage.removeItem('poker-bomb-pot-ever-started');
   };
 
   const updateBombPotInterval = (minutes: number): void => {
