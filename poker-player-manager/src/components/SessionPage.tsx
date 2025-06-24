@@ -275,7 +275,12 @@ function SessionPage(): React.JSX.Element {
             const currentPlayerData = JSON.stringify(session?.players?.map((p: any) => ({ id: p.player_id, buy_in: p.buy_in })).sort((a: any, b: any) => b.buy_in - a.buy_in));
             const newPlayerData = JSON.stringify(updatedSession?.players?.map((p: any) => ({ id: p.player_id, buy_in: p.buy_in })).sort((a: any, b: any) => b.buy_in - a.buy_in));
 
+            console.log('Dashboard refresh - Current data:', currentPlayerData);
+            console.log('Dashboard refresh - New data:', newPlayerData);
+            console.log('Data changed:', currentPlayerData !== newPlayerData);
+
             if (currentPlayerData !== newPlayerData) {
+              console.log('Triggering dashboard flash animation');
               // Trigger flash animation for visual feedback
               setDashboardUpdateFlash(true);
               setTimeout(() => setDashboardUpdateFlash(false), 1000);
@@ -779,25 +784,40 @@ function SessionPage(): React.JSX.Element {
               <h1 className="text-xl sm:text-2xl font-bold text-white truncate mr-4">
                 {session.name || 'Poker Night'} - Dashboard
               </h1>
-              <Button
-                onClick={toggleDashboardView}
-                variant="outline"
-                className="bg-white text-gray-900 hover:bg-gray-100 flex-shrink-0"
-                size="sm"
-              >
-                <Minimize2 className="h-4 w-4 mr-2" />
-                Exit Dashboard
-              </Button>
+              <div className="flex gap-2">
+                {/* Test Animation Button - Remove this after testing */}
+                <Button
+                  onClick={() => {
+                    console.log('Manual animation trigger');
+                    setDashboardUpdateFlash(true);
+                    setTimeout(() => setDashboardUpdateFlash(false), 1000);
+                  }}
+                  variant="outline"
+                  className="bg-yellow-500 text-yellow-900 hover:bg-yellow-400 flex-shrink-0"
+                  size="sm"
+                >
+                  Test Animation
+                </Button>
+                <Button
+                  onClick={toggleDashboardView}
+                  variant="outline"
+                  className="bg-white text-gray-900 hover:bg-gray-100 flex-shrink-0"
+                  size="sm"
+                >
+                  <Minimize2 className="h-4 w-4 mr-2" />
+                  Exit Dashboard
+                </Button>
+              </div>
             </div>
 
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 min-h-0 overflow-hidden">
               {/* Player Buy-ins - Full Height */}
               <Card className="md:col-span-2 lg:col-span-1 flex flex-col min-h-0">
-                <div className={`p-2 sm:p-3 bg-green-600 text-white flex-shrink-0 rounded-t-lg transition-all duration-300 ${dashboardUpdateFlash ? 'bg-green-400 shadow-lg' : ''}`}>
+                <div className={`p-2 sm:p-3 bg-green-600 text-white flex-shrink-0 rounded-t-lg transition-all duration-500 ${dashboardUpdateFlash ? 'bg-yellow-400 shadow-2xl scale-105 text-yellow-900' : ''}`}>
                   <div className="flex items-center justify-between">
                     <div className="text-center flex-1">
-                      <TrendingUp className={`h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-1 transition-transform duration-300 ${dashboardUpdateFlash ? 'scale-110' : ''}`} />
-                      <div className={`text-xl sm:text-2xl font-bold mb-1 transition-all duration-300 ${dashboardUpdateFlash ? 'scale-105 text-green-100' : ''}`}>
+                      <TrendingUp className={`h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-1 transition-transform duration-500 ${dashboardUpdateFlash ? 'scale-125 text-yellow-200' : ''}`} />
+                      <div className={`text-xl sm:text-2xl font-bold mb-1 transition-all duration-500 ${dashboardUpdateFlash ? 'scale-110 text-yellow-100 animate-pulse' : ''}`}>
                         {formatCurrency(getTotalBuyIns())}
                       </div>
                       <div className="text-xs sm:text-sm">
@@ -836,11 +856,11 @@ function SessionPage(): React.JSX.Element {
                             return (
                               <TableRow
                                 key={sessionPlayer.player_id}
-                                className={`${isSessionOwner() ? 'cursor-pointer hover:bg-gray-50' : ''} transition-all duration-700 ease-in-out ${dashboardUpdateFlash ? 'bg-green-50 border-l-4 border-green-400' : ''}`}
+                                className={`${isSessionOwner() ? 'cursor-pointer hover:bg-gray-50' : ''} transition-all duration-700 ease-in-out ${dashboardUpdateFlash ? 'bg-yellow-100 border-l-8 border-yellow-400 shadow-lg' : ''}`}
                                 onClick={() => isSessionOwner() && !isEditing && handleEditFinancials(sessionPlayer)}
                                 data-editing-row={isEditing ? 'true' : undefined}
                                 style={{
-                                  transform: `translateY(0)`,
+                                  transform: dashboardUpdateFlash ? `translateX(10px) scale(1.02)` : `translateY(0)`,
                                   opacity: 1,
                                   transitionDelay: `${index * 100}ms`
                                 }}
