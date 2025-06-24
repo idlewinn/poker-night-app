@@ -60,6 +60,7 @@ import UserMenu from './UserMenu';
 
 interface SessionPageParams extends Record<string, string | undefined> {
   sessionId: string;
+  tab?: string;
 }
 
 interface EditingFinancials {
@@ -69,7 +70,7 @@ interface EditingFinancials {
 }
 
 function SessionPage(): React.JSX.Element {
-  const { sessionId } = useParams<SessionPageParams>();
+  const { sessionId, tab } = useParams<SessionPageParams>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [session, setSession] = useState<Session | null>(null);
@@ -147,13 +148,8 @@ function SessionPage(): React.JSX.Element {
   const [bombPotTimerModalOpen, setBombPotTimerModalOpen] = useState<boolean>(false);
   const [currentTableIndex, setCurrentTableIndex] = useState<number>(0);
 
-  // Tab persistence - remember which tab is active across page refreshes
-  const [activeTab, setActiveTab] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('poker-session-active-tab') || 'winnings';
-    }
-    return 'winnings';
-  });
+  // Get active tab from URL, default to 'winnings'
+  const activeTab = tab || 'winnings';
 
   // Check if current user is the session owner
   const isSessionOwner = (): boolean => {
@@ -420,10 +416,15 @@ function SessionPage(): React.JSX.Element {
     return seatingCharts.length > 0 ? seatingCharts[0] || null : null;
   };
 
-  // Handle tab change and persist to localStorage
+  // Handle tab change by navigating to new URL
   const handleTabChange = (value: string): void => {
-    setActiveTab(value);
-    localStorage.setItem('poker-session-active-tab', value);
+    if (value === 'winnings') {
+      // Default tab - use clean URL without tab parameter
+      navigate(`/sessions/${sessionId}`);
+    } else {
+      // Non-default tab - include tab in URL
+      navigate(`/sessions/${sessionId}/${value}`);
+    }
   };
 
   const formatCurrency = (amount: number): string => {

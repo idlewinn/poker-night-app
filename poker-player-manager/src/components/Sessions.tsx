@@ -153,7 +153,7 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
   };
 
   const handleViewSession = (session: Session): void => {
-    navigate(`/session/${session.id}`);
+    navigate(`/sessions/${session.id}`);
   };
 
   // Helper function to check if user owns a session
