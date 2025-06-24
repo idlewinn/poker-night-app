@@ -56,12 +56,29 @@ function PokerTable({ table, variant = 'default' }: PokerTableProps): React.JSX.
         {/* Player Positions */}
         {players.map((assignment, index) => {
           const position = getPlayerPosition(index, Math.max(players.length, 6));
+
+          // Adjust positioning to prevent clipping at edges for ALL table sizes
+          let adjustedX = position.x;
+          let adjustedY = position.y;
+
+          // Calculate card dimensions as percentage of container
+          const isCrowded = players.length > 8;
+          const cardWidthPercent = isCrowded ? 10 : 15; // Estimated card width as % of container
+          const cardHeightPercent = 8; // Estimated card height as % of container
+
+          // Apply safety margins to keep cards fully within bounds
+          const marginX = cardWidthPercent / 2;
+          const marginY = cardHeightPercent / 2;
+
+          // Clamp positions to safe zone
+          adjustedX = Math.max(marginX, Math.min(100 - marginX, adjustedX));
+          adjustedY = Math.max(marginY, Math.min(100 - marginY, adjustedY));
+
           // Position badge on top-left for players on the right side to prevent clipping
-          const isRightSide = position.x > 50;
+          const isRightSide = adjustedX > 50;
           const badgePosition = isRightSide ? "-top-1 -left-1" : "-top-1 -right-1";
 
           // Scale down player cards for crowded tables
-          const isCrowded = players.length > 8;
           const cardSizeClasses = isCrowded
             ? "bg-white/95 backdrop-blur-sm border-2 border-gray-300 shadow-lg min-w-[60px] md:min-w-[70px] lg:min-w-[80px] max-w-[80px] md:max-w-[90px] lg:max-w-[100px]"
             : "bg-white/95 backdrop-blur-sm border-2 border-gray-300 shadow-lg min-w-[80px] md:min-w-[100px] lg:min-w-[120px] xl:min-w-[140px] max-w-[140px] md:max-w-[160px] lg:max-w-[180px]";
@@ -77,8 +94,8 @@ function PokerTable({ table, variant = 'default' }: PokerTableProps): React.JSX.
               key={assignment.id}
               className="absolute transform -translate-x-1/2 -translate-y-1/2"
               style={{
-                left: `${position.x}%`,
-                top: `${position.y}%`,
+                left: `${adjustedX}%`,
+                top: `${adjustedY}%`,
               }}
             >
               {/* Player Card */}
