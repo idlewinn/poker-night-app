@@ -46,7 +46,8 @@ import {
   Monitor,
   Minimize2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Search
 } from 'lucide-react';
 import { Session, Player, SessionPlayer, SeatingChart, CreateSeatingChartRequest } from '../types/index';
 import { sessionsApi, playersApi, seatingChartsApi } from '../services/api';
@@ -142,6 +143,7 @@ function SessionPage(): React.JSX.Element {
   const [bombPotTimerModalOpen, setBombPotTimerModalOpen] = useState<boolean>(false);
   const [currentTableIndex, setCurrentTableIndex] = useState<number>(0);
   const [dashboardUpdateFlash, setDashboardUpdateFlash] = useState<boolean>(false);
+  const [playerSearchQuery, setPlayerSearchQuery] = useState<string>('');
 
   // Get active tab from URL, default to 'winnings'
   const activeTab = tab || 'winnings';
@@ -588,10 +590,21 @@ function SessionPage(): React.JSX.Element {
     // Return players who are either:
     // 1. Not in the session at all, OR
     // 2. In the session but not with "In" status
-    return players.filter(player => {
+    let availablePlayers = players.filter(player => {
       const sessionPlayer = session.players?.find(sp => sp.player_id === player.id);
       return !sessionPlayer || sessionPlayer.status !== 'In';
     });
+
+    // Apply search filter if there's a search query
+    if (playerSearchQuery.trim()) {
+      const query = playerSearchQuery.toLowerCase().trim();
+      availablePlayers = availablePlayers.filter(player =>
+        player.name.toLowerCase().includes(query) ||
+        (player.email && player.email.toLowerCase().includes(query))
+      );
+    }
+
+    return availablePlayers;
   };
 
   const calculateTotals = () => {
@@ -1343,7 +1356,15 @@ function SessionPage(): React.JSX.Element {
       {/* Modals - Always available regardless of dashboard mode */}
       {/* Add Player Modal - Only for session owners */}
       {isSessionOwner() && (
-        <Dialog open={addPlayerModalOpen} onOpenChange={setAddPlayerModalOpen}>
+        <Dialog
+          open={addPlayerModalOpen}
+          onOpenChange={(open) => {
+            setAddPlayerModalOpen(open);
+            if (!open) {
+              setPlayerSearchQuery(''); // Clear search when modal closes
+            }
+          }}
+        >
           <DialogContent className="max-w-md w-[95vw] sm:w-full max-h-[85vh] overflow-hidden flex flex-col p-4 sm:p-6">
             <DialogHeader className="flex-shrink-0">
               <DialogTitle className="text-base sm:text-lg">Add Player to Session</DialogTitle>
@@ -1353,6 +1374,18 @@ function SessionPage(): React.JSX.Element {
               <p className="text-xs sm:text-sm text-gray-600">
                 Select a player to add or change their status to "In".
               </p>
+
+              {/* Search Input */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Search players by name or email..."
+                  value={playerSearchQuery}
+                  onChange={(e) => setPlayerSearchQuery(e.target.value)}
+                  className="pl-10 text-sm"
+                />
+              </div>
 
               <div className="space-y-2 pr-1"> {/* Small right padding for scrollbar */}
                 {getAvailablePlayersToAdd().map((player) => (
@@ -1380,9 +1413,23 @@ function SessionPage(): React.JSX.Element {
               </div>
 
               {getAvailablePlayersToAdd().length === 0 && (
-                <p className="text-xs sm:text-sm text-gray-600 text-center py-4">
-                  All players are already marked as "In" for this session.
-                </p>
+                <div className="text-center py-4">
+                  {playerSearchQuery.trim() ? (
+                    <div>
+                      <Search className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+                      <p className="text-xs sm:text-sm text-gray-600 mb-2">
+                        No players found matching "{playerSearchQuery}"
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Try adjusting your search terms.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs sm:text-sm text-gray-600">
+                      All players are already marked as "In" for this session.
+                    </p>
+                  )}
+                </div>
               )}
             </div>
 
