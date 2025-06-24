@@ -105,6 +105,16 @@ function SessionPage(): React.JSX.Element {
       if (saved && savedTimestamp && savedRunning) {
         const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
         const remaining = Math.max(0, parseInt(saved) - elapsed);
+
+        // If timer reached 0 and was running, clear the state (page was refreshed during bomb alert)
+        if (remaining === 0) {
+          localStorage.removeItem('poker-bomb-pot-running');
+          localStorage.removeItem('poker-bomb-pot-time-left');
+          localStorage.removeItem('poker-bomb-pot-timestamp');
+          localStorage.removeItem('poker-bomb-pot-ever-started');
+          return savedInterval ? parseInt(savedInterval) * 60 : 45 * 60;
+        }
+
         return remaining;
       } else if (saved) {
         return parseInt(saved);
@@ -124,6 +134,12 @@ function SessionPage(): React.JSX.Element {
       if (saved === 'true' && savedTimeLeft && savedTimestamp) {
         const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
         const remaining = Math.max(0, parseInt(savedTimeLeft) - elapsed);
+
+        // If timer reached 0, don't restore running state (page was refreshed during bomb alert)
+        if (remaining === 0) {
+          return false;
+        }
+
         return remaining > 0;
       }
     }
@@ -131,10 +147,25 @@ function SessionPage(): React.JSX.Element {
   });
 
   const [bombPotAlert, setBombPotAlert] = useState<boolean>(false);
+  const [alarmInterval, setAlarmInterval] = useState<NodeJS.Timeout | null>(null);
 
   const [bombPotEverStarted, setBombPotEverStarted] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('poker-bomb-pot-ever-started') === 'true';
+      const saved = localStorage.getItem('poker-bomb-pot-ever-started');
+      const savedTimeLeft = localStorage.getItem('poker-bomb-pot-time-left');
+      const savedTimestamp = localStorage.getItem('poker-bomb-pot-timestamp');
+      const savedRunning = localStorage.getItem('poker-bomb-pot-running') === 'true';
+
+      // If timer was at 0 and running (bomb alert state), reset ever-started to false
+      if (savedRunning && savedTimeLeft && savedTimestamp) {
+        const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
+        const remaining = Math.max(0, parseInt(savedTimeLeft) - elapsed);
+        if (remaining === 0) {
+          return false;
+        }
+      }
+
+      return saved === 'true';
     }
     return false;
   });
@@ -222,9 +253,9 @@ function SessionPage(): React.JSX.Element {
             setBombPotAlert(true);
             setBombPotRunning(false);
 
-            // Play alarm sound
+            // Start repeating alarm sound
             try {
-              playAlarmSound();
+              startRepeatingAlarm();
             } catch (error) {
               console.error('Failed to play alert sound:', error);
             }
@@ -259,6 +290,15 @@ function SessionPage(): React.JSX.Element {
   useEffect(() => {
     localStorage.setItem('poker-bomb-pot-ever-started', bombPotEverStarted.toString());
   }, [bombPotEverStarted]);
+
+  // Cleanup alarm interval on unmount
+  useEffect(() => {
+    return () => {
+      if (alarmInterval) {
+        clearInterval(alarmInterval);
+      }
+    };
+  }, [alarmInterval]);
 
   // Dashboard auto-refresh - poll API every minute when in dashboard view
   useEffect(() => {
@@ -490,6 +530,11 @@ function SessionPage(): React.JSX.Element {
 
   const acknowledgeBombPotAlert = (): void => {
     setBombPotAlert(false);
+    // Stop repeating alarm
+    if (alarmInterval) {
+      clearInterval(alarmInterval);
+      setAlarmInterval(null);
+    }
     // Reset timer and start next countdown
     setBombPotTimeLeft(bombPotInterval * 60);
     setBombPotRunning(true);
@@ -542,7 +587,7 @@ function SessionPage(): React.JSX.Element {
         oscillator.type = 'sine';
 
         gainNode.gain.setValueAtTime(0, context.currentTime + delay);
-        gainNode.gain.linearRampToValueAtTime(0.3, context.currentTime + delay + 0.01);
+        gainNode.gain.linearRampToValueAtTime(0.6, context.currentTime + delay + 0.01); // Increased volume from 0.3 to 0.6
         gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + delay + duration);
 
         oscillator.start(context.currentTime + delay);
@@ -566,6 +611,19 @@ function SessionPage(): React.JSX.Element {
         console.error('No audio fallback available:', fallbackError);
       }
     }
+  };
+
+  // Function to start repeating alarm every 5 seconds
+  const startRepeatingAlarm = (): void => {
+    // Play the first alarm immediately
+    playAlarmSound();
+
+    // Set up interval to repeat every 5 seconds
+    const interval = setInterval(() => {
+      playAlarmSound();
+    }, 5000);
+
+    setAlarmInterval(interval);
   };
 
   // Dashboard View Functions
