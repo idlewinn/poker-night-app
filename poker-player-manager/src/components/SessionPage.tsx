@@ -102,11 +102,17 @@ function SessionPage(): React.JSX.Element {
       const savedRunning = localStorage.getItem('poker-bomb-pot-running') === 'true';
       const savedInterval = localStorage.getItem('poker-bomb-pot-interval');
 
-      if (saved && savedTimestamp && savedRunning) {
-        const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
-        const remaining = Math.max(0, parseInt(saved) - elapsed);
+      if (saved && savedTimestamp) {
+        let remaining;
 
-        // If timer reached 0 and was running, clear the state (page was refreshed during bomb alert)
+        if (savedRunning) {
+          const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
+          remaining = Math.max(0, parseInt(saved) - elapsed);
+        } else {
+          remaining = parseInt(saved);
+        }
+
+        // If timer is at 0 (whether running or paused), clear the state completely
         if (remaining === 0) {
           localStorage.removeItem('poker-bomb-pot-running');
           localStorage.removeItem('poker-bomb-pot-time-left');
@@ -116,8 +122,6 @@ function SessionPage(): React.JSX.Element {
         }
 
         return remaining;
-      } else if (saved) {
-        return parseInt(saved);
       } else if (savedInterval) {
         return parseInt(savedInterval) * 60;
       }
@@ -131,16 +135,22 @@ function SessionPage(): React.JSX.Element {
       const savedTimeLeft = localStorage.getItem('poker-bomb-pot-time-left');
       const savedTimestamp = localStorage.getItem('poker-bomb-pot-timestamp');
 
-      if (saved === 'true' && savedTimeLeft && savedTimestamp) {
-        const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
-        const remaining = Math.max(0, parseInt(savedTimeLeft) - elapsed);
+      if (savedTimeLeft && savedTimestamp) {
+        let remaining;
 
-        // If timer reached 0, don't restore running state (page was refreshed during bomb alert)
+        if (saved === 'true') {
+          const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
+          remaining = Math.max(0, parseInt(savedTimeLeft) - elapsed);
+        } else {
+          remaining = parseInt(savedTimeLeft);
+        }
+
+        // If timer is at 0 (whether running or paused), don't restore running state
         if (remaining === 0) {
           return false;
         }
 
-        return remaining > 0;
+        return saved === 'true' && remaining > 0;
       }
     }
     return false;
@@ -156,10 +166,17 @@ function SessionPage(): React.JSX.Element {
       const savedTimestamp = localStorage.getItem('poker-bomb-pot-timestamp');
       const savedRunning = localStorage.getItem('poker-bomb-pot-running') === 'true';
 
-      // If timer was at 0 and running (bomb alert state), reset ever-started to false
-      if (savedRunning && savedTimeLeft && savedTimestamp) {
-        const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
-        const remaining = Math.max(0, parseInt(savedTimeLeft) - elapsed);
+      // If timer is at 0 (whether running or paused), reset ever-started to false
+      if (savedTimeLeft && savedTimestamp) {
+        let remaining;
+
+        if (savedRunning) {
+          const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
+          remaining = Math.max(0, parseInt(savedTimeLeft) - elapsed);
+        } else {
+          remaining = parseInt(savedTimeLeft);
+        }
+
         if (remaining === 0) {
           return false;
         }
