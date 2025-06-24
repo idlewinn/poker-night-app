@@ -145,6 +145,9 @@ function SessionPage(): React.JSX.Element {
   const [dashboardUpdateFlash, setDashboardUpdateFlash] = useState<boolean>(false);
   const [playerSearchQuery, setPlayerSearchQuery] = useState<string>('');
 
+  // Audio context for alarm sound - needs to be initialized after user interaction
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+
   // Get active tab from URL, default to 'winnings'
   const activeTab = tab || 'winnings';
 
@@ -219,10 +222,9 @@ function SessionPage(): React.JSX.Element {
             setBombPotAlert(true);
             setBombPotRunning(false);
 
-            // Play sound
+            // Play alarm sound
             try {
-              const audio = new Audio('/api/placeholder/bomb-pot-alert.mp3');
-              audio.play().catch(console.error);
+              playAlarmSound();
             } catch (error) {
               console.error('Failed to play alert sound:', error);
             }
@@ -435,6 +437,9 @@ function SessionPage(): React.JSX.Element {
 
   // Bomb Pot Timer Functions
   const startBombPotTimer = (): void => {
+    // Initialize audio context on first user interaction
+    initializeAudioContext();
+
     setBombPotRunning(true);
     setBombPotAlert(false);
     setBombPotEverStarted(true);
@@ -445,12 +450,18 @@ function SessionPage(): React.JSX.Element {
   };
 
   const resetBombPotTimer = (): void => {
+    // Initialize audio context on user interaction
+    initializeAudioContext();
+
     // Reset timer to full interval but maintain current running/paused state
     setBombPotTimeLeft(bombPotInterval * 60);
     setBombPotAlert(false);
   };
 
   const cancelBombPotTimer = (): void => {
+    // Initialize audio context on user interaction
+    initializeAudioContext();
+
     // Cancel timer: reset to full interval AND stop running
     setBombPotRunning(false);
     setBombPotTimeLeft(bombPotInterval * 60);
@@ -482,6 +493,79 @@ function SessionPage(): React.JSX.Element {
     // Reset timer and start next countdown
     setBombPotTimeLeft(bombPotInterval * 60);
     setBombPotRunning(true);
+  };
+
+  // Initialize audio context after user interaction
+  const initializeAudioContext = (): AudioContext | null => {
+    try {
+      if (!audioContext) {
+        const newAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        setAudioContext(newAudioContext);
+        return newAudioContext;
+      }
+      return audioContext;
+    } catch (error) {
+      console.error('Failed to initialize audio context:', error);
+      return null;
+    }
+  };
+
+  // Function to play alarm sound using Web Audio API
+  const playAlarmSound = async (): Promise<void> => {
+    try {
+      let context = audioContext;
+
+      // Initialize audio context if not already done
+      if (!context) {
+        context = initializeAudioContext();
+        if (!context) {
+          throw new Error('Could not initialize audio context');
+        }
+      }
+
+      // Resume audio context if it's suspended (required for autoplay policy)
+      if (context.state === 'suspended') {
+        await context.resume();
+      }
+
+      // Create a sequence of beeps for the alarm
+      const playBeep = (frequency: number, duration: number, delay: number) => {
+        if (!context) return;
+
+        const oscillator = context.createOscillator();
+        const gainNode = context.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+
+        oscillator.frequency.setValueAtTime(frequency, context.currentTime + delay);
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0, context.currentTime + delay);
+        gainNode.gain.linearRampToValueAtTime(0.3, context.currentTime + delay + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + delay + duration);
+
+        oscillator.start(context.currentTime + delay);
+        oscillator.stop(context.currentTime + delay + duration);
+      };
+
+      // Play a sequence of alarm beeps (high-low-high pattern repeated)
+      playBeep(800, 0.2, 0);     // High beep
+      playBeep(600, 0.2, 0.3);   // Low beep
+      playBeep(800, 0.2, 0.6);   // High beep
+      playBeep(600, 0.2, 0.9);   // Low beep
+      playBeep(800, 0.3, 1.2);   // Final high beep (longer)
+
+    } catch (error) {
+      console.error('Web Audio API not supported or failed:', error);
+      // Fallback: try to use a simple beep if available
+      try {
+        // Some browsers support this simple beep
+        (window as any).speechSynthesis?.speak(new SpeechSynthesisUtterance(''));
+      } catch (fallbackError) {
+        console.error('No audio fallback available:', fallbackError);
+      }
+    }
   };
 
   // Dashboard View Functions
@@ -926,7 +1010,10 @@ function SessionPage(): React.JSX.Element {
                   <Timer className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600 mx-auto mb-1" />
                   <div
                     className="text-2xl sm:text-3xl font-bold text-orange-600 mb-1 cursor-pointer hover:text-orange-700 transition-colors"
-                    onClick={() => setBombPotTimerModalOpen(true)}
+                    onClick={() => {
+                      initializeAudioContext();
+                      setBombPotTimerModalOpen(true);
+                    }}
                     title="Click to adjust timer interval"
                   >
                     {formatTime(bombPotTimeLeft)}
