@@ -56,8 +56,21 @@ function PokerTable({ table, variant = 'default' }: PokerTableProps): React.JSX.
         {/* Player Positions */}
         {players.map((assignment, index) => {
           const position = getPlayerPosition(index, Math.max(players.length, 6));
+
+          // Adjust positioning to prevent clipping at edges
+          let adjustedX = position.x;
+          let adjustedY = position.y;
+
+          // Clamp positions to keep cards within bounds
+          // Account for card width (roughly 8-10% of container width)
+          const cardWidthPercent = players.length > 8 ? 8 : 12; // Smaller cards for crowded tables
+          const cardHeightPercent = 6; // Approximate card height
+
+          adjustedX = Math.max(cardWidthPercent / 2, Math.min(100 - cardWidthPercent / 2, adjustedX));
+          adjustedY = Math.max(cardHeightPercent / 2, Math.min(100 - cardHeightPercent / 2, adjustedY));
+
           // Position badge on top-left for players on the right side to prevent clipping
-          const isRightSide = position.x > 50;
+          const isRightSide = adjustedX > 50;
           const badgePosition = isRightSide ? "-top-1 -left-1" : "-top-1 -right-1";
 
           // Scale down player cards for crowded tables
@@ -77,8 +90,8 @@ function PokerTable({ table, variant = 'default' }: PokerTableProps): React.JSX.
               key={assignment.id}
               className="absolute transform -translate-x-1/2 -translate-y-1/2"
               style={{
-                left: `${position.x}%`,
-                top: `${position.y}%`,
+                left: `${adjustedX}%`,
+                top: `${adjustedY}%`,
               }}
             >
               {/* Player Card */}
