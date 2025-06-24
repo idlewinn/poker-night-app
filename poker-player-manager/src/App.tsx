@@ -42,6 +42,16 @@ function App(): React.JSX.Element {
               <SessionPage />
             </ProtectedRoute>
           } />
+          <Route path="/sessions/:sessionId/dashboard" element={
+            <ProtectedRoute>
+              <SessionPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/sessions/:sessionId/dashboard/:tab" element={
+            <ProtectedRoute>
+              <SessionPage />
+            </ProtectedRoute>
+          } />
           <Route path="/invite/:sessionId/:encodedEmail" element={<InvitePage />} />
         </Routes>
       </div>

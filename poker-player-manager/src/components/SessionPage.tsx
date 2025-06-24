@@ -138,18 +138,15 @@ function SessionPage(): React.JSX.Element {
     return false;
   });
 
-  // Dashboard View State - persist across page refreshes
-  const [isDashboardView, setIsDashboardView] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('poker-dashboard-view') === 'true';
-    }
-    return false;
-  });
+
   const [bombPotTimerModalOpen, setBombPotTimerModalOpen] = useState<boolean>(false);
   const [currentTableIndex, setCurrentTableIndex] = useState<number>(0);
 
   // Get active tab from URL, default to 'winnings'
   const activeTab = tab || 'winnings';
+
+  // Determine if we're in dashboard view from URL
+  const isDashboardView = window.location.pathname.includes('/dashboard');
 
   // Check if current user is the session owner
   const isSessionOwner = (): boolean => {
@@ -245,6 +242,30 @@ function SessionPage(): React.JSX.Element {
   useEffect(() => {
     localStorage.setItem('poker-bomb-pot-ever-started', bombPotEverStarted.toString());
   }, [bombPotEverStarted]);
+
+  // Handle click outside to exit editing state
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+
+      // Check if click is outside any editing elements
+      if (editingFinancials &&
+          !target.closest('[data-editing-row]') &&
+          !target.closest('[role="listbox"]') &&
+          !target.closest('[data-radix-popper-content-wrapper]')) {
+        setEditingFinancials(null);
+      }
+    };
+
+    if (editingFinancials) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+
+    return () => {}; // Return empty cleanup function when not editing
+  }, [editingFinancials]);
 
   const handleEditFinancials = (sessionPlayer: SessionPlayer) => {
     // If we're already editing a different player, don't switch
@@ -395,10 +416,21 @@ function SessionPage(): React.JSX.Element {
 
   // Dashboard View Functions
   const toggleDashboardView = (): void => {
-    const newDashboardState = !isDashboardView;
-    setIsDashboardView(newDashboardState);
-    // Save dashboard state to localStorage
-    localStorage.setItem('poker-dashboard-view', newDashboardState.toString());
+    if (isDashboardView) {
+      // Exit dashboard - go back to normal view with current tab
+      if (activeTab === 'winnings') {
+        navigate(`/sessions/${sessionId}`);
+      } else {
+        navigate(`/sessions/${sessionId}/${activeTab}`);
+      }
+    } else {
+      // Enter dashboard - go to dashboard with current tab
+      if (activeTab === 'winnings') {
+        navigate(`/sessions/${sessionId}/dashboard`);
+      } else {
+        navigate(`/sessions/${sessionId}/dashboard/${activeTab}`);
+      }
+    }
     // Reset table index when toggling dashboard view
     setCurrentTableIndex(0);
   };
@@ -418,12 +450,14 @@ function SessionPage(): React.JSX.Element {
 
   // Handle tab change by navigating to new URL
   const handleTabChange = (value: string): void => {
+    const basePath = isDashboardView ? `/sessions/${sessionId}/dashboard` : `/sessions/${sessionId}`;
+
     if (value === 'winnings') {
       // Default tab - use clean URL without tab parameter
-      navigate(`/sessions/${sessionId}`);
+      navigate(basePath);
     } else {
       // Non-default tab - include tab in URL
-      navigate(`/sessions/${sessionId}/${value}`);
+      navigate(`${basePath}/${value}`);
     }
   };
 
@@ -746,6 +780,7 @@ function SessionPage(): React.JSX.Element {
                                 key={sessionPlayer.player_id}
                                 className={`${isSessionOwner() ? 'cursor-pointer hover:bg-gray-50' : ''}`}
                                 onClick={() => isSessionOwner() && !isEditing && handleEditFinancials(sessionPlayer)}
+                                data-editing-row={isEditing ? 'true' : undefined}
                               >
                                 <TableCell className="py-2">
                                   <div className="text-sm font-medium text-gray-900">
@@ -1002,6 +1037,7 @@ function SessionPage(): React.JSX.Element {
                           ${editingFinancials && editingFinancials.playerId !== sessionPlayer.player_id ? 'opacity-50' : ''}
                         `}
                         onClick={() => !editingFinancials && isSessionOwner() && handleEditFinancials(sessionPlayer)}
+                        data-editing-row={editingFinancials?.playerId === sessionPlayer.player_id ? 'true' : undefined}
                       >
                         <TableCell className="py-3">
                           <div className="text-sm font-medium text-gray-900">
