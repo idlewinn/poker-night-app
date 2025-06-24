@@ -275,12 +275,7 @@ function SessionPage(): React.JSX.Element {
             const currentPlayerData = JSON.stringify(session?.players?.map((p: any) => ({ id: p.player_id, buy_in: p.buy_in })).sort((a: any, b: any) => b.buy_in - a.buy_in));
             const newPlayerData = JSON.stringify(updatedSession?.players?.map((p: any) => ({ id: p.player_id, buy_in: p.buy_in })).sort((a: any, b: any) => b.buy_in - a.buy_in));
 
-            console.log('Dashboard refresh - Current data:', currentPlayerData);
-            console.log('Dashboard refresh - New data:', newPlayerData);
-            console.log('Data changed:', currentPlayerData !== newPlayerData);
-
             if (currentPlayerData !== newPlayerData) {
-              console.log('Triggering dashboard flash animation');
               // Trigger flash animation for visual feedback
               setDashboardUpdateFlash(true);
               setTimeout(() => setDashboardUpdateFlash(false), 1000);
@@ -355,7 +350,6 @@ function SessionPage(): React.JSX.Element {
 
       // Trigger dashboard animation if in dashboard view
       if (isDashboardView) {
-        console.log('Triggering dashboard animation from manual edit');
         setDashboardUpdateFlash(true);
         setTimeout(() => setDashboardUpdateFlash(false), 1000);
       }
@@ -395,7 +389,6 @@ function SessionPage(): React.JSX.Element {
 
       // Trigger dashboard animation if in dashboard view
       if (isDashboardView) {
-        console.log('Triggering dashboard animation from adding player');
         setDashboardUpdateFlash(true);
         setTimeout(() => setDashboardUpdateFlash(false), 1000);
       }
@@ -798,30 +791,15 @@ function SessionPage(): React.JSX.Element {
               <h1 className="text-xl sm:text-2xl font-bold text-white truncate mr-4">
                 {session.name || 'Poker Night'} - Dashboard
               </h1>
-              <div className="flex gap-2">
-                {/* Test Animation Button - Remove this after testing */}
-                <Button
-                  onClick={() => {
-                    console.log('Manual animation trigger');
-                    setDashboardUpdateFlash(true);
-                    setTimeout(() => setDashboardUpdateFlash(false), 1000);
-                  }}
-                  variant="outline"
-                  className="bg-yellow-500 text-yellow-900 hover:bg-yellow-400 flex-shrink-0"
-                  size="sm"
-                >
-                  Test Animation
-                </Button>
-                <Button
-                  onClick={toggleDashboardView}
-                  variant="outline"
-                  className="bg-white text-gray-900 hover:bg-gray-100 flex-shrink-0"
-                  size="sm"
-                >
-                  <Minimize2 className="h-4 w-4 mr-2" />
-                  Exit Dashboard
-                </Button>
-              </div>
+              <Button
+                onClick={toggleDashboardView}
+                variant="outline"
+                className="bg-white text-gray-900 hover:bg-gray-100 flex-shrink-0"
+                size="sm"
+              >
+                <Minimize2 className="h-4 w-4 mr-2" />
+                Exit Dashboard
+              </Button>
             </div>
 
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 min-h-0 overflow-hidden">
