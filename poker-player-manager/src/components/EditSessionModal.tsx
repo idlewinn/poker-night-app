@@ -158,9 +158,6 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }: 
                 placeholder="Defaults to 'Poker Night'"
                 maxLength={50}
               />
-              <p className="text-xs text-muted-foreground">
-                Customize the session name or leave as 'Poker Night'
-              </p>
             </div>
 
             <div className="space-y-2">
@@ -178,9 +175,6 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }: 
                   className="pl-10"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                When will this session occur?
-              </p>
             </div>
           </div>
 

@@ -147,9 +147,6 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
                 placeholder="Defaults to 'Poker Night'"
                 maxLength={50}
               />
-              <p className="text-xs text-muted-foreground">
-                Customize the session name or leave as 'Poker Night'
-              </p>
             </div>
 
             <div className="space-y-2">
@@ -178,9 +175,6 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Choose between cash game or tournament format
-              </p>
             </div>
 
             <div className="space-y-2">
@@ -198,9 +192,6 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
                   className="pl-10"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                When will this session occur? (defaults to Saturday 7pm, 3 weeks from today)
-              </p>
             </div>
           </div>
 
