@@ -89,6 +89,7 @@ function SessionPage(): React.JSX.Element {
   const [bombPotTimeLeft, setBombPotTimeLeft] = useState<number>(45 * 60); // seconds
   const [bombPotRunning, setBombPotRunning] = useState<boolean>(false);
   const [bombPotAlert, setBombPotAlert] = useState<boolean>(false);
+  const [bombPotEverStarted, setBombPotEverStarted] = useState<boolean>(false); // Track if timer was ever started
 
   // Dashboard View State - persist across page refreshes
   const [isDashboardView, setIsDashboardView] = useState<boolean>(() => {
@@ -99,6 +100,14 @@ function SessionPage(): React.JSX.Element {
   });
   const [bombPotTimerModalOpen, setBombPotTimerModalOpen] = useState<boolean>(false);
   const [currentTableIndex, setCurrentTableIndex] = useState<number>(0);
+
+  // Tab persistence - remember which tab is active across page refreshes
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('poker-session-active-tab') || 'winnings';
+    }
+    return 'winnings';
+  });
 
   // Check if current user is the session owner
   const isSessionOwner = (): boolean => {
@@ -276,6 +285,7 @@ function SessionPage(): React.JSX.Element {
   const startBombPotTimer = (): void => {
     setBombPotRunning(true);
     setBombPotAlert(false);
+    setBombPotEverStarted(true);
   };
 
   const pauseBombPotTimer = (): void => {
@@ -336,6 +346,12 @@ function SessionPage(): React.JSX.Element {
   // Get current seating chart
   const getCurrentSeatingChart = (): SeatingChart | null => {
     return seatingCharts.length > 0 ? seatingCharts[0] || null : null;
+  };
+
+  // Handle tab change and persist to localStorage
+  const handleTabChange = (value: string): void => {
+    setActiveTab(value);
+    localStorage.setItem('poker-session-active-tab', value);
   };
 
   const formatCurrency = (amount: number): string => {
@@ -670,7 +686,7 @@ function SessionPage(): React.JSX.Element {
                     {formatTime(bombPotTimeLeft)}
                   </div>
                   <div className="text-xs sm:text-sm text-gray-600 mb-2">
-                    {bombPotRunning ? 'Next Bomb Pot' : 'Timer Paused'}
+                    {bombPotRunning ? 'Next Bomb Pot' : (bombPotEverStarted ? 'Timer Paused' : 'Timer Ready')}
                   </div>
                   <div className="flex justify-center gap-1">
                     {!bombPotRunning ? (
@@ -778,7 +794,7 @@ function SessionPage(): React.JSX.Element {
       ) : (
         <>
           {/* Tabs */}
-          <Tabs defaultValue="winnings" className="w-full">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="winnings" className="flex items-center gap-2">
             <TrendingDown className="h-4 w-4" />
@@ -1041,7 +1057,7 @@ function SessionPage(): React.JSX.Element {
                   {formatTime(bombPotTimeLeft)}
                 </div>
                 <div className="text-lg text-gray-600 mb-6">
-                  {bombPotRunning ? 'Time until next Bomb Pot' : 'Timer paused'}
+                  {bombPotRunning ? 'Time until next Bomb Pot' : (bombPotEverStarted ? 'Timer paused' : 'Timer ready to start')}
                 </div>
 
                 {/* Timer Controls */}
