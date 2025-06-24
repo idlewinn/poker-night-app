@@ -61,12 +61,12 @@ function PokerTable({ table, variant = 'default' }: PokerTableProps): React.JSX.
           let adjustedX = position.x;
           let adjustedY = position.y;
 
-          // Calculate card dimensions as percentage of container
+          // Calculate card dimensions as percentage of container - more aggressive margins
           const isCrowded = players.length > 8;
-          const cardWidthPercent = isCrowded ? 10 : 15; // Estimated card width as % of container
-          const cardHeightPercent = 8; // Estimated card height as % of container
+          const cardWidthPercent = isCrowded ? 12 : 18; // Increased from 10/15 to 12/18
+          const cardHeightPercent = 10; // Increased from 8 to 10
 
-          // Apply safety margins to keep cards fully within bounds
+          // Apply more aggressive safety margins to keep cards fully within bounds
           const marginX = cardWidthPercent / 2;
           const marginY = cardHeightPercent / 2;
 

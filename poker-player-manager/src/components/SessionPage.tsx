@@ -591,8 +591,8 @@ function SessionPage(): React.JSX.Element {
 
       {/* Dashboard View */}
       {isDashboardView ? (
-        <div className="bg-gray-900 min-h-screen -mx-4 -my-4 p-3 sm:p-4">
-          <div className="flex flex-col h-screen">
+        <div className="bg-gray-900 fixed inset-0 p-3 sm:p-4 overflow-hidden">
+          <div className="flex flex-col h-full">
             {/* Dashboard Header */}
             <div className="flex items-center justify-between mb-3 flex-shrink-0">
               <h1 className="text-xl sm:text-2xl font-bold text-white truncate mr-4">
