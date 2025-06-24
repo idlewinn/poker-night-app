@@ -1047,7 +1047,7 @@ function SessionPage(): React.JSX.Element {
 
                         <TableCell className="py-3 text-right">
                       {isEditing ? (
-                        <div onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
                           <Select
                             value={editingFinancials.buy_in.toString()}
                             onValueChange={async (value) => {
@@ -1060,10 +1060,10 @@ function SessionPage(): React.JSX.Element {
                               await handleSaveFinancials(updatedFinancials);
                             }}
                           >
-                            <SelectTrigger className="w-24 h-8 text-sm">
+                            <SelectTrigger className="w-24 h-8 text-sm text-right">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent align="end">
                               {getBuyInOptions().map((amount) => (
                                 <SelectItem
                                   key={amount}
@@ -1085,20 +1085,22 @@ function SessionPage(): React.JSX.Element {
 
                     <TableCell className="py-3 text-right">
                       {isEditing ? (
-                        <Input
-                          type="number"
-                          value={editingFinancials.cash_out}
-                          onChange={(e) => setEditingFinancials({
-                            ...editingFinancials,
-                            cash_out: e.target.value
-                          })}
-                          onBlur={handleFinancialInputBlur}
-                          min={0}
-                          step={0.01}
-                          placeholder="0.00"
-                          className="w-20 h-8 text-sm text-right"
-                          onClick={(e) => e.stopPropagation()}
-                        />
+                        <div className="flex justify-end">
+                          <Input
+                            type="number"
+                            value={editingFinancials.cash_out}
+                            onChange={(e) => setEditingFinancials({
+                              ...editingFinancials,
+                              cash_out: e.target.value
+                            })}
+                            onBlur={handleFinancialInputBlur}
+                            min={0}
+                            step={0.01}
+                            placeholder="0.00"
+                            className="w-20 h-8 text-sm text-right"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
                       ) : (
                         <div className="text-sm font-medium">
                           {formatCurrency(sessionPlayer.cash_out)}
