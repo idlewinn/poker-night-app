@@ -15,17 +15,17 @@ function PokerTable({ table, variant = 'default' }: PokerTableProps): React.JSX.
   // Calculate positions around the oval table
   const getPlayerPosition = (seatIndex: number, totalSeats: number) => {
     // Distribute players around an oval/ellipse
-    // Adjust radius based on number of players to prevent overlap
+    // Use smaller radius to prevent clipping at edges
     const angle = (seatIndex / totalSeats) * 2 * Math.PI - Math.PI / 2; // Start from top
 
-    // Increase radius for crowded tables to prevent overlap
-    let radiusX = 45; // Horizontal radius percentage
-    let radiusY = 35; // Vertical radius percentage
+    // Smaller base radius to keep cards within bounds
+    let radiusX = 38; // Reduced from 45 to prevent horizontal clipping
+    let radiusY = 28; // Reduced from 35 to prevent vertical clipping
 
     if (totalSeats > 8) {
-      // Expand the ellipse for more players
-      radiusX = Math.min(48, 45 + (totalSeats - 8) * 1); // Gradually increase
-      radiusY = Math.min(40, 35 + (totalSeats - 8) * 1.5); // Increase more vertically
+      // More conservative expansion for crowded tables
+      radiusX = Math.min(42, 38 + (totalSeats - 8) * 0.5); // Smaller increments
+      radiusY = Math.min(32, 28 + (totalSeats - 8) * 0.8); // Smaller increments
     }
 
     const x = 50 + radiusX * Math.cos(angle); // Center at 50%
@@ -43,8 +43,8 @@ function PokerTable({ table, variant = 'default' }: PokerTableProps): React.JSX.
 
   return (
     <Card className={sizeClasses}>
-      {/* Table Surface */}
-      <div className="absolute inset-4 bg-gradient-to-br from-green-600 to-green-700 rounded-full border-4 border-green-800 shadow-inner">
+      {/* Table Surface - Add more padding to prevent card clipping */}
+      <div className="absolute inset-6 sm:inset-8 bg-gradient-to-br from-green-600 to-green-700 rounded-full border-4 border-green-800 shadow-inner">
         {/* Table Center */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-white/20 select-none">
