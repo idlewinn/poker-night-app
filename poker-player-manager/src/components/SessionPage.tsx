@@ -255,6 +255,38 @@ function SessionPage(): React.JSX.Element {
     localStorage.setItem('poker-bomb-pot-ever-started', bombPotEverStarted.toString());
   }, [bombPotEverStarted]);
 
+  // Dashboard auto-refresh - poll API every minute when in dashboard view
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
+    if (isDashboardView && sessionId) {
+      // Refresh immediately when entering dashboard
+      const refreshData = async () => {
+        try {
+          const response = await fetch(`/api/sessions/${sessionId}`, {
+            credentials: 'include'
+          });
+
+          if (response.ok) {
+            const updatedSession = await response.json();
+            setSession(updatedSession);
+          }
+        } catch (error) {
+          console.error('Failed to refresh session data:', error);
+        }
+      };
+
+      // Set up interval to refresh every minute (60000ms)
+      interval = setInterval(refreshData, 60000);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isDashboardView, sessionId]);
+
   // Handle click outside to exit editing state
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
