@@ -353,6 +353,13 @@ function SessionPage(): React.JSX.Element {
       // Update via API
       await sessionsApi.updatePlayerFinancials(session.id, financialsToSave.playerId, { buy_in, cash_out });
 
+      // Trigger dashboard animation if in dashboard view
+      if (isDashboardView) {
+        console.log('Triggering dashboard animation from manual edit');
+        setDashboardUpdateFlash(true);
+        setTimeout(() => setDashboardUpdateFlash(false), 1000);
+      }
+
       // Update local state
       if (session.players) {
         const updatedPlayers = session.players.map(sp =>
@@ -385,6 +392,13 @@ function SessionPage(): React.JSX.Element {
     try {
       setUpdating(true);
       await sessionsApi.addPlayerToSession(session.id, playerId, 'In');
+
+      // Trigger dashboard animation if in dashboard view
+      if (isDashboardView) {
+        console.log('Triggering dashboard animation from adding player');
+        setDashboardUpdateFlash(true);
+        setTimeout(() => setDashboardUpdateFlash(false), 1000);
+      }
 
       // Refresh session data
       const updatedSession = await sessionsApi.getById(session.id);
