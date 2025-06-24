@@ -21,10 +21,19 @@ if (!GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID_HERE') && !GOOGLE_CLIENT_S
   // Determine the callback URL based on environment
   const getCallbackURL = () => {
     if (process.env.NODE_ENV === 'production') {
-      // In production, construct the full HTTPS URL
-      const baseUrl = process.env.RAILWAY_PUBLIC_DOMAIN
-        ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
-        : 'https://poker-night-app-production.up.railway.app'; // Replace with your actual Railway domain
+      // In production, use custom domain or fallback to Railway domain
+      const customDomain = process.env.CUSTOM_DOMAIN;
+      const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN;
+
+      let baseUrl;
+      if (customDomain) {
+        baseUrl = `https://${customDomain}`;
+      } else if (railwayDomain) {
+        baseUrl = `https://${railwayDomain}`;
+      } else {
+        baseUrl = 'https://poker-night-app-production.up.railway.app'; // fallback
+      }
+
       return `${baseUrl}/api/auth/google/callback`;
     }
     return "/api/auth/google/callback"; // relative URL for development
