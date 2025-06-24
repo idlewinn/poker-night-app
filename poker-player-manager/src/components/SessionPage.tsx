@@ -153,6 +153,18 @@ function SessionPage(): React.JSX.Element {
     return user?.id === session?.createdBy;
   };
 
+  // Redirect non-owners away from dashboard URLs
+  useEffect(() => {
+    if (isDashboardView && session && !isSessionOwner()) {
+      // Redirect to normal view with same tab
+      if (activeTab === 'winnings') {
+        navigate(`/sessions/${sessionId}`);
+      } else {
+        navigate(`/sessions/${sessionId}/${activeTab}`);
+      }
+    }
+  }, [isDashboardView, session, activeTab, sessionId, navigate, user?.id]);
+
   // Check if session is currently active (within last 8 hours)
   const isSessionActive = (): boolean => {
     if (!session?.scheduledDateTime) return false;
@@ -605,23 +617,25 @@ function SessionPage(): React.JSX.Element {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                onClick={toggleDashboardView}
-                variant={isDashboardView ? "default" : "outline"}
-                className="flex items-center gap-2"
-              >
-                {isDashboardView ? (
-                  <>
-                    <Minimize2 className="h-4 w-4" />
-                    Exit Dashboard
-                  </>
-                ) : (
-                  <>
-                    <Monitor className="h-4 w-4" />
-                    Dashboard View
-                  </>
-                )}
-              </Button>
+              {isSessionOwner() && (
+                <Button
+                  onClick={toggleDashboardView}
+                  variant={isDashboardView ? "default" : "outline"}
+                  className="flex items-center gap-2"
+                >
+                  {isDashboardView ? (
+                    <>
+                      <Minimize2 className="h-4 w-4" />
+                      Exit Dashboard
+                    </>
+                  ) : (
+                    <>
+                      <Monitor className="h-4 w-4" />
+                      Dashboard View
+                    </>
+                  )}
+                </Button>
+              )}
               <UserMenu />
             </div>
           </div>
@@ -649,8 +663,8 @@ function SessionPage(): React.JSX.Element {
         </div>
       )}
 
-      {/* Persistent Timer Display - Always visible when timer has been used */}
-      {!isDashboardView && (bombPotRunning || bombPotTimeLeft < bombPotInterval * 60) && (
+      {/* Persistent Timer Display - Always visible when timer has been used - Only for session owners */}
+      {!isDashboardView && isSessionOwner() && (bombPotRunning || bombPotTimeLeft < bombPotInterval * 60) && (
         <Card className={`mb-4 border-2 ${bombPotRunning ? 'border-orange-400 bg-orange-50' : 'border-gray-300 bg-gray-50'}`}>
           <CardContent className="py-3">
             <div className="flex items-center justify-between">
@@ -953,7 +967,7 @@ function SessionPage(): React.JSX.Element {
         <>
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsList className={`grid w-full ${isSessionOwner() ? 'grid-cols-3' : 'grid-cols-2'} mb-6`}>
           <TabsTrigger value="winnings" className="flex items-center gap-2">
             <TrendingDown className="h-4 w-4" />
             Winnings
@@ -962,10 +976,12 @@ function SessionPage(): React.JSX.Element {
             <Users className="h-4 w-4" />
             Seating
           </TabsTrigger>
-          <TabsTrigger value="bombpot" className="flex items-center gap-2">
-            <Timer className="h-4 w-4" />
-            Bomb Pot
-          </TabsTrigger>
+          {isSessionOwner() && (
+            <TabsTrigger value="bombpot" className="flex items-center gap-2">
+              <Timer className="h-4 w-4" />
+              Bomb Pot
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="winnings" className="mt-0">
@@ -1158,104 +1174,106 @@ function SessionPage(): React.JSX.Element {
           />
         </TabsContent>
 
-        <TabsContent value="bombpot" className="mt-0">
-          <div className="space-y-6">
-            {/* Timer Display */}
-            <Card className="text-center">
-              <CardContent className="py-8">
-                <Timer className="h-16 w-16 text-orange-600 mx-auto mb-4" />
-                <div className="text-6xl font-bold text-orange-600 mb-2">
-                  {formatTime(bombPotTimeLeft)}
-                </div>
-                <div className="text-lg text-gray-600 mb-6">
-                  {bombPotRunning ? 'Time until next Bomb Pot' : (bombPotEverStarted ? 'Timer paused' : 'Timer ready to start')}
-                </div>
-
-                {/* Timer Controls */}
-                <div className="flex justify-center gap-3">
-                  {!bombPotRunning ? (
-                    <Button onClick={startBombPotTimer} className="flex items-center gap-2">
-                      <Play className="h-4 w-4" />
-                      Start Timer
-                    </Button>
-                  ) : (
-                    <Button onClick={pauseBombPotTimer} variant="outline" className="flex items-center gap-2">
-                      <Pause className="h-4 w-4" />
-                      Pause Timer
-                    </Button>
-                  )}
-                  <Button onClick={resetBombPotTimer} variant="outline" className="flex items-center gap-2">
-                    <RotateCcw className="h-4 w-4" />
-                    Reset
-                  </Button>
-                  <Button onClick={cancelBombPotTimer} variant="outline" className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:border-red-300">
-                    <X className="h-4 w-4" />
-                    Cancel
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Timer Settings */}
-            <Card>
-              <div className="p-4 bg-primary text-primary-foreground">
-                <h3 className="text-lg font-bold flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Timer Settings
-                </h3>
-              </div>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Bomb Pot Interval (minutes)
-                    </label>
-                    <Select
-                      value={bombPotInterval.toString()}
-                      onValueChange={(value) => updateBombPotInterval(parseInt(value))}
-                    >
-                      <SelectTrigger className="w-48">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 minute (testing)</SelectItem>
-                        <SelectItem value="5">5 minutes</SelectItem>
-                        <SelectItem value="10">10 minutes</SelectItem>
-                        <SelectItem value="15">15 minutes</SelectItem>
-                        <SelectItem value="20">20 minutes</SelectItem>
-                        <SelectItem value="25">25 minutes</SelectItem>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                        <SelectItem value="35">35 minutes</SelectItem>
-                        <SelectItem value="40">40 minutes</SelectItem>
-                        <SelectItem value="45">45 minutes (default)</SelectItem>
-                        <SelectItem value="50">50 minutes</SelectItem>
-                        <SelectItem value="55">55 minutes</SelectItem>
-                        <SelectItem value="60">60 minutes</SelectItem>
-                      </SelectContent>
-                    </Select>
+        {isSessionOwner() && (
+          <TabsContent value="bombpot" className="mt-0">
+            <div className="space-y-6">
+              {/* Timer Display */}
+              <Card className="text-center">
+                <CardContent className="py-8">
+                  <Timer className="h-16 w-16 text-orange-600 mx-auto mb-4" />
+                  <div className="text-6xl font-bold text-orange-600 mb-2">
+                    {formatTime(bombPotTimeLeft)}
+                  </div>
+                  <div className="text-lg text-gray-600 mb-6">
+                    {bombPotRunning ? 'Time until next Bomb Pot' : (bombPotEverStarted ? 'Timer paused' : 'Timer ready to start')}
                   </div>
 
-                  <div className="text-sm text-gray-600">
-                    <p className="mb-2">
-                      <strong>How it works:</strong>
-                    </p>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>Timer counts down from the selected interval (1-60 minutes)</li>
-                      <li>Use 1 minute interval for testing purposes only</li>
-                      <li>When it reaches zero, a full-screen alert appears</li>
-                      <li>Click anywhere on the alert to acknowledge and restart timer</li>
-                      <li>Timer display with controls is visible on all tabs</li>
-                      <li><strong>Play/Pause:</strong> Start or stop timer</li>
-                      <li><strong>Reset:</strong> Restart at full interval (keeps running/paused state)</li>
-                      <li><strong>Cancel:</strong> Reset timer and stop it completely</li>
-                      <li>Audio alert plays when timer completes (if supported)</li>
-                    </ul>
+                  {/* Timer Controls */}
+                  <div className="flex justify-center gap-3">
+                    {!bombPotRunning ? (
+                      <Button onClick={startBombPotTimer} className="flex items-center gap-2">
+                        <Play className="h-4 w-4" />
+                        Start Timer
+                      </Button>
+                    ) : (
+                      <Button onClick={pauseBombPotTimer} variant="outline" className="flex items-center gap-2">
+                        <Pause className="h-4 w-4" />
+                        Pause Timer
+                      </Button>
+                    )}
+                    <Button onClick={resetBombPotTimer} variant="outline" className="flex items-center gap-2">
+                      <RotateCcw className="h-4 w-4" />
+                      Reset
+                    </Button>
+                    <Button onClick={cancelBombPotTimer} variant="outline" className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:border-red-300">
+                      <X className="h-4 w-4" />
+                      Cancel
+                    </Button>
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Timer Settings */}
+              <Card>
+                <div className="p-4 bg-primary text-primary-foreground">
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Timer Settings
+                  </h3>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Bomb Pot Interval (minutes)
+                      </label>
+                      <Select
+                        value={bombPotInterval.toString()}
+                        onValueChange={(value) => updateBombPotInterval(parseInt(value))}
+                      >
+                        <SelectTrigger className="w-48">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1 minute (testing)</SelectItem>
+                          <SelectItem value="5">5 minutes</SelectItem>
+                          <SelectItem value="10">10 minutes</SelectItem>
+                          <SelectItem value="15">15 minutes</SelectItem>
+                          <SelectItem value="20">20 minutes</SelectItem>
+                          <SelectItem value="25">25 minutes</SelectItem>
+                          <SelectItem value="30">30 minutes</SelectItem>
+                          <SelectItem value="35">35 minutes</SelectItem>
+                          <SelectItem value="40">40 minutes</SelectItem>
+                          <SelectItem value="45">45 minutes (default)</SelectItem>
+                          <SelectItem value="50">50 minutes</SelectItem>
+                          <SelectItem value="55">55 minutes</SelectItem>
+                          <SelectItem value="60">60 minutes</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="text-sm text-gray-600">
+                      <p className="mb-2">
+                        <strong>How it works:</strong>
+                      </p>
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>Timer counts down from the selected interval (1-60 minutes)</li>
+                        <li>Use 1 minute interval for testing purposes only</li>
+                        <li>When it reaches zero, a full-screen alert appears</li>
+                        <li>Click anywhere on the alert to acknowledge and restart timer</li>
+                        <li>Timer display with controls is visible on all tabs</li>
+                        <li><strong>Play/Pause:</strong> Start or stop timer</li>
+                        <li><strong>Reset:</strong> Restart at full interval (keeps running/paused state)</li>
+                        <li><strong>Cancel:</strong> Reset timer and stop it completely</li>
+                        <li>Audio alert plays when timer completes (if supported)</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
 
         </>
@@ -1328,8 +1346,9 @@ function SessionPage(): React.JSX.Element {
         />
       )}
 
-      {/* Bomb Pot Timer Settings Modal */}
-      <Dialog open={bombPotTimerModalOpen} onOpenChange={setBombPotTimerModalOpen}>
+      {/* Bomb Pot Timer Settings Modal - Only for session owners */}
+      {isSessionOwner() && (
+        <Dialog open={bombPotTimerModalOpen} onOpenChange={setBombPotTimerModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -1380,6 +1399,7 @@ function SessionPage(): React.JSX.Element {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      )}
     </div>
   );
 }
