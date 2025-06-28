@@ -75,6 +75,14 @@ function InvitePage(): React.JSX.Element {
           setCurrentStatus(playerSession.status as PlayerStatus);
           setPlayerName(playerSession.player?.name || '');
         }
+
+        // Track invite page view for metrics
+        try {
+          await sessionsApi.trackInviteView(parseInt(sessionId), playerEmail);
+        } catch (trackingError) {
+          console.error('Failed to track invite view:', trackingError);
+          // Don't fail the page load if tracking fails
+        }
       } catch (err) {
         console.error('Failed to load session:', err);
         setError('Session not found or invalid invite link');

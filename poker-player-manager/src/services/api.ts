@@ -149,6 +149,13 @@ export const sessionsApi = {
     apiRequest<{ message: string; sent: number; failed: number; totalNonResponders: number }>(`/sessions/${sessionId}/send-reminders`, {
       method: 'POST',
     }),
+
+  // Track invite page view
+  trackInviteView: (sessionId: number, playerEmail: string): Promise<{ message: string }> =>
+    apiRequest<{ message: string }>(`/sessions/${sessionId}/invite-view`, {
+      method: 'POST',
+      body: JSON.stringify({ playerEmail }),
+    }),
 };
 
 // Seating Charts API
@@ -180,6 +187,15 @@ export const seatingChartsApi = {
     apiRequest<{ message: string }>(`/seating-charts/${id}`, {
       method: 'DELETE',
     }),
+};
+
+// Metrics API
+export const metricsApi = {
+  // Get overall metrics summary
+  getSummary: (): Promise<any> => apiRequest<any>('/metrics'),
+
+  // Get session-specific metrics
+  getSessionMetrics: (sessionId: number): Promise<any> => apiRequest<any>(`/metrics/sessions/${sessionId}`),
 };
 
 // General API for custom requests
