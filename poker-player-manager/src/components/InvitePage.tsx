@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import PlayerStatusBadge from './PlayerStatusBadge';
 import {
   Calendar,
   Clock,
@@ -205,6 +206,27 @@ function InvitePage(): React.JSX.Element {
 
   const statusOptions: PlayerStatus[] = ['In', 'Out', 'Maybe', 'Attending but not playing'];
 
+  // Calculate status counts for other players (excluding current player)
+  const getOtherPlayersStatusCounts = () => {
+    const counts = {
+      'Invited': 0,
+      'In': 0,
+      'Out': 0,
+      'Maybe': 0,
+      'Attending but not playing': 0
+    };
+
+    session.players
+      .filter(sp => sp.player?.email !== playerEmail)
+      .forEach(sessionPlayer => {
+        counts[sessionPlayer.status]++;
+      });
+
+    return counts;
+  };
+
+  const otherPlayersStatusCounts = getOtherPlayersStatusCounts();
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto max-w-2xl p-4 sm:p-8">
@@ -309,12 +331,30 @@ function InvitePage(): React.JSX.Element {
               onClick={() => setShowOtherPlayers(!showOtherPlayers)}
             >
               <CardTitle className="text-lg flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  <span>Other Players</span>
-                  <Badge variant="secondary" className="ml-2">
-                    {session.players.length - 1}
-                  </Badge>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    <span>Other Players</span>
+                    <Badge variant="secondary" className="ml-2">
+                      {session.players.length - 1}
+                    </Badge>
+                  </div>
+
+                  {/* Status count pills */}
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(otherPlayersStatusCounts).map(([status, count]) => {
+                      if (count === 0) return null;
+                      return (
+                        <PlayerStatusBadge
+                          key={status}
+                          status={status as any}
+                          size="small"
+                          variant="outlined"
+                          count={count}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
                 {showOtherPlayers ? (
                   <ChevronDown className="h-5 w-5 text-gray-500" />
