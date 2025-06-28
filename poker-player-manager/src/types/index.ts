@@ -163,6 +163,7 @@ export interface UpdatePlayerRequest {
 export interface CreateSessionRequest {
   name?: string;
   scheduledDateTime: string;
+  timezone?: string;
   playerIds?: number[];
   game_type?: 'cash' | 'tournament';
 }

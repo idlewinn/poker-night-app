@@ -25,7 +25,6 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
   const [sessionToView, setSessionToView] = useState<Session | null>(null);
   const [sessionForMetrics, setSessionForMetrics] = useState<Session | null>(null);
   const [notification, setNotification] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
-  const [showPastSessions, setShowPastSessions] = useState<boolean>(false);
 
 
   const handleOpenCreateModal = (): void => {
@@ -198,6 +197,10 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
       .filter(session => isSessionPast(session))
       .sort(sortByEventTime)
   };
+
+  // Auto-expand past sessions if there are no upcoming or active sessions
+  const shouldAutoExpandPast = groupedSessions.upcoming.length === 0 && groupedSessions.active.length === 0 && groupedSessions.past.length > 0;
+  const [showPastSessions, setShowPastSessions] = useState<boolean>(shouldAutoExpandPast);
 
   return (
     <div>

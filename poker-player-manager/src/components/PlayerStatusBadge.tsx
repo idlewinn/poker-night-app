@@ -13,9 +13,10 @@ interface PlayerStatusBadgeProps {
   status: PlayerStatus;
   size?: 'small' | 'medium';
   variant?: 'filled' | 'outlined';
+  count?: number;
 }
 
-function PlayerStatusBadge({ status, variant = 'filled' }: PlayerStatusBadgeProps): React.JSX.Element {
+function PlayerStatusBadge({ status, variant = 'filled', count }: PlayerStatusBadgeProps): React.JSX.Element {
   const getStatusConfig = (status: PlayerStatus) => {
     switch (status) {
       case 'Invited':
@@ -66,6 +67,11 @@ function PlayerStatusBadge({ status, variant = 'filled' }: PlayerStatusBadgeProp
     >
       {config.icon}
       {config.label}
+      {count !== undefined && count > 0 && (
+        <span className="ml-1 px-1.5 py-0.5 text-xs bg-white/20 rounded-full">
+          {count}
+        </span>
+      )}
     </Badge>
   );
 }

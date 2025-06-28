@@ -178,6 +178,7 @@ function SessionItem({ session, onRemove, onEdit, onViewDetails, onViewSession, 
                         status={status as any}
                         size="small"
                         variant="outlined"
+                        count={count}
                       />
                     );
                   })}

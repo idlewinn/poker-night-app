@@ -168,10 +168,13 @@ function MainApp(): React.JSX.Element {
     try {
       const requestData: CreateSessionRequest = {
         scheduledDateTime: scheduledDateTime,
-        timezone: timezone,
         playerIds: selectedPlayerIds || [],
         game_type: gameType || 'cash'
       };
+
+      if (timezone) {
+        requestData.timezone = timezone;
+      }
 
       if (sessionName.trim()) {
         requestData.name = sessionName.trim();
@@ -199,9 +202,12 @@ function MainApp(): React.JSX.Element {
     try {
       const requestData: UpdateSessionRequest = {
         scheduledDateTime: scheduledDateTime,
-        timezone: timezone,
         playerIds: selectedPlayerIds || []
       };
+
+      if (timezone) {
+        requestData.timezone = timezone;
+      }
 
       if (sessionName.trim()) {
         requestData.name = sessionName.trim();
