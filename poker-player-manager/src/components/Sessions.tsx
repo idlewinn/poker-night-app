@@ -69,8 +69,8 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
     setSessionForMetrics(null);
   };
 
-  const handleCreateSession = (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): void => {
-    onCreateSession(sessionName, selectedPlayerIds, scheduledDateTime);
+  const handleCreateSession = (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string, gameType?: 'cash' | 'tournament', timezone?: string): void => {
+    onCreateSession(sessionName, selectedPlayerIds, scheduledDateTime, gameType, timezone);
   };
 
 
@@ -109,8 +109,8 @@ function Sessions({ sessions, players, onCreateSession, onUpdateSession, onRemov
     }
   };
 
-  const handleUpdateSession = (sessionId: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): void => {
-    onUpdateSession(sessionId, sessionName, selectedPlayerIds, scheduledDateTime);
+  const handleUpdateSession = (sessionId: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string, timezone?: string): void => {
+    onUpdateSession(sessionId, sessionName, selectedPlayerIds, scheduledDateTime, timezone);
   };
 
   const handleStatusChange = async (playerId: number, newStatus: PlayerStatus): Promise<void> => {

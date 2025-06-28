@@ -234,7 +234,7 @@ router.post('/past', authenticateToken, async (req: any, res: Response): Promise
 
 // POST create new session
 router.post('/', authenticateToken, async (req: any, res: Response): Promise<void> => {
-  const { name, scheduledDateTime, playerIds, game_type } = req.body;
+  const { name, scheduledDateTime, timezone, playerIds, game_type } = req.body;
   const userId = req.user?.id;
 
   if (!userId) {
@@ -250,11 +250,12 @@ router.post('/', authenticateToken, async (req: any, res: Response): Promise<voi
   // Generate session name from date/time if not provided
   const sessionName = name?.trim() || generateSessionNameFromDateTime(scheduledDateTime);
   const gameType = game_type || 'cash'; // Default to cash game
+  const sessionTimezone = timezone || 'America/Los_Angeles'; // Default to PST
 
-  const sql = 'INSERT INTO sessions (name, scheduled_datetime, created_by, game_type) VALUES (?, ?, ?, ?)';
+  const sql = 'INSERT INTO sessions (name, scheduled_datetime, timezone, created_by, game_type) VALUES (?, ?, ?, ?, ?)';
 
   try {
-    const result = await db.run(sql, [sessionName, scheduledDateTime, userId, gameType]);
+    const result = await db.run(sql, [sessionName, scheduledDateTime, sessionTimezone, userId, gameType]);
     const sessionId = result.lastID;
 
     if (!sessionId) {
@@ -284,7 +285,7 @@ router.post('/', authenticateToken, async (req: any, res: Response): Promise<voi
 // PUT update session (only by owner)
 router.put('/:id', authenticateToken, requireSessionOwnership, async (req: any, res: Response): Promise<void> => {
   const { id } = req.params;
-  const { name, scheduledDateTime, playerIds, game_type } = req.body;
+  const { name, scheduledDateTime, timezone, playerIds, game_type } = req.body;
 
   if (!scheduledDateTime) {
     res.status(400).json({ error: 'Scheduled date and time is required' });
@@ -294,11 +295,12 @@ router.put('/:id', authenticateToken, requireSessionOwnership, async (req: any, 
   // Generate session name from date/time if not provided
   const sessionName = name?.trim() || generateSessionNameFromDateTime(scheduledDateTime);
   const gameType = game_type || 'cash'; // Default to cash game
+  const sessionTimezone = timezone || 'America/Los_Angeles'; // Default to PST
 
-  const sql = 'UPDATE sessions SET name = ?, scheduled_datetime = ?, game_type = ? WHERE id = ?';
+  const sql = 'UPDATE sessions SET name = ?, scheduled_datetime = ?, timezone = ?, game_type = ? WHERE id = ?';
 
   try {
-    const result = await db.run(sql, [sessionName, scheduledDateTime, gameType, id]);
+    const result = await db.run(sql, [sessionName, scheduledDateTime, sessionTimezone, gameType, id]);
 
     if (result.changes === 0) {
       res.status(404).json({ error: 'Session not found' });

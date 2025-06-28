@@ -34,6 +34,18 @@ import {
 } from '@/components/ui/tooltip';
 import { CreateSessionModalProps } from '../types/index';
 
+// Common timezone options
+const timezoneOptions = [
+  { value: 'America/Los_Angeles', label: 'Pacific Time (PST/PDT)' },
+  { value: 'America/Denver', label: 'Mountain Time (MST/MDT)' },
+  { value: 'America/Chicago', label: 'Central Time (CST/CDT)' },
+  { value: 'America/New_York', label: 'Eastern Time (EST/EDT)' },
+  { value: 'America/Phoenix', label: 'Arizona Time (MST)' },
+  { value: 'America/Anchorage', label: 'Alaska Time (AKST/AKDT)' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii Time (HST)' },
+  { value: 'UTC', label: 'UTC' },
+];
+
 // Helper function to get the nearest Saturday 3 weeks from today at 7pm
 const getDefaultSessionDate = (): string => {
   const today = new Date();
@@ -75,12 +87,14 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<number[]>([]);
   const [scheduledDateTime, setScheduledDateTime] = useState<string>(getDefaultSessionDate());
   const [gameType, setGameType] = useState<'cash' | 'tournament'>('cash');
+  const [timezone, setTimezone] = useState<string>('America/Los_Angeles');
 
   const handleClose = (): void => {
     setSessionName('Poker Night');
     setSelectedPlayerIds([]);
     setScheduledDateTime(getDefaultSessionDate());
     setGameType('cash');
+    setTimezone('America/Los_Angeles');
     onClose();
   };
 
@@ -91,7 +105,7 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
       const finalSessionName = sessionName.trim() || 'Poker Night';
       // Convert datetime-local to ISO string
       const isoDateTime = new Date(scheduledDateTime).toISOString();
-      onCreateSession(finalSessionName, selectedPlayerIds, isoDateTime, gameType);
+      onCreateSession(finalSessionName, selectedPlayerIds, isoDateTime, gameType, timezone);
       handleClose();
     }
   };
@@ -192,6 +206,27 @@ function CreateSessionModal({ open, onClose, onCreateSession, players }: CreateS
                   className="pl-10"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="timezone" className="text-sm font-medium">
+                Time Zone
+              </label>
+              <Select value={timezone} onValueChange={setTimezone}>
+                <SelectTrigger className="w-full">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <SelectValue placeholder="Select timezone" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  {timezoneOptions.map((tz) => (
+                    <SelectItem key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

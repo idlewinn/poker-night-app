@@ -77,6 +77,22 @@ function initializeDatabase(): void {
           console.error('Error adding created_by column:', alterErr.message);
         }
       });
+
+      // Add timezone column if it doesn't exist (for existing databases)
+      db.run(`ALTER TABLE sessions ADD COLUMN timezone TEXT DEFAULT 'America/Los_Angeles'`, (alterErr: Error | null) => {
+        if (alterErr && !alterErr.message.includes('duplicate column name')) {
+          console.error('Error adding timezone column:', alterErr.message);
+        } else {
+          // Migration: Set all existing sessions to PST timezone
+          db.run(`UPDATE sessions SET timezone = 'America/Los_Angeles' WHERE timezone IS NULL`, (updateErr: Error | null) => {
+            if (updateErr) {
+              console.error('Error updating existing sessions timezone:', updateErr.message);
+            } else {
+              console.log('Successfully migrated existing sessions to PST timezone');
+            }
+          });
+        }
+      });
     }
   });
 

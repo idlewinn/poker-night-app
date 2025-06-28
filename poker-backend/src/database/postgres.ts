@@ -54,6 +54,7 @@ export async function initializePostgresDatabase(): Promise<void> {
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         scheduled_datetime TIMESTAMP,
+        timezone VARCHAR(100) DEFAULT 'America/Los_Angeles',
         created_by INTEGER NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE CASCADE
@@ -147,6 +148,16 @@ export async function initializePostgresDatabase(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_user_metrics_player_email ON user_metrics(player_email);
     `);
     console.log('User_metrics indexes ready');
+
+    // Migration: Set existing sessions to PST timezone if they don't have one
+    try {
+      const result = await client.query(`UPDATE sessions SET timezone = 'America/Los_Angeles' WHERE timezone IS NULL`);
+      if (result.rowCount && result.rowCount > 0) {
+        console.log(`Successfully migrated ${result.rowCount} existing sessions to PST timezone`);
+      }
+    } catch (migrationError) {
+      console.error('Error during timezone migration:', migrationError);
+    }
 
   } catch (error) {
     console.error('Error initializing PostgreSQL database:', error);

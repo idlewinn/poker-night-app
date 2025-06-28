@@ -164,10 +164,11 @@ function MainApp(): React.JSX.Element {
 
 
 
-  const addSession = async (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string, gameType?: 'cash' | 'tournament'): Promise<void> => {
+  const addSession = async (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string, gameType?: 'cash' | 'tournament', timezone?: string): Promise<void> => {
     try {
       const requestData: CreateSessionRequest = {
         scheduledDateTime: scheduledDateTime,
+        timezone: timezone,
         playerIds: selectedPlayerIds || [],
         game_type: gameType || 'cash'
       };
@@ -194,10 +195,11 @@ function MainApp(): React.JSX.Element {
     }
   };
 
-  const updateSession = async (id: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string): Promise<void> => {
+  const updateSession = async (id: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string, timezone?: string): Promise<void> => {
     try {
       const requestData: UpdateSessionRequest = {
         scheduledDateTime: scheduledDateTime,
+        timezone: timezone,
         playerIds: selectedPlayerIds || []
       };
 

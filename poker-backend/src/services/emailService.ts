@@ -77,11 +77,12 @@ class EmailService {
       // Format date for email subject
       const formatDateForSubject = (dateString: string): string => {
         const date = new Date(dateString);
+        const timezone = data.session.timezone || 'America/Los_Angeles';
         return date.toLocaleDateString('en-US', {
           month: 'short',
           day: 'numeric',
           year: 'numeric',
-          timeZone: 'America/Los_Angeles'
+          timeZone: timezone
         });
       };
 
@@ -163,11 +164,12 @@ class EmailService {
       // Format date for email subject
       const formatDateForSubject = (dateString: string): string => {
         const date = new Date(dateString);
+        const timezone = data.session.timezone || 'America/Los_Angeles';
         return date.toLocaleDateString('en-US', {
           month: 'short',
           day: 'numeric',
           year: 'numeric',
-          timeZone: 'America/Los_Angeles'
+          timeZone: timezone
         });
       };
 
@@ -236,6 +238,7 @@ class EmailService {
     
     const formatDate = (dateString: string): string => {
       const date = new Date(dateString);
+      const timezone = session.timezone || 'America/Los_Angeles';
       return date.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -244,7 +247,7 @@ class EmailService {
         hour: 'numeric',
         minute: '2-digit',
         hour12: true,
-        timeZone: 'America/Los_Angeles'
+        timeZone: timezone
       });
     };
 
@@ -313,6 +316,7 @@ class EmailService {
     
     const formatDate = (dateString: string): string => {
       const date = new Date(dateString);
+      const timezone = session.timezone || 'America/Los_Angeles';
       return date.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -321,7 +325,7 @@ class EmailService {
         hour: 'numeric',
         minute: '2-digit',
         hour12: true,
-        timeZone: 'America/Los_Angeles'
+        timeZone: timezone
       });
     };
 
@@ -357,6 +361,7 @@ If you have any questions, please contact the host directly.
 
     const formatDate = (dateString: string): string => {
       const date = new Date(dateString);
+      const timezone = session.timezone || 'America/Los_Angeles';
       return date.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -365,7 +370,7 @@ If you have any questions, please contact the host directly.
         hour: 'numeric',
         minute: '2-digit',
         hour12: true,
-        timeZone: 'America/Los_Angeles'
+        timeZone: timezone
       });
     };
 
@@ -438,6 +443,7 @@ If you have any questions, please contact the host directly.
 
     const formatDate = (dateString: string): string => {
       const date = new Date(dateString);
+      const timezone = session.timezone || 'America/Los_Angeles';
       return date.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -446,7 +452,7 @@ If you have any questions, please contact the host directly.
         hour: 'numeric',
         minute: '2-digit',
         hour12: true,
-        timeZone: 'America/Los_Angeles'
+        timeZone: timezone
       });
     };
 

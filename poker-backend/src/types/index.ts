@@ -20,6 +20,7 @@ export interface Session {
   id: number;
   name: string;
   scheduled_datetime: string | null;
+  timezone?: string;
   created_by: number;
   created_at: string;
   game_type?: 'cash' | 'tournament';
@@ -71,6 +72,7 @@ export interface UpdatePlayerRequest {
 export interface CreateSessionRequest {
   name?: string;
   scheduledDateTime: string;
+  timezone?: string;
   playerIds?: number[];
   game_type?: 'cash' | 'tournament';
 }

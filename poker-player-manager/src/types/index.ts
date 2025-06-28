@@ -40,6 +40,7 @@ export interface Session {
   id: number;
   name: string;
   scheduledDateTime: string | null;
+  timezone?: string;
   createdBy: number;
   createdAt: string;
   game_type?: 'cash' | 'tournament';
@@ -122,14 +123,14 @@ export interface SessionListProps {
 export interface CreateSessionModalProps {
   open: boolean;
   onClose: () => void;
-  onCreateSession: (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string, gameType?: 'cash' | 'tournament') => void;
+  onCreateSession: (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string, gameType?: 'cash' | 'tournament', timezone?: string) => void;
   players: Player[];
 }
 
 export interface EditSessionModalProps {
   open: boolean;
   onClose: () => void;
-  onUpdateSession: (sessionId: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string) => void;
+  onUpdateSession: (sessionId: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string, timezone?: string) => void;
   players: Player[];
   session: Session | null;
 }
@@ -137,8 +138,8 @@ export interface EditSessionModalProps {
 export interface SessionsProps {
   sessions: Session[];
   players: Player[];
-  onCreateSession: (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string) => void;
-  onUpdateSession: (sessionId: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string) => void;
+  onCreateSession: (sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string, gameType?: 'cash' | 'tournament', timezone?: string) => void;
+  onUpdateSession: (sessionId: number, sessionName: string, selectedPlayerIds: number[], scheduledDateTime: string, timezone?: string) => void;
   onRemoveSession: (id: number) => void;
 }
 
@@ -180,6 +181,7 @@ export interface CreatePastSessionRequest {
 export interface UpdateSessionRequest {
   name?: string;
   scheduledDateTime: string;
+  timezone?: string;
   playerIds?: number[];
   game_type?: 'cash' | 'tournament';
 }

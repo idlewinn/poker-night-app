@@ -25,6 +25,25 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { EditSessionModalProps } from '../types/index';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+// Common timezone options
+const timezoneOptions = [
+  { value: 'America/Los_Angeles', label: 'Pacific Time (PST/PDT)' },
+  { value: 'America/Denver', label: 'Mountain Time (MST/MDT)' },
+  { value: 'America/Chicago', label: 'Central Time (CST/CDT)' },
+  { value: 'America/New_York', label: 'Eastern Time (EST/EDT)' },
+  { value: 'America/Phoenix', label: 'Arizona Time (MST)' },
+  { value: 'America/Anchorage', label: 'Alaska Time (AKST/AKDT)' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii Time (HST)' },
+  { value: 'UTC', label: 'UTC' },
+];
 
 // Helper function to get the nearest Saturday 3 weeks from today at 7pm
 const getDefaultSessionDate = (): string => {
@@ -66,12 +85,14 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }: 
   const [sessionName, setSessionName] = useState<string>('Poker Night');
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<number[]>([]);
   const [scheduledDateTime, setScheduledDateTime] = useState<string>('');
+  const [timezone, setTimezone] = useState<string>('America/Los_Angeles');
 
   // Initialize form with session data when modal opens
   useEffect(() => {
     if (session && open) {
       setSessionName(session.name || 'Poker Night');
       setSelectedPlayerIds(session.players?.map(sp => sp.player_id) || []);
+      setTimezone(session.timezone || 'America/Los_Angeles');
       if (session.scheduledDateTime) {
         const sessionDate = new Date(session.scheduledDateTime);
         const year = sessionDate.getFullYear();
@@ -100,7 +121,7 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }: 
       const finalSessionName = sessionName.trim() || 'Poker Night';
       // Convert datetime-local to ISO string
       const isoDateTime = new Date(scheduledDateTime).toISOString();
-      onUpdateSession(session.id, finalSessionName, selectedPlayerIds, isoDateTime);
+      onUpdateSession(session.id, finalSessionName, selectedPlayerIds, isoDateTime, timezone);
       handleClose();
     }
   };
@@ -175,6 +196,27 @@ function EditSessionModal({ open, onClose, onUpdateSession, players, session }: 
                   className="pl-10"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="timezone" className="text-sm font-medium">
+                Time Zone
+              </label>
+              <Select value={timezone} onValueChange={setTimezone}>
+                <SelectTrigger className="w-full">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <SelectValue placeholder="Select timezone" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  {timezoneOptions.map((tz) => (
+                    <SelectItem key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
