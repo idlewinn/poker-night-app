@@ -579,7 +579,10 @@ router.post('/:sessionId/invite-view', async (req: Request, res: Response): Prom
     const { sessionId } = req.params;
     const { playerEmail } = req.body;
 
+    console.log('📊 Tracking invite view:', { sessionId, playerEmail, ip: req.ip, userAgent: req.get('User-Agent') });
+
     if (!sessionId || !playerEmail) {
+      console.log('❌ Missing required fields:', { sessionId, playerEmail });
       res.status(400).json({ error: 'Session ID and player email are required' });
       return;
     }
@@ -592,9 +595,10 @@ router.post('/:sessionId/invite-view', async (req: Request, res: Response): Prom
       req.get('User-Agent')
     );
 
+    console.log('✅ Invite view tracked successfully for session', sessionId, 'email', playerEmail);
     res.json({ message: 'Invite view tracked successfully' });
   } catch (error: any) {
-    console.error('Error tracking invite view:', error);
+    console.error('❌ Error tracking invite view:', error);
     res.status(500).json({ error: 'Failed to track invite view' });
   }
 });

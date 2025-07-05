@@ -38,7 +38,15 @@ export class MetricsService {
       
       const eventDataJson = event.eventData ? JSON.stringify(event.eventData) : null;
       
-      await db.run(sql, [
+      console.log('📊 Attempting to track event:', {
+        eventType: event.eventType,
+        sessionId: event.sessionId,
+        playerEmail: event.playerEmail,
+        userId: event.userId,
+        eventData: eventDataJson
+      });
+
+      const result = await db.run(sql, [
         event.userId || null,
         event.playerEmail || null,
         event.sessionId || null,
@@ -47,10 +55,11 @@ export class MetricsService {
         event.ipAddress || null,
         event.userAgent || null
       ]);
-      
-      console.log(`Tracked event: ${event.eventType} for ${event.userId ? `user ${event.userId}` : `email ${event.playerEmail}`}`);
+
+      console.log(`✅ Successfully tracked event: ${event.eventType} for ${event.userId ? `user ${event.userId}` : `email ${event.playerEmail}`}`, result);
     } catch (error) {
-      console.error('Error tracking metric event:', error);
+      console.error('❌ Error tracking metric event:', error);
+      console.error('Event details:', event);
       // Don't throw - metrics shouldn't break the main functionality
     }
   }
