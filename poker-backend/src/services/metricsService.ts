@@ -163,11 +163,16 @@ export class MetricsService {
       const avgResponseTime = avgResponseTimeResult?.avg_minutes || 0;
 
       // Status breakdown from responses
+      // Use different JSON functions for SQLite vs PostgreSQL
+      const jsonExtract = isPostgreSQL
+        ? `event_data->>'status'` // PostgreSQL: JSONB operator
+        : `JSON_EXTRACT(event_data, '$.status')`; // SQLite: JSON_EXTRACT function
+
       const statusBreakdownResult = await db.all(`
-        SELECT JSON_EXTRACT(event_data, '$.status') as status, COUNT(*) as count
-        FROM user_metrics 
+        SELECT ${jsonExtract} as status, COUNT(*) as count
+        FROM user_metrics
         WHERE session_id = ? AND event_type = 'status_response'
-        GROUP BY JSON_EXTRACT(event_data, '$.status')
+        GROUP BY ${jsonExtract}
       `, [sessionId]);
       
       const statusBreakdown: { [key: string]: number } = {};
