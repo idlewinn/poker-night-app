@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -117,7 +117,7 @@ function SessionMetricsModal({ open, onClose, session }: SessionMetricsModalProp
   };
 
   // Filter and search timeline events
-  const filteredEvents = React.useMemo(() => {
+  const filteredEvents = useMemo(() => {
     if (!metrics?.timeline) return [];
 
     let filtered = metrics.timeline;
@@ -167,18 +167,22 @@ function SessionMetricsModal({ open, onClose, session }: SessionMetricsModalProp
   }, [metrics?.timeline, eventTypeFilter, searchTerm, dateFilter]);
 
   // Get unique event types for filter dropdown
-  const eventTypes = React.useMemo(() => {
+  const eventTypes = useMemo(() => {
     if (!metrics?.timeline) return [];
     const types = [...new Set(metrics.timeline.map(event => event.event_type))];
     return types.sort();
   }, [metrics?.timeline]);
 
-  const formatEventData = (eventData: string) => {
+  const formatEventData = (eventData: string | null | undefined) => {
+    if (!eventData) return '';
     try {
       const parsed = JSON.parse(eventData);
-      return Object.entries(parsed)
-        .map(([key, value]) => `${key}: ${value}`)
-        .join(', ');
+      if (typeof parsed === 'object' && parsed !== null) {
+        return Object.entries(parsed)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join(', ');
+      }
+      return String(parsed);
     } catch {
       return eventData;
     }
