@@ -149,8 +149,12 @@ export async function initializePostgresDatabase(): Promise<void> {
     `);
     console.log('User_metrics indexes ready');
 
-    // Migration: Set existing sessions to PST timezone if they don't have one
+    // Migration: Add timezone column if it doesn't exist, then set default values
     try {
+      // First, try to add the timezone column if it doesn't exist
+      await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timezone VARCHAR(100) DEFAULT 'America/Los_Angeles'`);
+
+      // Then update any NULL values
       const result = await client.query(`UPDATE sessions SET timezone = 'America/Los_Angeles' WHERE timezone IS NULL`);
       if (result.rowCount && result.rowCount > 0) {
         console.log(`Successfully migrated ${result.rowCount} existing sessions to PST timezone`);
