@@ -8,6 +8,16 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
 import {
   BarChart3,
   Users,
@@ -16,7 +26,9 @@ import {
   Clock,
   TrendingUp,
   Calendar,
-  Activity
+  Activity,
+  Search,
+  Filter
 } from 'lucide-react';
 import { Session } from '../types/index';
 import { api } from '../services/api';
@@ -47,6 +59,10 @@ function SessionMetricsModal({ open, onClose, session }: SessionMetricsModalProp
   const [metrics, setMetrics] = useState<SessionMetrics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [eventTypeFilter, setEventTypeFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
 
   useEffect(() => {
     if (open && session) {
@@ -56,10 +72,10 @@ function SessionMetricsModal({ open, onClose, session }: SessionMetricsModalProp
 
   const fetchMetrics = async () => {
     if (!session) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await api.get(`/metrics/sessions/${session.id}`);
       setMetrics(response as SessionMetrics);
@@ -100,6 +116,104 @@ function SessionMetricsModal({ open, onClose, session }: SessionMetricsModalProp
     }
   };
 
+  // Filter and search timeline events
+  const filteredEvents = React.useMemo(() => {
+    if (!metrics?.timeline) return [];
+
+    let filtered = metrics.timeline;
+
+    // Filter by event type
+    if (eventTypeFilter !== 'all') {
+      filtered = filtered.filter(event => event.event_type === eventTypeFilter);
+    }
+
+    // Filter by search term (search in player email and event data)
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(event =>
+        event.player_email?.toLowerCase().includes(searchLower) ||
+        event.event_type.toLowerCase().includes(searchLower) ||
+        event.event_data?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Filter by date
+    if (dateFilter !== 'all') {
+      const now = new Date();
+      const filterDate = new Date();
+
+      switch (dateFilter) {
+        case 'today':
+          filterDate.setHours(0, 0, 0, 0);
+          break;
+        case 'week':
+          filterDate.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          filterDate.setMonth(now.getMonth() - 1);
+          break;
+      }
+
+      if (dateFilter !== 'all') {
+        filtered = filtered.filter(event =>
+          new Date(event.created_at) >= filterDate
+        );
+      }
+    }
+
+    return filtered.sort((a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [metrics?.timeline, eventTypeFilter, searchTerm, dateFilter]);
+
+  // Get unique event types for filter dropdown
+  const eventTypes = React.useMemo(() => {
+    if (!metrics?.timeline) return [];
+    const types = [...new Set(metrics.timeline.map(event => event.event_type))];
+    return types.sort();
+  }, [metrics?.timeline]);
+
+  const formatEventData = (eventData: string) => {
+    try {
+      const parsed = JSON.parse(eventData);
+      return Object.entries(parsed)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(', ');
+    } catch {
+      return eventData;
+    }
+  };
+
+  const getEventIcon = (eventType: string) => {
+    switch (eventType) {
+      case 'invite_page_view':
+        return <Eye className="h-4 w-4" />;
+      case 'status_response':
+        return <MessageSquare className="h-4 w-4" />;
+      case 'user_login':
+        return <Users className="h-4 w-4" />;
+      case 'session_created':
+        return <Calendar className="h-4 w-4" />;
+      default:
+        return <Activity className="h-4 w-4" />;
+    }
+  };
+
+  const getEventColor = (eventType: string) => {
+    switch (eventType) {
+      case 'invite_page_view':
+        return 'bg-blue-100 text-blue-800';
+      case 'status_response':
+        return 'bg-green-100 text-green-800';
+      case 'user_login':
+        return 'bg-purple-100 text-purple-800';
+      case 'session_created':
+        return 'bg-orange-100 text-orange-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -126,7 +240,13 @@ function SessionMetricsModal({ open, onClose, session }: SessionMetricsModalProp
         )}
 
         {metrics && !loading && (
-          <div className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="events">Events ({metrics.timeline.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="space-y-6">
             {/* Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
@@ -241,18 +361,117 @@ function SessionMetricsModal({ open, onClose, session }: SessionMetricsModalProp
               </Card>
             )}
 
-            {/* No Data Message */}
-            {metrics.inviteViews === 0 && metrics.responses === 0 && (
+              {/* No Data Message */}
+              {metrics.inviteViews === 0 && metrics.responses === 0 && (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      No metrics data available yet. Metrics will appear once players start viewing invites and responding.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="events" className="space-y-4">
+              {/* Search and Filter Controls */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search events, emails, or data..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Event Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Events</SelectItem>
+                    {eventTypes.map(type => (
+                      <SelectItem key={type} value={type}>
+                        {formatEventType(type)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger className="w-full sm:w-32">
+                    <SelectValue placeholder="Date" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="week">Last Week</SelectItem>
+                    <SelectItem value="month">Last Month</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Events List */}
               <Card>
-                <CardContent className="p-8 text-center">
-                  <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
-                    No metrics data available yet. Metrics will appear once players start viewing invites and responding.
-                  </p>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <Activity className="h-5 w-5" />
+                      Event Timeline
+                    </span>
+                    <Badge variant="secondary">
+                      {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {filteredEvents.length > 0 ? (
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {filteredEvents.map((event, index) => (
+                        <div key={index} className="flex items-start gap-3 p-3 rounded-lg border bg-card">
+                          <div className={`p-2 rounded-full ${getEventColor(event.event_type)}`}>
+                            {getEventIcon(event.event_type)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-medium text-sm">
+                                {formatEventType(event.event_type)}
+                              </h4>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(event.created_at).toLocaleString()}
+                              </span>
+                            </div>
+                            {event.player_email && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Player: {event.player_email}
+                              </p>
+                            )}
+                            {event.event_data && (
+                              <p className="text-xs text-muted-foreground mt-1 font-mono">
+                                {formatEventData(event.event_data)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Filter className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-muted-foreground">
+                        No events match your current filters.
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-            )}
-          </div>
+            </TabsContent>
+          </Tabs>
         )}
       </DialogContent>
     </Dialog>
