@@ -142,16 +142,20 @@ export class MetricsService {
       const responseRate = inviteViews > 0 ? (responses / inviteViews) * 100 : 0;
 
       // Average response time (time between invite view and first response)
+      // Use different date functions for SQLite vs PostgreSQL
+      const isPostgreSQL = process.env.DATABASE_URL?.startsWith('postgresql');
+      const dateDiffQuery = isPostgreSQL
+        ? `EXTRACT(EPOCH FROM (response.created_at - view.created_at)) / 60` // PostgreSQL: seconds to minutes
+        : `(JULIANDAY(response.created_at) - JULIANDAY(view.created_at)) * 24 * 60`; // SQLite: days to minutes
+
       const avgResponseTimeResult = await db.get(`
-        SELECT AVG(
-          JULIANDAY(response.created_at) - JULIANDAY(view.created_at)
-        ) * 24 * 60 as avg_minutes
+        SELECT AVG(${dateDiffQuery}) as avg_minutes
         FROM user_metrics view
         JOIN user_metrics response ON (
-          view.session_id = response.session_id AND 
+          view.session_id = response.session_id AND
           (view.user_id = response.user_id OR view.player_email = response.player_email)
         )
-        WHERE view.session_id = ? 
+        WHERE view.session_id = ?
           AND view.event_type = 'invite_page_view'
           AND response.event_type = 'status_response'
           AND response.created_at > view.created_at
