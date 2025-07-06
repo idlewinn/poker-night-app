@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -42,7 +43,7 @@ interface SessionMetrics {
   statusBreakdown: { [key: string]: number };
   timeline: Array<{
     event_type: string;
-    event_data: any;
+    event_data: string | null;
     created_at: string;
     user_id?: number;
     player_email?: string;
@@ -173,28 +174,53 @@ function SessionMetricsModal({ open, onClose, session }: SessionMetricsModalProp
     return types.sort();
   }, [metrics?.timeline]);
 
-  const formatEventData = (eventData: string | null | undefined) => {
+  const formatEventData = (eventData: string | null | undefined | object) => {
     if (!eventData) return '';
-    try {
-      const parsed = JSON.parse(eventData);
-      if (typeof parsed === 'object' && parsed !== null) {
-        return Object.entries(parsed)
-          .map(([key, value]) => `${key}: ${value}`)
-          .join(', ');
+
+    let parsed;
+
+    // If it's already an object, use it directly
+    if (typeof eventData === 'object') {
+      parsed = eventData;
+    } else if (typeof eventData === 'string') {
+      // If it's a string, try to parse it
+      try {
+        parsed = JSON.parse(eventData);
+      } catch {
+        return eventData; // Return the string as-is if it's not valid JSON
       }
-      return String(parsed);
-    } catch {
-      return eventData;
+    } else {
+      return String(eventData);
     }
+
+    // Format the parsed object
+    if (typeof parsed === 'object' && parsed !== null) {
+      return Object.entries(parsed)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(', ');
+    }
+
+    return String(parsed);
   };
 
-  const parseEventData = (eventData: string | null | undefined) => {
+  const parseEventData = (eventData: string | null | undefined | object) => {
     if (!eventData) return null;
-    try {
-      return JSON.parse(eventData);
-    } catch {
-      return null;
+
+    // If it's already an object, return it
+    if (typeof eventData === 'object') {
+      return eventData;
     }
+
+    // If it's a string, try to parse it
+    if (typeof eventData === 'string') {
+      try {
+        return JSON.parse(eventData);
+      } catch {
+        return null;
+      }
+    }
+
+    return null;
   };
 
   const getEventIcon = (eventType: string) => {
@@ -235,6 +261,9 @@ function SessionMetricsModal({ open, onClose, session }: SessionMetricsModalProp
             <BarChart3 className="h-5 w-5" />
             Session Metrics: {session?.name || 'Poker Night'}
           </DialogTitle>
+          <DialogDescription>
+            View detailed analytics and event tracking for this poker session.
+          </DialogDescription>
         </DialogHeader>
 
         {loading && (
