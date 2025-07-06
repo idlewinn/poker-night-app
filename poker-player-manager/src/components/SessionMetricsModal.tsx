@@ -133,7 +133,7 @@ function SessionMetricsModal({ open, onClose, session }: SessionMetricsModalProp
       filtered = filtered.filter(event =>
         event.player_email?.toLowerCase().includes(searchLower) ||
         event.event_type.toLowerCase().includes(searchLower) ||
-        event.event_data?.toLowerCase().includes(searchLower)
+        (typeof event.event_data === 'string' && event.event_data.toLowerCase().includes(searchLower))
       );
     }
 
@@ -185,6 +185,15 @@ function SessionMetricsModal({ open, onClose, session }: SessionMetricsModalProp
       return String(parsed);
     } catch {
       return eventData;
+    }
+  };
+
+  const parseEventData = (eventData: string | null | undefined) => {
+    if (!eventData) return null;
+    try {
+      return JSON.parse(eventData);
+    } catch {
+      return null;
     }
   };
 
@@ -340,11 +349,14 @@ function SessionMetricsModal({ open, onClose, session }: SessionMetricsModalProp
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{formatEventType(event.event_type)}</span>
-                            {event.event_data?.status && (
-                              <Badge variant="outline" className="text-xs">
-                                {event.event_data.status}
-                              </Badge>
-                            )}
+                            {(() => {
+                              const parsedData = parseEventData(event.event_data);
+                              return parsedData?.status && (
+                                <Badge variant="outline" className="text-xs">
+                                  {parsedData.status}
+                                </Badge>
+                              );
+                            })()}
                           </div>
                           <div className="text-muted-foreground text-xs">
                             {event.player_email && (
