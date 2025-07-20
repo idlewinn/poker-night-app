@@ -798,7 +798,7 @@ function SessionPage(): React.JSX.Element {
   }
 
   const sessionPlayers = getSessionPlayers();
-  const { totalBuyIn } = calculateTotals();
+  const { totalBuyIn, totalCashOut } = calculateTotals();
 
   return (
     <div className={`container mx-auto py-4 px-4 ${isDashboardView ? 'max-w-full' : 'max-w-4xl'}`}>
@@ -1222,15 +1222,25 @@ function SessionPage(): React.JSX.Element {
 
         <TabsContent value="winnings" className="mt-0">
           {/* Financial Summary */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-3 gap-4 mb-6">
             <Card>
               <CardContent className="text-center py-6">
-                <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-3" />
                 <div className="text-2xl font-bold text-green-600">
                   {formatCurrency(totalBuyIn)}
                 </div>
                 <div className="text-sm text-gray-600">
                   Total Buy-In
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="text-center py-6">
+                <div className="text-2xl font-bold text-blue-600">
+                  {formatCurrency(totalCashOut)}
+                </div>
+                <div className="text-sm text-gray-600">
+                  Total Cash-Out
                 </div>
               </CardContent>
             </Card>
