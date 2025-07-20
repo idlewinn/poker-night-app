@@ -1247,7 +1247,6 @@ function SessionPage(): React.JSX.Element {
 
             <Card>
               <CardContent className="text-center py-6">
-                <User className="h-8 w-8 text-primary mx-auto mb-3" />
                 <div className="text-2xl font-bold text-primary">
                   {sessionPlayers.length}
                 </div>
