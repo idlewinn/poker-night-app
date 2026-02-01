@@ -5,6 +5,7 @@ import MainApp from './components/MainApp';
 import AnalyticsPage from './components/AnalyticsPage';
 import SessionPage from './components/SessionPage';
 import InvitePage from './components/InvitePage';
+import TestPage from './components/TestPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App(): React.JSX.Element {
@@ -60,6 +61,11 @@ function App(): React.JSX.Element {
           <Route path="/sessions/:sessionId/dashboard/:tab" element={
             <ProtectedRoute>
               <SessionPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/test" element={
+            <ProtectedRoute>
+              <TestPage />
             </ProtectedRoute>
           } />
           <Route path="/invite/:sessionId/:encodedEmail" element={<InvitePage />} />
