@@ -113,6 +113,7 @@ export async function initializePostgresDatabase(): Promise<void> {
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL,
         player_id INTEGER NOT NULL,
+        default_invite BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
         FOREIGN KEY (player_id) REFERENCES players (id) ON DELETE CASCADE,
