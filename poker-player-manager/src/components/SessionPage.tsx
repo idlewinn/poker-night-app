@@ -1011,36 +1011,41 @@ function SessionPage(): React.JSX.Element {
 
       {/* Dashboard View */}
       {isDashboardView ? (
-        <div className="bg-gray-900 fixed inset-0 p-3 sm:p-4 overflow-hidden">
+        <div className="bg-poker-navy dark:bg-background fixed inset-0 p-3 sm:p-4 overflow-hidden">
           <div className="flex flex-col h-full">
             {/* Dashboard Header */}
             <div className="flex items-center justify-between mb-3 flex-shrink-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-white truncate mr-4">
-                {session.name || 'Poker Night'} - Dashboard
+              <h1 className="text-xl sm:text-2xl font-bold text-white dark:text-foreground truncate mr-4 flex items-center gap-2">
+                <span className="text-poker-gold">♠</span>
+                {session.name || 'Poker Night'}
+                <span className="text-sm font-normal text-white/70 dark:text-foreground/70">LIVE DASHBOARD</span>
               </h1>
               <Button
                 onClick={toggleDashboardView}
                 variant="outline"
-                className="bg-white text-gray-900 hover:bg-gray-100 flex-shrink-0"
+                className="bg-white dark:bg-card text-poker-navy dark:text-foreground hover:bg-white/90 dark:hover:bg-card/90 flex-shrink-0 border-poker-gold/30"
                 size="sm"
               >
                 <Minimize2 className="h-4 w-4 mr-2" />
-                Exit Dashboard
+                Exit
               </Button>
             </div>
 
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 min-h-0 overflow-hidden">
               {/* Player Buy-ins - Full Height */}
-              <Card className="md:col-span-2 lg:col-span-1 flex flex-col min-h-0">
-                <div className="p-2 sm:p-3 bg-green-600 text-white flex-shrink-0 rounded-t-lg">
+              <Card className="md:col-span-2 lg:col-span-1 flex flex-col min-h-0 border-poker-gold/20">
+                <div className="p-2 sm:p-3 bg-gradient-to-br from-primary to-poker-felt-light text-white flex-shrink-0 rounded-t-lg">
                   <div className="flex items-center justify-between">
                     <div className="text-center flex-1">
-                      <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-1" />
-                      <div className="text-xl sm:text-2xl font-bold mb-1">
+                      <div className="flex items-center justify-center gap-2 mb-1">
+                        <span className="text-poker-gold text-2xl">💰</span>
+                        <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" />
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-bold mb-1 text-poker-gold tabular-nums">
                         {formatCurrency(getTotalBuyIns())}
                       </div>
-                      <div className="text-xs sm:text-sm">
-                        Total Buy-ins ({sessionPlayers.length} players)
+                      <div className="text-xs sm:text-sm opacity-90">
+                        Total Buy-ins • {sessionPlayers.length} Players
                       </div>
                     </div>
                     {isSessionOwner() && (
@@ -1048,7 +1053,7 @@ function SessionPage(): React.JSX.Element {
                         onClick={() => setAddPlayerModalOpen(true)}
                         size="sm"
                         variant="ghost"
-                        className="text-white hover:bg-green-700 p-2"
+                        className="text-white hover:bg-white/20 p-2"
                         title="Add Player"
                       >
                         <Plus className="h-4 w-4" />
@@ -1130,13 +1135,16 @@ function SessionPage(): React.JSX.Element {
               </Card>
 
               {/* Bomb Pot Timer */}
-              <Card className="flex flex-col min-h-0">
+              <Card className="flex flex-col min-h-0 border-orange-500/30 bg-gradient-to-br from-card to-orange-50 dark:to-orange-950/20">
                 <CardContent className="flex-1 flex flex-col justify-center p-2 sm:p-3 text-center">
-                  <Timer className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600 mx-auto mb-1" />
-                  <div className="text-2xl sm:text-3xl font-bold text-orange-600 mb-1 tabular-nums">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <span className="text-2xl">💣</span>
+                    <Timer className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600" />
+                  </div>
+                  <div className="text-3xl sm:text-4xl font-bold text-orange-600 mb-2 tabular-nums">
                     {formatTime(bombPotTimeLeft)}
                   </div>
-                  <div className="text-xs sm:text-sm text-gray-600 mb-3">
+                  <div className="text-xs sm:text-sm text-muted-foreground mb-3 font-medium">
                     {bombPotRunning ? '💣 Next Bomb Pot' : (bombPotEverStarted ? '⏸️ Paused' : '✓ Ready')}
                   </div>
                   
@@ -1201,12 +1209,13 @@ function SessionPage(): React.JSX.Element {
               </Card>
 
               {/* Current Seating Chart - Single Table View with Navigation */}
-              <Card className="flex flex-col min-h-0">
-                <div className="p-2 sm:p-3 bg-blue-600 text-white flex-shrink-0 rounded-t-lg">
+              <Card className="flex flex-col min-h-0 border-primary/30">
+                <div className="p-2 sm:p-3 bg-gradient-to-br from-primary to-poker-felt-light text-white flex-shrink-0 rounded-t-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Users className="h-6 w-6 sm:h-8 sm:w-8" />
-                      <div className="text-base sm:text-lg font-bold">Current Seating</div>
+                      <span className="text-xl">🎰</span>
+                      <Users className="h-5 w-5 sm:h-6 sm:w-6" />
+                      <div className="text-base sm:text-lg font-bold">Seating</div>
                     </div>
                     {(() => {
                       const currentChart = getCurrentSeatingChart();
