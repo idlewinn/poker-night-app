@@ -55,6 +55,7 @@ export async function initializePostgresDatabase(): Promise<void> {
         name VARCHAR(255) NOT NULL,
         scheduled_datetime TIMESTAMP,
         timezone VARCHAR(100) DEFAULT 'America/Los_Angeles',
+        game_type VARCHAR(50) DEFAULT 'cash',
         created_by INTEGER NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE CASCADE
@@ -162,6 +163,19 @@ export async function initializePostgresDatabase(): Promise<void> {
       }
     } catch (migrationError) {
       console.error('Error during timezone migration:', migrationError);
+    }
+
+    // Migration: Add game_type column if it doesn't exist
+    try {
+      await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS game_type VARCHAR(50) DEFAULT 'cash'`);
+
+      // Update any NULL values
+      const result = await client.query(`UPDATE sessions SET game_type = 'cash' WHERE game_type IS NULL`);
+      if (result.rowCount && result.rowCount > 0) {
+        console.log(`Successfully migrated ${result.rowCount} existing sessions to cash game type`);
+      }
+    } catch (migrationError) {
+      console.error('Error during game_type migration:', migrationError);
     }
 
   } catch (error) {
