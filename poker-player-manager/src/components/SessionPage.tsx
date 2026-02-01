@@ -1351,8 +1351,8 @@ function SessionPage(): React.JSX.Element {
 
           {/* Player Financial Details */}
           <Card className="overflow-hidden">
-            <div className="p-4 bg-primary text-primary-foreground">
-              <h3 className="text-lg font-bold">
+            <div className="p-4 bg-gradient-to-r from-primary/10 to-primary/20 dark:from-primary dark:to-poker-felt-light border-b-2 border-primary/20 dark:border-primary/50">
+              <h3 className="text-lg font-bold text-primary dark:text-primary-foreground">
                 Winnings
               </h3>
             </div>
@@ -1552,8 +1552,8 @@ function SessionPage(): React.JSX.Element {
 
               {/* Timer Settings */}
               <Card>
-                <div className="p-4 bg-primary text-primary-foreground">
-                  <h3 className="text-lg font-bold flex items-center gap-2">
+                <div className="p-4 bg-gradient-to-r from-primary/10 to-primary/20 dark:from-primary dark:to-poker-felt-light border-b-2 border-primary/20 dark:border-primary/50">
+                  <h3 className="text-lg font-bold flex items-center gap-2 text-primary dark:text-primary-foreground">
                     <Settings className="h-5 w-5" />
                     Timer Settings
                   </h3>

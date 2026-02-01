@@ -78,14 +78,14 @@ function PokerTable({ table, variant = 'default' }: PokerTableProps): React.JSX.
           const isRightSide = adjustedX > 50;
           const badgePosition = isRightSide ? "-top-1 -left-1" : "-top-1 -right-1";
 
-          // Scale down player cards for crowded tables
+          // Scale down player cards for crowded tables - always light like poker chips
           const cardSizeClasses = isCrowded
-            ? "bg-white/95 backdrop-blur-sm border-2 border-gray-300 shadow-lg min-w-[60px] md:min-w-[70px] lg:min-w-[80px] max-w-[80px] md:max-w-[90px] lg:max-w-[100px]"
-            : "bg-white/95 backdrop-blur-sm border-2 border-gray-300 shadow-lg min-w-[80px] md:min-w-[100px] lg:min-w-[120px] xl:min-w-[140px] max-w-[140px] md:max-w-[160px] lg:max-w-[180px]";
+            ? "bg-white/95 dark:bg-white/90 backdrop-blur-sm border-2 border-gray-300 dark:border-gray-400 shadow-lg min-w-[60px] md:min-w-[70px] lg:min-w-[80px] max-w-[80px] md:max-w-[90px] lg:max-w-[100px]"
+            : "bg-white/95 dark:bg-white/90 backdrop-blur-sm border-2 border-gray-300 dark:border-gray-400 shadow-lg min-w-[80px] md:min-w-[100px] lg:min-w-[120px] xl:min-w-[140px] max-w-[140px] md:max-w-[160px] lg:max-w-[180px]";
 
           const textSizeClasses = isCrowded
-            ? "text-xs md:text-sm font-semibold text-foreground truncate"
-            : "text-sm md:text-base lg:text-lg font-semibold text-foreground truncate";
+            ? "text-xs md:text-sm font-semibold text-gray-900 dark:text-gray-900 truncate"
+            : "text-sm md:text-base lg:text-lg font-semibold text-gray-900 dark:text-gray-900 truncate";
 
           const paddingClasses = isCrowded ? "p-1 md:p-2" : "p-2 md:p-3";
 
