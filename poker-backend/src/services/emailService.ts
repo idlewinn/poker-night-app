@@ -89,7 +89,7 @@ class EmailService {
       const dateText = data.session.scheduled_datetime ? ` - ${formatDateForSubject(data.session.scheduled_datetime)}` : '';
 
       const mailOptions = {
-        from: `"Poker Night" <${process.env.EMAIL_USER}>`,
+        from: `"Poker Night" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
         to: data.player.email,
         subject: `🃏 You're invited to ${data.session.name || 'Poker Night'}${dateText}`,
         text: emailText,
@@ -176,7 +176,7 @@ class EmailService {
       const dateText = data.session.scheduled_datetime ? ` - ${formatDateForSubject(data.session.scheduled_datetime)}` : '';
 
       const mailOptions = {
-        from: `"Poker Night" <${process.env.EMAIL_USER}>`,
+        from: `"Poker Night" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
         to: data.player.email,
         subject: `🔔 Reminder: Please respond to ${data.session.name || 'Poker Night'}${dateText}`,
         text: emailText,

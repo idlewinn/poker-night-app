@@ -32,11 +32,15 @@ EMAIL_HOST=smtp.resend.com
 EMAIL_PORT=587
 EMAIL_USER=resend
 EMAIL_PASS=re_YourAPIKey_Here  # Your actual Resend API key
+EMAIL_FROM=onboarding@resend.dev  # Or your verified domain email
 ```
 
 **Important:** 
-- `EMAIL_USER` is literally the word `resend` (not your email)
+- `EMAIL_USER` is literally the word `resend` (not your email) - for SMTP authentication
 - `EMAIL_PASS` is your Resend API key (starts with `re_`)
+- `EMAIL_FROM` is the sender email address:
+  - Use `onboarding@resend.dev` for testing (works immediately)
+  - OR use `noreply@famylin.com` if you verified your domain
 
 ### 5. Restart Backend
 
