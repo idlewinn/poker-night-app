@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import MainApp from './components/MainApp';
@@ -8,6 +8,16 @@ import InvitePage from './components/InvitePage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App(): React.JSX.Element {
+  // Initialize theme on app load
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('poker-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+    
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(theme);
+  }, []);
+
   return (
     <AuthProvider>
       <div className="min-h-screen bg-background text-foreground">

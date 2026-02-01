@@ -11,8 +11,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, ChevronDown, BarChart3 } from 'lucide-react';
+import { LogOut, ChevronDown, BarChart3, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../hooks/useTheme';
 import { Session } from '../types/index';
 
 interface UserMenuProps {
@@ -21,6 +22,7 @@ interface UserMenuProps {
 
 function UserMenu({ sessions = [] }: UserMenuProps): React.JSX.Element {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   if (!user) {
@@ -86,6 +88,22 @@ function UserMenu({ sessions = [] }: UserMenuProps): React.JSX.Element {
             <DropdownMenuSeparator />
           </>
         )}
+
+        <DropdownMenuItem onClick={toggleTheme}>
+          {theme === 'light' ? (
+            <>
+              <Moon className="h-4 w-4 mr-2" />
+              Dark Mode
+            </>
+          ) : (
+            <>
+              <Sun className="h-4 w-4 mr-2" />
+              Light Mode
+            </>
+          )}
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
 
         <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600">
           <LogOut className="h-4 w-4 mr-2" />
