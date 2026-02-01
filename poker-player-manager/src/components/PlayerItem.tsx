@@ -160,7 +160,7 @@ function PlayerItem({ player, onRemove, onRename, onViewDetails, onToggleDefault
               </div>
               <div className="flex-1 min-w-0">
                 <h3
-                  className="font-semibold text-gray-900 leading-tight truncate mb-1"
+                  className="font-semibold text-foreground leading-tight truncate mb-1"
                   title={player.name}
                 >
                   {player.name}

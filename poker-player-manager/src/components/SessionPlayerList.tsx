@@ -121,7 +121,7 @@ function SessionPlayerList({
                 </div>
 
                 <div className="flex-1 min-w-0 mr-2">
-                  <h4 className="text-sm sm:text-base font-medium text-gray-900 truncate">
+                  <h4 className="text-sm sm:text-base font-medium text-foreground truncate">
                     {player.name}
                   </h4>
                 </div>

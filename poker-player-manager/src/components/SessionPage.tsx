@@ -845,7 +845,7 @@ function SessionPage(): React.JSX.Element {
           </div>
 
           {session.scheduledDateTime && (
-            <h2 className="text-gray-600 mb-2 ml-14">
+            <h2 className="text-muted-foreground mb-2 ml-14">
               {formatScheduledDate(session.scheduledDateTime)}
             </h2>
           )}
@@ -1064,7 +1064,7 @@ function SessionPage(): React.JSX.Element {
                 <CardContent className="flex-1 p-0 overflow-hidden min-h-0">
                   <div className="h-full overflow-y-auto">
                     <Table>
-                      <TableHeader className="sticky top-0 bg-white">
+                      <TableHeader className="sticky top-0 bg-card dark:bg-card">
                         <TableRow>
                           <TableHead className="py-2 text-sm font-semibold">Player</TableHead>
                           <TableHead className="py-2 text-sm font-semibold text-right">Buy-In</TableHead>
@@ -1080,12 +1080,12 @@ function SessionPage(): React.JSX.Element {
                             return (
                               <TableRow
                                 key={sessionPlayer.player_id}
-                                className={`${isSessionOwner() ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+                                className={`${isSessionOwner() ? 'cursor-pointer hover:bg-accent/50' : ''}`}
                                 onClick={() => isSessionOwner() && !isEditing && handleEditFinancials(sessionPlayer)}
                                 data-editing-row={isEditing ? 'true' : undefined}
                               >
                                 <TableCell className="py-2">
-                                  <div className="text-sm font-medium text-gray-900">
+                                  <div className="text-sm font-medium text-foreground">
                                     {player?.name || 'Unknown Player'}
                                   </div>
                                 </TableCell>
@@ -1385,15 +1385,15 @@ function SessionPage(): React.JSX.Element {
                       <TableRow
                         key={sessionPlayer.player_id}
                         className={`
-                          ${!editingFinancials && isSessionOwner() ? 'cursor-pointer hover:bg-gray-50' : ''}
-                          ${editingFinancials?.playerId === sessionPlayer.player_id ? 'bg-blue-50 border-l-4 border-blue-500' : ''}
+                          ${!editingFinancials && isSessionOwner() ? 'cursor-pointer hover:bg-accent/50' : ''}
+                          ${editingFinancials?.playerId === sessionPlayer.player_id ? 'bg-accent border-l-4 border-primary' : ''}
                           ${editingFinancials && editingFinancials.playerId !== sessionPlayer.player_id ? 'opacity-50' : ''}
                         `}
                         onClick={() => !editingFinancials && isSessionOwner() && handleEditFinancials(sessionPlayer)}
                         data-editing-row={editingFinancials?.playerId === sessionPlayer.player_id ? 'true' : undefined}
                       >
                         <TableCell className="py-3">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-foreground">
                             {player?.name || 'Unknown Player'}
                           </div>
                         </TableCell>
@@ -1634,7 +1634,7 @@ function SessionPage(): React.JSX.Element {
             </DialogHeader>
 
             <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 min-h-0">
-              <p className="text-xs sm:text-sm text-gray-600">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Select a player to add or change their status to "In".
               </p>
 
@@ -1654,9 +1654,9 @@ function SessionPage(): React.JSX.Element {
                 {getAvailablePlayersToAdd().map((player) => (
                   <div key={player.id} className="flex items-center justify-between p-2 sm:p-3 border border-gray-200 rounded-lg">
                     <div className="flex items-center flex-1 min-w-0 mr-2">
-                      <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 mr-1 sm:mr-2 flex-shrink-0" />
+                      <User className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground mr-1 sm:mr-2 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <div className="font-medium text-gray-900 text-sm sm:text-base truncate">{player.name}</div>
+                        <div className="font-medium text-foreground text-sm sm:text-base truncate">{player.name}</div>
                       </div>
                     </div>
                     <Button

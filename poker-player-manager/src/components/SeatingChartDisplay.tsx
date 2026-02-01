@@ -62,7 +62,7 @@ function SeatingChartDisplay({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+            <h3 className="text-lg font-semibold text-foreground mb-1">
               {seatingChart.name}
             </h3>
             <div className="flex items-center gap-4 text-sm text-gray-600">

@@ -84,8 +84,8 @@ function PokerTable({ table, variant = 'default' }: PokerTableProps): React.JSX.
             : "bg-white/95 backdrop-blur-sm border-2 border-gray-300 shadow-lg min-w-[80px] md:min-w-[100px] lg:min-w-[120px] xl:min-w-[140px] max-w-[140px] md:max-w-[160px] lg:max-w-[180px]";
 
           const textSizeClasses = isCrowded
-            ? "text-xs md:text-sm font-semibold text-gray-900 truncate"
-            : "text-sm md:text-base lg:text-lg font-semibold text-gray-900 truncate";
+            ? "text-xs md:text-sm font-semibold text-foreground truncate"
+            : "text-sm md:text-base lg:text-lg font-semibold text-foreground truncate";
 
           const paddingClasses = isCrowded ? "p-1 md:p-2" : "p-2 md:p-3";
 

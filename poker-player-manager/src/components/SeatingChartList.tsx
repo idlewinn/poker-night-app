@@ -40,7 +40,7 @@ function SeatingChartList({
       <Card>
         <CardContent className="p-6 text-center">
           <Shuffle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Seating Charts</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-2">No Seating Charts</h3>
           <p className="text-gray-600 mb-6">
             {isOwner
               ? "Generate seating arrangements for your poker tables to organize players efficiently."
@@ -63,7 +63,7 @@ function SeatingChartList({
       {/* Header with Generate Button */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-foreground">
             Seating Charts ({seatingCharts.length})
           </h3>
           <p className="text-sm text-gray-600">
