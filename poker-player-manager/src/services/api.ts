@@ -24,10 +24,14 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
   // Get auth headers at request time (not at function definition time)
   const authHeaders = getAuthHeaders();
 
+  // Development mode bypass: Add header to auto-authenticate when running locally
+  const devBypassHeaders = import.meta.env.DEV ? { 'x-dev-bypass': 'true' } : {};
+
   const config: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
       ...authHeaders,
+      ...devBypassHeaders,
       ...options.headers,
     },
     ...options,

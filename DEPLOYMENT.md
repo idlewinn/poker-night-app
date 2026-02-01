@@ -1,201 +1,211 @@
-# 🚀 Deployment Guide - Poker Night App
+# Poker Night App - Deployment Documentation
 
-This guide will help you deploy your Poker Night app to the cloud using Railway (recommended) or other services.
+## Overview
 
-## 🛤️ Railway Deployment (Recommended)
+The Poker Night App has been deployed to Railway with a custom domain (famylin.com).
 
-Railway is perfect for this full-stack TypeScript app with automatic deployments and database support.
+**Deployment Date:** January 31, 2026  
+**Deployed By:** Ollie (AI Assistant)
 
-### Prerequisites
-- GitHub account
-- Railway account (free at [railway.app](https://railway.app))
+---
 
-### Step 1: Push to GitHub
+## Production URLs
 
-1. **Create a new repository** on GitHub (e.g., `poker-night-app`)
-2. **Push your code:**
-   ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/poker-night-app.git
-   git branch -M main
-   git push -u origin main
-   ```
+- **Primary:** https://famylin.com
+- **WWW:** https://www.famylin.com  
+- **Railway Domain:** https://poker-night-app-production-985f.up.railway.app
 
-### Step 2: Deploy Backend to Railway
+---
 
-1. **Go to [railway.app](https://railway.app)** and sign in with GitHub
-2. **Click "New Project"** → **"Deploy from GitHub repo"**
-3. **Select your repository** and choose **"poker-backend"** folder
-4. **Railway will automatically:**
-   - Detect Node.js/TypeScript
-   - Install dependencies
-   - Build TypeScript
-   - Start the server
+## Backend Deployment (Railway)
 
-5. **Set environment variables** (if needed):
-   - `NODE_ENV=production`
-   - `PORT` (Railway sets this automatically)
+### Service Details
+- **Platform:** Railway
+- **Project:** poker-night-app
+- **Service:** poker-night-app-production-985f
+- **Region:** us-west1
+- **Runtime:** Node.js (detected from package.json)
 
-6. **Get your backend URL** (e.g., `https://your-app-name.railway.app`)
+### Configuration Files
+All Railway configuration is defined in `railway.json`:
 
-### Step 3: Deploy Frontend to Vercel
-
-1. **Go to [vercel.com](https://vercel.com)** and sign in with GitHub
-2. **Click "New Project"** → **Import your repository**
-3. **Configure build settings:**
-   - **Root Directory:** `poker-player-manager`
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
-
-4. **Set environment variables:**
-   - Create `VITE_API_URL` with your Railway backend URL
-
-5. **Deploy** - Vercel will build and deploy automatically
-
-### Step 4: Update Frontend API URL
-
-Update your frontend to use the deployed backend:
-
-```typescript
-// poker-player-manager/src/services/api.ts
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+```json
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "npm ci && npm run build"
+  },
+  "deploy": {
+    "startCommand": "npm start",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 300,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
+}
 ```
 
-## 🔄 Alternative Deployment Options
+### Environment Variables
+The following environment variables are configured in Railway:
+- `NODE_ENV=production`
+- `PORT=3000` (Railway auto-assigns)
+- Database credentials (if applicable)
 
-### Option 2: Render (Free Tier)
+### Build Process
+1. Railway detects Node.js from `package.json`
+2. Runs `npm ci && npm run build`
+3. Starts with `npm start`
+4. Health check endpoint: `/health`
 
-**Backend:**
-1. Go to [render.com](https://render.com)
-2. Create "New Web Service"
-3. Connect GitHub repository
-4. Settings:
-   - **Root Directory:** `poker-backend`
-   - **Build Command:** `npm run build`
-   - **Start Command:** `npm start`
+---
 
-**Frontend:**
-1. Create "New Static Site"
-2. Settings:
-   - **Root Directory:** `poker-player-manager`
-   - **Build Command:** `npm run build`
-   - **Publish Directory:** `dist`
+## Custom Domain Setup
 
-### Option 3: Netlify + Railway
+### Domain Purchase
+- **Domain:** famylin.com
+- **Registrar:** Namecheap
+- **Purchase Date:** January 31, 2026
+- **Cost:** $8.88/year (first year)
+- **Renewal:** Auto-renew enabled (annually ~$13.98)
+- **Account:** edwinlin1987@gmail.com
 
-**Backend:** Deploy to Railway (same as above)
-**Frontend:** Deploy to Netlify
-1. Go to [netlify.com](https://netlify.com)
-2. Drag and drop your `poker-player-manager/dist` folder
-3. Or connect GitHub for automatic deployments
+### DNS Configuration
 
-## 🔧 Environment Variables
+Configured in Namecheap Advanced DNS:
 
-### Backend (.env)
-```env
-NODE_ENV=production
-PORT=3001
+| Type | Host | Value | TTL |
+|------|------|-------|-----|
+| A Record | @ | 216.198.79.1 | Automatic |
+| CNAME Record | www | poker-night-app-production-985f.up.railway.app | 30 min |
+
+**Notes:**
+- The A record points the root domain (famylin.com) to Railway's IP address
+- The CNAME record points www.famylin.com to the Railway deployment
+- Clean configuration with no redirect conflicts
+
+### Railway Custom Domain Settings
+1. Added custom domain in Railway dashboard: `famylin.com`
+2. Railway automatically provides SSL certificate via Let's Encrypt
+3. HTTPS is enforced automatically
+
+---
+
+## Propagation & Testing
+
+### DNS Propagation
+DNS changes can take 24-48 hours to fully propagate worldwide. Check status:
+```bash
+# Check DNS propagation
+dig famylin.com
+dig www.famylin.com
+
+# Check from specific DNS server
+dig @8.8.8.8 famylin.com
 ```
 
-### Frontend
-```env
-VITE_API_URL=https://your-backend-url.railway.app/api
+### Testing Endpoints
+```bash
+# Test health check
+curl https://famylin.com/health
+
+# Test with www
+curl https://www.famylin.com/health
+
+# Test direct Railway URL
+curl https://poker-night-app-production-985f.up.railway.app/health
 ```
 
-## 📊 Database Considerations
+---
 
-### SQLite (Current Setup)
-- ✅ **Works great** for Railway/Render
-- ✅ **No additional setup** required
-- ✅ **File-based** storage
-- ⚠️ **Single instance** limitation
+## Monitoring & Logs
 
-### Upgrade to PostgreSQL (Optional)
-For production scale, consider upgrading:
+### Railway Dashboard
+Access logs and metrics at:
+https://railway.app/project/poker-night-app-production-985f
 
-1. **Railway PostgreSQL:**
-   - Add PostgreSQL service in Railway
-   - Update connection string
-   - Migrate schema
+### Health Check
+- **Endpoint:** `/health`
+- **Timeout:** 300 seconds
+- **Expected Response:** HTTP 200
 
-2. **Supabase:**
-   - Free PostgreSQL hosting
-   - Built-in API features
-   - Real-time subscriptions
+### Restart Policy
+- **Type:** ON_FAILURE
+- **Max Retries:** 10
 
-## 🚀 Deployment Checklist
+---
 
-### Pre-deployment
-- [ ] Code committed to Git
-- [ ] TypeScript compiles without errors
-- [ ] Environment variables configured
-- [ ] API endpoints tested locally
+## Future Improvements
 
-### Backend Deployment
-- [ ] Railway/Render service created
-- [ ] Build succeeds
-- [ ] Health check endpoint working
-- [ ] Database initializes correctly
+### Short-term
+1. **Test SSL Certificate**: Verify Let's Encrypt SSL certificate is properly issued for both famylin.com and www.famylin.com
+2. **Monitor DNS Propagation**: Check that DNS changes have propagated globally (24-48 hours)
+3. **Test Production Endpoints**: Verify all app functionality works on the custom domain
 
-### Frontend Deployment
-- [ ] Vercel/Netlify service created
-- [ ] Build succeeds
-- [ ] API URL updated
-- [ ] App loads and connects to backend
+### Long-term
+1. **Set up monitoring**: Consider adding Uptime Robot or similar service
+2. **Configure CDN**: Add Cloudflare for performance and security
+3. **Database backups**: Ensure automated backups are configured
+4. **CI/CD Pipeline**: Set up automated deployments from GitHub
 
-### Post-deployment
-- [ ] Test all CRUD operations
-- [ ] Verify data persistence
-- [ ] Check error handling
-- [ ] Test on mobile devices
+---
 
-## 🔍 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
-**Backend won't start:**
-- Check build logs for TypeScript errors
-- Verify all dependencies are in package.json
-- Check environment variables
+**Domain not resolving:**
+- Check DNS propagation status
+- Verify A record points to 216.198.79.1
+- Wait 24-48 hours for full propagation
 
-**Frontend can't connect to backend:**
-- Verify API URL is correct
-- Check CORS settings
-- Ensure backend is running
+**SSL certificate issues:**
+- Railway automatically provisions Let's Encrypt certificates
+- May take a few minutes after DNS propagation
+- Check Railway dashboard for certificate status
 
-**Database issues:**
-- Check file permissions for SQLite
-- Verify database directory exists
-- Check initialization logs
+**App not responding:**
+- Check Railway logs for errors
+- Verify health check endpoint is working
+- Check restart policy hasn't exceeded max retries
 
-### Useful Commands
+### Support Resources
+- **Railway Documentation:** https://docs.railway.app
+- **Namecheap Support:** https://www.namecheap.com/support/
+- **DNS Checker:** https://dnschecker.org/
 
-```bash
-# Test backend locally
-cd poker-backend && npm run build && npm start
+---
 
-# Test frontend build
-cd poker-player-manager && npm run build && npm run preview
+## Costs Summary
 
-# Check backend health
-curl https://your-backend-url.railway.app/api/health
-```
+### One-time
+- Domain registration: $8.88 (first year)
 
-## 🎯 Next Steps
+### Recurring
+- Domain renewal: ~$13.98/year (Namecheap)
+- Railway hosting: Variable based on usage (free tier available)
 
-After successful deployment:
+### Total Estimated Annual Cost
+- **Year 1:** ~$8.88 + Railway costs
+- **Year 2+:** ~$13.98 + Railway costs
 
-1. **Custom Domain:** Add your own domain in Railway/Vercel
-2. **SSL Certificate:** Automatically provided by hosting services
-3. **Monitoring:** Set up uptime monitoring
-4. **Analytics:** Add Google Analytics or similar
-5. **Error Tracking:** Consider Sentry for error monitoring
+---
 
-## 💡 Pro Tips
+## Deployment Checklist
 
-- **Use Railway for backend** - excellent Node.js support
-- **Use Vercel for frontend** - optimized for React/Vite
-- **Enable automatic deployments** from GitHub
-- **Set up staging environments** for testing
-- **Monitor your usage** to stay within free tiers
+- [x] Backend deployed to Railway
+- [x] Custom domain purchased (famylin.com)
+- [x] DNS A record configured (@ → 216.198.79.1)
+- [x] DNS CNAME record configured (www → Railway domain)
+- [x] DNS configuration cleaned (redirect conflicts removed)
+- [x] Custom domain added in Railway
+- [ ] SSL certificate verified (auto-provisioned by Railway)
+- [ ] DNS propagation complete (wait 24-48 hours)
+- [ ] Health check endpoint tested
+- [ ] Production testing complete
+- [ ] Monitoring configured
+- [ ] Backups configured
 
-Your Poker Night app is now ready for the world! 🌍🃏
+---
+
+**Last Updated:** January 31, 2026, 4:45 PM PST

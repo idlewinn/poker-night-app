@@ -12,6 +12,35 @@ interface AuthenticatedRequest extends Request {
 
 const router = express.Router();
 
+// DEV MODE ONLY: Auto-login as first user
+router.get('/dev-login', async (req: Request, res: Response) => {
+  if (process.env.NODE_ENV === 'production') {
+    res.status(403).json({ error: 'Dev login only available in development mode' });
+    return;
+  }
+
+  try {
+    const db = require('../database/index').default;
+    const users = await db.all('SELECT * FROM users LIMIT 1');
+    
+    if (!users || users.length === 0) {
+      res.status(404).json({ error: 'No users found in database' });
+      return;
+    }
+
+    const user = users[0];
+    const token = generateJWT(user);
+    
+    console.log('🔓 Dev login: Auto-authenticated as', user.email);
+    
+    // Redirect to frontend with token
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}?token=${token}`);
+  } catch (error) {
+    console.error('Dev login error:', error);
+    res.status(500).json({ error: 'Dev login failed' });
+  }
+});
+
 // Google OAuth login
 router.get('/google', passport.authenticate('google', {
   scope: ['profile', 'email']

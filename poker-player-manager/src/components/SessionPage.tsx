@@ -190,7 +190,6 @@ function SessionPage(): React.JSX.Element {
 
   const [bombPotTimerModalOpen, setBombPotTimerModalOpen] = useState<boolean>(false);
   const [currentTableIndex, setCurrentTableIndex] = useState<number>(0);
-  const [dashboardUpdateFlash, setDashboardUpdateFlash] = useState<boolean>(false);
   const [playerSearchQuery, setPlayerSearchQuery] = useState<string>('');
 
   // Audio context for alarm sound - needs to be initialized after user interaction
@@ -331,17 +330,6 @@ function SessionPage(): React.JSX.Element {
 
           if (response.ok) {
             const updatedSession = await response.json();
-
-            // Check if data actually changed to trigger animation
-            const currentPlayerData = JSON.stringify(session?.players?.map((p: any) => ({ id: p.player_id, buy_in: p.buy_in })).sort((a: any, b: any) => b.buy_in - a.buy_in));
-            const newPlayerData = JSON.stringify(updatedSession?.players?.map((p: any) => ({ id: p.player_id, buy_in: p.buy_in })).sort((a: any, b: any) => b.buy_in - a.buy_in));
-
-            if (currentPlayerData !== newPlayerData) {
-              // Trigger flash animation for visual feedback
-              setDashboardUpdateFlash(true);
-              setTimeout(() => setDashboardUpdateFlash(false), 1000);
-            }
-
             setSession(updatedSession);
           }
         } catch (error) {
@@ -409,12 +397,6 @@ function SessionPage(): React.JSX.Element {
       // Update via API
       await sessionsApi.updatePlayerFinancials(session.id, financialsToSave.playerId, { buy_in, cash_out });
 
-      // Trigger dashboard animation if in dashboard view
-      if (isDashboardView) {
-        setDashboardUpdateFlash(true);
-        setTimeout(() => setDashboardUpdateFlash(false), 1000);
-      }
-
       // Update local state
       if (session.players) {
         const updatedPlayers = session.players.map(sp =>
@@ -447,12 +429,6 @@ function SessionPage(): React.JSX.Element {
     try {
       setUpdating(true);
       await sessionsApi.addPlayerToSession(session.id, playerId, 'In');
-
-      // Trigger dashboard animation if in dashboard view
-      if (isDashboardView) {
-        setDashboardUpdateFlash(true);
-        setTimeout(() => setDashboardUpdateFlash(false), 1000);
-      }
 
       // Refresh session data
       const updatedSession = await sessionsApi.getById(session.id);
@@ -877,16 +853,45 @@ function SessionPage(): React.JSX.Element {
       </Card>
       )}
 
-      {/* Bomb Pot Timer Alert Overlay */}
+      {/* Bomb Pot Timer Alert Banner */}
       {bombPotAlert && (
-        <div
-          className="fixed inset-0 bg-red-500 bg-opacity-90 flex items-center justify-center z-50 animate-pulse cursor-pointer"
-          onClick={acknowledgeBombPotAlert}
-        >
-          <div className="text-center text-white pointer-events-none">
-            <div className="text-6xl font-bold mb-4">💣 BOMB POT! 💣</div>
-            <div className="text-2xl">Time for a Bomb Pot!</div>
-            <div className="text-lg mt-4">Click anywhere to acknowledge and restart timer</div>
+        <div className="fixed top-0 left-0 right-0 z-50 animate-bounce">
+          <div className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 text-white shadow-2xl border-b-4 border-orange-600">
+            <div className="container mx-auto px-4 py-6">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4 text-center sm:text-left">
+                  <div className="text-5xl sm:text-6xl animate-pulse">💣</div>
+                  <div>
+                    <div className="text-2xl sm:text-3xl font-bold mb-1">BOMB POT TIME!</div>
+                    <div className="text-sm sm:text-base opacity-90">It's time for a bomb pot round</div>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={acknowledgeBombPotAlert}
+                    size="lg"
+                    className="bg-white text-orange-600 hover:bg-orange-50 font-bold shadow-lg"
+                  >
+                    Start Next Round
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setBombPotAlert(false);
+                      if (alarmInterval) {
+                        clearInterval(alarmInterval);
+                        setAlarmInterval(null);
+                      }
+                      setBombPotRunning(false);
+                    }}
+                    size="lg"
+                    variant="outline"
+                    className="bg-white/10 text-white border-white hover:bg-white/20"
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -895,17 +900,64 @@ function SessionPage(): React.JSX.Element {
       {!isDashboardView && isSessionOwner() && (bombPotRunning || bombPotTimeLeft < bombPotInterval * 60) && (
         <Card className={`mb-4 border-2 ${bombPotRunning ? 'border-orange-400 bg-orange-50' : 'border-gray-300 bg-gray-50'}`}>
           <CardContent className="py-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <Timer className={`h-5 w-5 ${bombPotRunning ? 'text-orange-600' : 'text-gray-500'}`} />
-                <span className={`font-medium ${bombPotRunning ? 'text-orange-800' : 'text-gray-600'}`}>
-                  Bomb Pot Timer {!bombPotRunning && '(Paused)'}
-                </span>
+                <div>
+                  <div className={`font-medium ${bombPotRunning ? 'text-orange-800' : 'text-gray-600'}`}>
+                    💣 Bomb Pot Timer
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {bombPotRunning ? 'Running' : bombPotEverStarted ? 'Paused' : 'Ready'}
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className={`text-2xl font-bold ${bombPotRunning ? 'text-orange-600' : 'text-gray-500'}`}>
+              
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                {/* Interval Adjustment */}
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const intervals = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+                      const currentIndex = intervals.indexOf(bombPotInterval);
+                      if (currentIndex > 0 && intervals[currentIndex - 1] !== undefined) {
+                        updateBombPotInterval(intervals[currentIndex - 1]!);
+                      }
+                    }}
+                    disabled={bombPotInterval <= 5}
+                    className="h-8 px-2"
+                    title="Decrease interval"
+                  >
+                    <ChevronLeft className="h-3 w-3" />
+                  </Button>
+                  <span className="text-xs text-gray-600 min-w-[50px] text-center">
+                    {bombPotInterval} min
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const intervals = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+                      const currentIndex = intervals.indexOf(bombPotInterval);
+                      if (currentIndex >= 0 && currentIndex < intervals.length - 1 && intervals[currentIndex + 1] !== undefined) {
+                        updateBombPotInterval(intervals[currentIndex + 1]!);
+                      }
+                    }}
+                    disabled={bombPotInterval >= 60}
+                    className="h-8 px-2"
+                    title="Increase interval"
+                  >
+                    <ChevronRight className="h-3 w-3" />
+                  </Button>
+                </div>
+
+                {/* Timer Display */}
+                <div className={`text-2xl font-bold tabular-nums ${bombPotRunning ? 'text-orange-600' : 'text-gray-500'}`}>
                   {formatTime(bombPotTimeLeft)}
                 </div>
+                
                 {/* Timer Controls */}
                 <div className="flex items-center gap-1">
                   {!bombPotRunning ? (
@@ -913,20 +965,22 @@ function SessionPage(): React.JSX.Element {
                       size="sm"
                       variant="outline"
                       onClick={startBombPotTimer}
-                      className="h-8 w-8 p-0"
-                      title="Resume Timer"
+                      className="h-8 px-3"
+                      title="Start Timer"
                     >
-                      <Play className="h-3 w-3" />
+                      <Play className="h-3 w-3 mr-1" />
+                      <span className="hidden sm:inline">Start</span>
                     </Button>
                   ) : (
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={pauseBombPotTimer}
-                      className="h-8 w-8 p-0"
+                      className="h-8 px-3"
                       title="Pause Timer"
                     >
-                      <Pause className="h-3 w-3" />
+                      <Pause className="h-3 w-3 mr-1" />
+                      <span className="hidden sm:inline">Pause</span>
                     </Button>
                   )}
                   <Button
@@ -934,7 +988,7 @@ function SessionPage(): React.JSX.Element {
                     variant="outline"
                     onClick={resetBombPotTimer}
                     className="h-8 w-8 p-0"
-                    title="Reset Timer to Full Interval"
+                    title="Reset to full interval"
                   >
                     <RotateCcw className="h-3 w-3" />
                   </Button>
@@ -942,10 +996,11 @@ function SessionPage(): React.JSX.Element {
                     size="sm"
                     variant="outline"
                     onClick={cancelBombPotTimer}
-                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:border-red-300"
-                    title="Cancel Timer (Reset and Stop)"
+                    className="h-8 px-3 text-red-600 hover:text-red-700 hover:border-red-300"
+                    title="Stop timer completely"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="h-3 w-3 mr-1" />
+                    <span className="hidden sm:inline">Stop</span>
                   </Button>
                 </div>
               </div>
@@ -977,11 +1032,11 @@ function SessionPage(): React.JSX.Element {
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 min-h-0 overflow-hidden">
               {/* Player Buy-ins - Full Height */}
               <Card className="md:col-span-2 lg:col-span-1 flex flex-col min-h-0">
-                <div className={`p-2 sm:p-3 bg-green-600 text-white flex-shrink-0 rounded-t-lg transition-all duration-500 ${dashboardUpdateFlash ? 'bg-yellow-400 shadow-2xl scale-105 text-yellow-900' : ''}`}>
+                <div className="p-2 sm:p-3 bg-green-600 text-white flex-shrink-0 rounded-t-lg">
                   <div className="flex items-center justify-between">
                     <div className="text-center flex-1">
-                      <TrendingUp className={`h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-1 transition-transform duration-500 ${dashboardUpdateFlash ? 'scale-125 text-yellow-200' : ''}`} />
-                      <div className={`text-xl sm:text-2xl font-bold mb-1 transition-all duration-500 ${dashboardUpdateFlash ? 'scale-110 text-yellow-100 animate-pulse' : ''}`}>
+                      <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-1" />
+                      <div className="text-xl sm:text-2xl font-bold mb-1">
                         {formatCurrency(getTotalBuyIns())}
                       </div>
                       <div className="text-xs sm:text-sm">
@@ -1013,21 +1068,16 @@ function SessionPage(): React.JSX.Element {
                       <TableBody>
                         {sessionPlayers
                           .sort((a, b) => b.buy_in - a.buy_in) // Sort by highest buy-in first
-                          .map((sessionPlayer, index) => {
+                          .map((sessionPlayer) => {
                             const player = sessionPlayer.player;
                             const isEditing = editingFinancials?.playerId === sessionPlayer.player_id;
 
                             return (
                               <TableRow
                                 key={sessionPlayer.player_id}
-                                className={`${isSessionOwner() ? 'cursor-pointer hover:bg-gray-50' : ''} transition-all duration-700 ease-in-out ${dashboardUpdateFlash ? 'bg-yellow-100 border-l-8 border-yellow-400 shadow-lg' : ''}`}
+                                className={`${isSessionOwner() ? 'cursor-pointer hover:bg-gray-50' : ''}`}
                                 onClick={() => isSessionOwner() && !isEditing && handleEditFinancials(sessionPlayer)}
                                 data-editing-row={isEditing ? 'true' : undefined}
-                                style={{
-                                  transform: dashboardUpdateFlash ? `translateX(10px) scale(1.02)` : `translateY(0)`,
-                                  opacity: 1,
-                                  transitionDelay: `${index * 100}ms`
-                                }}
                               >
                                 <TableCell className="py-2">
                                   <div className="text-sm font-medium text-gray-900">
@@ -1083,19 +1133,51 @@ function SessionPage(): React.JSX.Element {
               <Card className="flex flex-col min-h-0">
                 <CardContent className="flex-1 flex flex-col justify-center p-2 sm:p-3 text-center">
                   <Timer className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600 mx-auto mb-1" />
-                  <div
-                    className="text-2xl sm:text-3xl font-bold text-orange-600 mb-1 cursor-pointer hover:text-orange-700 transition-colors"
-                    onClick={() => {
-                      initializeAudioContext();
-                      setBombPotTimerModalOpen(true);
-                    }}
-                    title="Click to adjust timer interval"
-                  >
+                  <div className="text-2xl sm:text-3xl font-bold text-orange-600 mb-1 tabular-nums">
                     {formatTime(bombPotTimeLeft)}
                   </div>
-                  <div className="text-xs sm:text-sm text-gray-600 mb-2">
-                    {bombPotRunning ? 'Next Bomb Pot' : (bombPotEverStarted ? 'Timer Paused' : 'Timer Ready')}
+                  <div className="text-xs sm:text-sm text-gray-600 mb-3">
+                    {bombPotRunning ? '💣 Next Bomb Pot' : (bombPotEverStarted ? '⏸️ Paused' : '✓ Ready')}
                   </div>
+                  
+                  {/* Interval Adjustment */}
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const intervals = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+                        const currentIndex = intervals.indexOf(bombPotInterval);
+                        if (currentIndex > 0 && intervals[currentIndex - 1] !== undefined) {
+                          updateBombPotInterval(intervals[currentIndex - 1]!);
+                        }
+                      }}
+                      disabled={bombPotInterval <= 5}
+                      className="h-7 px-2"
+                    >
+                      <ChevronLeft className="h-3 w-3" />
+                    </Button>
+                    <span className="text-xs font-medium text-gray-700 min-w-[60px]">
+                      {bombPotInterval} min
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const intervals = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+                        const currentIndex = intervals.indexOf(bombPotInterval);
+                        if (currentIndex >= 0 && currentIndex < intervals.length - 1 && intervals[currentIndex + 1] !== undefined) {
+                          updateBombPotInterval(intervals[currentIndex + 1]!);
+                        }
+                      }}
+                      disabled={bombPotInterval >= 60}
+                      className="h-7 px-2"
+                    >
+                      <ChevronRight className="h-3 w-3" />
+                    </Button>
+                  </div>
+
+                  {/* Timer Controls */}
                   <div className="flex justify-center gap-1">
                     {!bombPotRunning ? (
                       <Button onClick={startBombPotTimer} size="sm">
@@ -1108,10 +1190,10 @@ function SessionPage(): React.JSX.Element {
                         Pause
                       </Button>
                     )}
-                    <Button onClick={resetBombPotTimer} variant="outline" size="sm">
+                    <Button onClick={resetBombPotTimer} variant="outline" size="sm" title="Reset to full interval">
                       <RotateCcw className="h-3 w-3" />
                     </Button>
-                    <Button onClick={cancelBombPotTimer} variant="outline" size="sm" className="text-red-600">
+                    <Button onClick={cancelBombPotTimer} variant="outline" size="sm" className="text-red-600" title="Stop timer">
                       <X className="h-3 w-3" />
                     </Button>
                   </div>

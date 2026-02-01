@@ -1,16 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/pokernight",
-      "destination": "/pokernight/index.html"
-    },
-    {
-      "source": "/pokernight/(.*)",
-      "destination": "/pokernight/index.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/api/:path*",
+      "destination": "https://poker-night-app-production-985f.up.railway.app/api/:path*"
     }
   ]
 }

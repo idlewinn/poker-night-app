@@ -1,0 +1,8 @@
+# Database URLs for migration
+# Saved: 2026-02-01
+
+# OLD database (Edwin's workspace - unique-forgiveness)
+OLD_DB_URL=postgresql://postgres:auBpNBapGowTfouPRBOMmVmGTGGEDxdQ@caboose.proxy.rlwy.net:57812/railway
+
+# NEW database (ollieorganizer's workspace - triumphant-integrity)
+NEW_DB_URL=postgresql://postgres:aancLZTIDvYMRvovxVjHYNoVTGJYFKzv@trolley.proxy.rlwy.net:45027/railway

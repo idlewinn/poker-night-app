@@ -9,6 +9,22 @@ interface AuthenticatedRequest extends Request {
 
 // Middleware to authenticate JWT token
 export async function authenticateToken(req: any, res: any, next: any): Promise<void> {
+  // DEV MODE BYPASS: Auto-authenticate as first user when running locally without production DB
+  if (process.env.NODE_ENV !== 'production' && req.headers['x-dev-bypass'] === 'true') {
+    try {
+      const db = require('../database/index').default;
+      const users = await db.all('SELECT * FROM users LIMIT 1');
+      if (users && users.length > 0) {
+        req.user = userToAuthUser(users[0]);
+        console.log('🔓 Dev mode: Auto-authenticated as', users[0].email);
+        next();
+        return;
+      }
+    } catch (error) {
+      console.error('Dev bypass failed:', error);
+    }
+  }
+
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
