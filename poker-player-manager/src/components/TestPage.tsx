@@ -224,7 +224,7 @@ function TestPage(): React.JSX.Element {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <Button 
               size="lg" 
-              className="h-20 bg-success hover:bg-success/90 text-white text-lg font-bold"
+              className="h-20 bg-primary hover:bg-primary/90 text-primary-foreground text-lg font-bold shadow-lg"
             >
               <span className="text-2xl mr-2">✓</span>
               I'm In!
@@ -232,7 +232,7 @@ function TestPage(): React.JSX.Element {
             <Button 
               size="lg" 
               variant="outline"
-              className="h-20 border-2 text-lg font-bold"
+              className="h-20 border-2 border-primary/50 hover:bg-accent text-lg font-bold"
             >
               <span className="text-2xl mr-2">?</span>
               Maybe
@@ -240,7 +240,7 @@ function TestPage(): React.JSX.Element {
             <Button 
               size="lg" 
               variant="destructive"
-              className="h-20 text-lg font-bold"
+              className="h-20 text-lg font-bold shadow-lg"
             >
               <span className="text-2xl mr-2">✗</span>
               Can't Make It

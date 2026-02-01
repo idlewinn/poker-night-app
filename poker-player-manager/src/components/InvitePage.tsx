@@ -311,22 +311,31 @@ function InvitePage(): React.JSX.Element {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {statusOptions.map((status) => (
-                <Button
-                  key={status}
-                  onClick={() => handleStatusUpdate(status)}
-                  disabled={updating || currentStatus === status}
-                  variant={currentStatus === status ? 'default' : 'outline'}
-                  className={`justify-start h-auto p-4 ${
-                    currentStatus === status ? 'ring-2 ring-primary' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    {getStatusIcon(status)}
-                    <span className="font-medium">{status}</span>
-                  </div>
-                </Button>
-              ))}
+              {statusOptions.map((status) => {
+                const isSelected = currentStatus === status;
+                const isYes = status === 'In';
+                
+                return (
+                  <Button
+                    key={status}
+                    onClick={() => handleStatusUpdate(status)}
+                    disabled={updating || isSelected}
+                    variant={isSelected ? 'default' : 'outline'}
+                    className={`justify-start h-auto p-4 ${
+                      isSelected ? 'ring-2 ring-primary' : ''
+                    } ${
+                      isYes && !isSelected 
+                        ? 'border-primary/50 hover:bg-primary hover:text-primary-foreground font-bold' 
+                        : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {getStatusIcon(status)}
+                      <span className="font-medium">{status}</span>
+                    </div>
+                  </Button>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
