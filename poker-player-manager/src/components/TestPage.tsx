@@ -11,7 +11,7 @@ function TestPage(): React.JSX.Element {
 
   // Mock data for email preview
   const mockSession = {
-    name: "Friday Night Poker",
+    name: "Poker Night",
     scheduledDateTime: "2026-02-07T19:00:00.000Z",
     players: [
       { name: "Edwin", status: "In" },
@@ -66,54 +66,23 @@ function TestPage(): React.JSX.Element {
           </p>
         </div>
 
-        {/* RSVP Buttons */}
+        {/* RSVP Link */}
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <p style={{ fontSize: '16px', color: '#1a2332', marginBottom: '15px' }}>
-            Will you be joining us?
+            Click below to view details and RSVP:
           </p>
-          <table cellPadding="0" cellSpacing="0" style={{ margin: '0 auto' }}>
-            <tr>
-              <td style={{ padding: '0 5px' }}>
-                <a href="#" style={{ 
-                  backgroundColor: '#4a7c59', 
-                  color: '#ffffff', 
-                  padding: '12px 24px', 
-                  textDecoration: 'none', 
-                  borderRadius: '6px',
-                  fontWeight: 'bold',
-                  display: 'inline-block'
-                }}>
-                  ✓ I'm In
-                </a>
-              </td>
-              <td style={{ padding: '0 5px' }}>
-                <a href="#" style={{ 
-                  backgroundColor: '#e0e0e0', 
-                  color: '#1a2332', 
-                  padding: '12px 24px', 
-                  textDecoration: 'none', 
-                  borderRadius: '6px',
-                  fontWeight: 'bold',
-                  display: 'inline-block'
-                }}>
-                  ? Maybe
-                </a>
-              </td>
-              <td style={{ padding: '0 5px' }}>
-                <a href="#" style={{ 
-                  backgroundColor: '#e63946', 
-                  color: '#ffffff', 
-                  padding: '12px 24px', 
-                  textDecoration: 'none', 
-                  borderRadius: '6px',
-                  fontWeight: 'bold',
-                  display: 'inline-block'
-                }}>
-                  ✗ Can't Make It
-                </a>
-              </td>
-            </tr>
-          </table>
+          <a href="https://pokernight.famylin.com/invite/SESSION_ID/ENCODED_EMAIL" style={{ 
+            backgroundColor: '#4a7c59', 
+            color: '#ffffff', 
+            padding: '14px 32px', 
+            textDecoration: 'none', 
+            borderRadius: '6px',
+            fontWeight: 'bold',
+            display: 'inline-block',
+            fontSize: '16px'
+          }}>
+            View Invitation & RSVP
+          </a>
         </div>
 
         <p style={{ fontSize: '14px', color: '#6b7280', textAlign: 'center', marginTop: '20px' }}>
@@ -177,7 +146,7 @@ function TestPage(): React.JSX.Element {
           <p style={{ fontSize: '16px', color: '#1a2332', marginBottom: '15px' }}>
             Haven't responded yet? Let us know!
           </p>
-          <a href="#" style={{ 
+          <a href="https://pokernight.famylin.com/invite/SESSION_ID/ENCODED_EMAIL" style={{ 
             backgroundColor: '#4a7c59', 
             color: '#ffffff', 
             padding: '14px 28px', 
@@ -187,7 +156,7 @@ function TestPage(): React.JSX.Element {
             display: 'inline-block',
             fontSize: '16px'
           }}>
-            Update RSVP
+            View Invitation & RSVP
           </a>
         </div>
       </div>
@@ -201,9 +170,9 @@ function TestPage(): React.JSX.Element {
 
   // Invite response page (what the user sees when they click the link)
   const renderInviteResponsePage = () => (
-    <div className="min-h-screen bg-gradient-to-br from-background via-accent/5 to-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl poker-card shadow-2xl">
-        <CardHeader className="bg-gradient-to-r from-primary to-poker-felt-light text-white text-center pb-8">
+        <CardHeader className="bg-primary text-white text-center pb-8">
           <div className="text-5xl mb-4">♠ ♣ ♥ ♦</div>
           <CardTitle className="text-3xl font-bold mb-2">{mockSession.name}</CardTitle>
           <p className="text-white/90 text-lg">{formatDate(mockSession.scheduledDateTime)}</p>

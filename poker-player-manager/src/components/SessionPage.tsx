@@ -856,7 +856,7 @@ function SessionPage(): React.JSX.Element {
       {/* Bomb Pot Timer Alert Banner */}
       {bombPotAlert && (
         <div className="fixed top-0 left-0 right-0 z-50 animate-bounce">
-          <div className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 text-white shadow-2xl border-b-4 border-orange-600">
+          <div className="bg-orange-500 text-white shadow-2xl border-b-4 border-orange-600">
             <div className="container mx-auto px-4 py-6">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-4 text-center sm:text-left">
@@ -1034,7 +1034,7 @@ function SessionPage(): React.JSX.Element {
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 min-h-0 overflow-hidden">
               {/* Player Buy-ins - Full Height */}
               <Card className="md:col-span-2 lg:col-span-1 flex flex-col min-h-0 border-poker-gold/20">
-                <div className="p-2 sm:p-3 bg-gradient-to-br from-primary to-poker-felt-light text-white flex-shrink-0 rounded-t-lg">
+                <div className="p-2 sm:p-3 bg-primary text-white flex-shrink-0 rounded-t-lg">
                   <div className="flex items-center justify-between">
                     <div className="text-center flex-1">
                       <div className="flex items-center justify-center gap-2 mb-1">
@@ -1135,7 +1135,7 @@ function SessionPage(): React.JSX.Element {
               </Card>
 
               {/* Bomb Pot Timer */}
-              <Card className="flex flex-col min-h-0 border-orange-500/30 bg-gradient-to-br from-card to-orange-50 dark:to-orange-950/20">
+              <Card className="flex flex-col min-h-0 border-orange-500/30">
                 <CardContent className="flex-1 flex flex-col justify-center p-2 sm:p-3 text-center">
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <span className="text-2xl">💣</span>
@@ -1210,7 +1210,7 @@ function SessionPage(): React.JSX.Element {
 
               {/* Current Seating Chart - Single Table View with Navigation */}
               <Card className="flex flex-col min-h-0 border-primary/30">
-                <div className="p-2 sm:p-3 bg-gradient-to-br from-primary to-poker-felt-light text-white flex-shrink-0 rounded-t-lg">
+                <div className="p-2 sm:p-3 bg-primary text-white flex-shrink-0 rounded-t-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-xl">🎰</span>
@@ -1351,7 +1351,7 @@ function SessionPage(): React.JSX.Element {
 
           {/* Player Financial Details */}
           <Card className="overflow-hidden">
-            <div className="p-4 bg-gradient-to-r from-primary/10 to-primary/20 dark:from-primary dark:to-poker-felt-light border-b-2 border-primary/20 dark:border-primary/50">
+            <div className="p-4 bg-accent dark:bg-primary border-b-2 border-primary/20 dark:border-primary/50">
               <h3 className="text-lg font-bold text-primary dark:text-primary-foreground">
                 Winnings
               </h3>
@@ -1552,7 +1552,7 @@ function SessionPage(): React.JSX.Element {
 
               {/* Timer Settings */}
               <Card>
-                <div className="p-4 bg-gradient-to-r from-primary/10 to-primary/20 dark:from-primary dark:to-poker-felt-light border-b-2 border-primary/20 dark:border-primary/50">
+                <div className="p-4 bg-accent dark:bg-primary border-b-2 border-primary/20 dark:border-primary/50">
                   <h3 className="text-lg font-bold flex items-center gap-2 text-primary dark:text-primary-foreground">
                     <Settings className="h-5 w-5" />
                     Timer Settings
