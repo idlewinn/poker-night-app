@@ -1305,35 +1305,36 @@ function SessionPage(): React.JSX.Element {
         <TabsContent value="winnings" className="mt-0">
           {/* Financial Summary */}
           <div className="grid grid-cols-3 gap-4 mb-6">
-            <Card>
+            <Card className="poker-card border-primary/20">
               <CardContent className="text-center py-6">
-                <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(totalBuyIn)}
-                </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground mb-1 font-medium">
                   Total Buy-In
                 </div>
+                <div className="text-3xl font-bold money-amount">
+                  {formatCurrency(totalBuyIn)}
+                </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="poker-card border-primary/20">
               <CardContent className="text-center py-6">
-                <div className="text-2xl font-bold text-blue-600">
-                  {formatCurrency(totalCashOut)}
-                </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground mb-1 font-medium">
                   Total Cash-Out
                 </div>
+                <div className="text-3xl font-bold text-primary">
+                  {formatCurrency(totalCashOut)}
+                </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="poker-card border-primary/20">
               <CardContent className="text-center py-6">
-                <div className="text-2xl font-bold text-primary">
-                  {sessionPlayers.length}
-                </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground mb-1 font-medium">
                   Players
+                </div>
+                <div className="text-3xl font-bold text-poker-navy dark:text-foreground flex items-center justify-center gap-2">
+                  <Users className="h-6 w-6" />
+                  {sessionPlayers.length}
                 </div>
               </CardContent>
             </Card>

@@ -241,9 +241,12 @@ function MainApp(): React.JSX.Element {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex-1 text-center">
-            <h1 className="text-4xl font-bold text-foreground drop-shadow-lg">
-              🃏 Poker Night
+            <h1 className="text-4xl font-bold text-poker-navy dark:text-foreground flex items-center justify-center gap-3">
+              <span className="text-3xl">♠</span>
+              <span>Poker Night</span>
+              <span className="text-3xl">♣</span>
             </h1>
+            <p className="text-sm text-muted-foreground mt-1">Family poker game tracker</p>
           </div>
           <div className="flex-shrink-0">
             <UserMenu sessions={sessions} />
