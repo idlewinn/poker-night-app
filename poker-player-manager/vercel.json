@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/pokernight",
+      "destination": "/pokernight/index.html"
+    },
+    {
+      "source": "/pokernight/(.*)",
+      "destination": "/pokernight/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
