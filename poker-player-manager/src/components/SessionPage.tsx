@@ -788,7 +788,7 @@ function SessionPage(): React.JSX.Element {
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate('/sessions')}
-                className="text-gray-600 hover:text-gray-900"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
@@ -1589,7 +1589,7 @@ function SessionPage(): React.JSX.Element {
                       </Select>
                     </div>
 
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-muted-foreground">
                       <p className="mb-2">
                         <strong>How it works:</strong>
                       </p>

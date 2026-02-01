@@ -206,7 +206,7 @@ function PlayerItem({ player, onRemove, onRename, onViewDetails, onToggleDefault
                     onClick={() => setIsEditing(true)}
                     variant="ghost"
                     size="sm"
-                    className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    className="text-muted-foreground hover:text-foreground hover:bg-accent/50"
                     title="Edit player"
                   >
                     <Edit className="h-4 w-4" />
